@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tablero SafeCane</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  :root {
+    --bg: #f4f5f7; --panel: #ffffff; --text: #1d2330; --muted: #667085; --border: #dde1e7;
+    --ok: #18864b; --warn: #b7791f; --bad: #c62828; --info: #1f5fbf; --idle: #6b7280;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12151b; --panel: #1b2029; --text: #e7eaf0; --muted: #9aa3b2; --border: #2c3340;
+      --ok: #3fb872; --warn: #e0a43a; --bad: #ef5350; --info: #5b9bf0; --idle: #8b93a1;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+           padding: 14px 16px; border-bottom: 1px solid var(--border); background: var(--panel); }
+  header h1 { font-size: 20px; margin: 0; flex: 1; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px;
+          border: 1px solid var(--border); font-size: 13px; color: var(--muted); }
+  .pill::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--pill, var(--idle)); }
+  main { max-width: 1100px; margin: 0 auto; padding: 16px; display: grid; gap: 16px;
+         grid-template-columns: 1fr 1fr; }
+  section { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+  section h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 0 0 10px; }
+  .full { grid-column: 1 / -1; }
+  #estado { font-size: 30px; font-weight: 700; padding: 10px 14px; border-radius: 8px; text-align: center;
+            color: #fff; background: var(--idle); margin-bottom: 12px; }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .dato { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
+  .dato small { display: block; color: var(--muted); font-size: 12px; }
+  .dato b { font-size: 22px; font-variant-numeric: tabular-nums; }
+  .nota { color: var(--muted); font-size: 13px; margin: 10px 0 0; }
+  #mapa { height: 320px; border-radius: 8px; }
+  form { display: grid; grid-template-columns: 2fr 1.4fr auto; gap: 10px; align-items: end; }
+  form.personalizado { grid-template-columns: 2fr 1.4fr 1fr 1fr auto; }
+  label { font-size: 12px; color: var(--muted); display: grid; gap: 4px; }
+  input, select, button { font: inherit; padding: 7px 9px; border-radius: 6px; border: 1px solid var(--border);
+                          background: var(--bg); color: var(--text); min-width: 0; }
+  button { cursor: pointer; background: var(--info); color: #fff; border: 0; font-weight: 600; }
+  .extra { display: none; }
+  form.personalizado .extra { display: grid; }
+  #log { font: 12px/1.5 ui-monospace, Menlo, monospace; max-height: 220px; overflow: auto; margin: 0;
+         white-space: pre-wrap; word-break: break-all; }
+  #log div { border-bottom: 1px dashed var(--border); padding: 3px 0; }
+  #log span { color: var(--muted); }
+
+  #alerta { position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+            background: rgba(120, 0, 0, .55); z-index: 2000; padding: 16px; }
+  #alerta.visible { display: flex; }
+  #alerta .caja { background: var(--bad); color: #fff; border-radius: 14px; padding: 24px; max-width: 460px;
+                  width: 100%; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,.4);
+                  animation: latido 1s infinite; }
+  #alerta h2 { font-size: 34px; margin: 0 0 8px; }
+  #alerta p { margin: 6px 0; font-size: 16px; }
+  #alerta button { margin-top: 14px; background: #fff; color: var(--bad); font-size: 16px; padding: 10px 18px; }
+  @keyframes latido { 50% { transform: scale(1.03); } }
+  #aviso { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--text);
+           color: var(--bg); padding: 10px 16px; border-radius: 8px; display: none; z-index: 1500; }
+
+  @media (max-width: 760px) {
+    main { grid-template-columns: 1fr; }
+    form, form.personalizado { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>SafeCane · Tablero</h1>
+  <span class="pill" id="conexion">Desconectado</span>
+  <span class="pill" id="ultimo">Sin datos</span>
+</header>
+
+<main>
+  <section class="full">
+    <h2>Conexión</h2>
+    <form id="form">
+      <label>Tópico (el mismo <code>TOPICO</code> del firmware)
+        <input id="topico" required placeholder="safecane/grupo1">
+      </label>
+      <label>Broker
+        <select id="broker">
+          <option value="wss://broker.hivemq.com:8884/mqtt">broker.hivemq.com</option>
+          <option value="wss://test.mosquitto.org:8081/mqtt">test.mosquitto.org</option>
+          <option value="otro">Personalizado (opción B)</option>
+        </select>
+      </label>
+      <label class="extra">URL WebSocket
+        <input id="url" placeholder="ws://localhost:9001">
+      </label>
+      <label class="extra">Usuario / clave
+        <span style="display:flex; gap:6px"><input id="usuario" placeholder="baston" style="width:50%">
+        <input id="clave" type="password" placeholder="clave" style="width:50%"></span>
+      </label>
+      <button type="submit">Conectar</button>
+    </form>
+  </section>
+
+  <section>
+    <h2>Estado del bastón</h2>
+    <div id="estado">—</div>
+    <div class="grid">
+      <div class="dato"><small>Distancia al obstáculo</small><b id="dist">—</b></div>
+      <div class="dato"><small>Desnivel (escalón)</small><b id="desnivel">—</b></div>
+      <div class="dato"><small>En uso</small><b id="uso">—</b></div>
+      <div class="dato"><small>Batería</small><b id="vbat">—</b></div>
+    </div>
+    <p class="nota" id="ultimaAlerta">Sin alertas.</p>
+  </section>
+
+  <section>
+    <h2>Ubicación</h2>
+    <div id="mapa"></div>
+    <p class="nota" id="gpsTexto">Esperando posición GPS…</p>
+  </section>
+
+  <section class="full">
+    <h2>Mensajes</h2>
+    <div id="log"><div><span>Aquí aparecen los JSON que llegan del bastón.</span></div></div>
+  </section>
+</main>
+
+<div id="alerta" role="alertdialog" aria-live="assertive">
+  <div class="caja">
+    <h2>¡CAÍDA!</h2>
+    <p id="alertaDonde"></p>
+    <p id="alertaHora"></p>
+    <button id="entendido">Entendido (silenciar)</button>
+  </div>
+</div>
+<div id="aviso"></div>
+
+<script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const UTEC = [-12.1352, -77.0222];
+const COLOR_ESTADO = { NORMAL: "--ok", PRE_ALERTA: "--warn", ALERTA: "--bad", REPOSO: "--idle" };
+const $ = id => document.getElementById(id);
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+// ---------- Preferencias (solo en este navegador) ----------
+function leerPref() {
+  try { return JSON.parse(localStorage.getItem("safecane") || "{}"); } catch { return {}; }
+}
+function guardarPref(p) {
+  try { localStorage.setItem("safecane", JSON.stringify(p)); } catch {}
+}
+const pref = leerPref();
+$("topico").value = pref.topico || "safecane/grupo1";
+$("broker").value = pref.broker || "wss://broker.hivemq.com:8884/mqtt";
+$("url").value = pref.url || "";
+$("usuario").value = pref.usuario || "";
+$("broker").onchange = () => $("form").classList.toggle("personalizado", $("broker").value === "otro");
+$("broker").onchange();
+
+// ---------- Mapa ----------
+const mapa = L.map("mapa").setView(UTEC, 16);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  maxZoom: 19, attribution: "© OpenStreetMap"
+}).addTo(mapa);
+let punto = null;
+
+function ponerPunto(lat, lon, caida) {
+  if (!lat && !lon) return false;                // sin fix: el firmware manda 0, 0
+  const color = caida ? css("--bad") : css("--info");
+  if (!punto) punto = L.circleMarker([lat, lon], { radius: 11, weight: 3 }).addTo(mapa);
+  punto.setLatLng([lat, lon]).setStyle({ color, fillColor: color, fillOpacity: .6 });
+  punto.bindTooltip(caida ? "SafeCane: CAÍDA" : "SafeCane");
+  mapa.setView([lat, lon], Math.max(mapa.getZoom(), 17));
+  return true;
+}
+const coords = (lat, lon) => `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+
+// ---------- Sonido de alarma ----------
+let audio = null, sirena = null;
+document.addEventListener("click", () => {
+  try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); audio.resume(); } catch {}
+}, { once: true });
+
+function pitido() {
+  if (!audio) return;
+  const o = audio.createOscillator(), g = audio.createGain();
+  o.frequency.value = 880; g.gain.value = .25;
+  o.connect(g).connect(audio.destination);
+  o.start(); o.stop(audio.currentTime + .35);
+}
+function sonar(si) {
+  clearInterval(sirena); sirena = null;
+  if (si) { pitido(); sirena = setInterval(pitido, 700); }
+}
+
+// ---------- Avisos ----------
+function avisar(texto) {
+  const a = $("aviso");
+  a.textContent = texto; a.style.display = "block";
+  clearTimeout(avisar.t); avisar.t = setTimeout(() => a.style.display = "none", 5000);
+}
+$("entendido").onclick = () => { $("alerta").classList.remove("visible"); sonar(false); };
+
+// ---------- Mensajes recibidos ----------
+let ultimoDato = 0;
+
+function registrar(topico, texto, retenido) {
+  const fila = document.createElement("div");
+  const hora = new Date().toLocaleTimeString();
+  const cab = document.createElement("span");
+  cab.textContent = `${hora} ${topico}${retenido ? " (retenido)" : ""}`;
+  fila.append(cab, document.createElement("br"), texto);
+  const log = $("log");
+  if (log.firstChild && !log.firstChild.dataset.real) log.innerHTML = "";
+  fila.dataset.real = 1;
+  log.prepend(fila);
+  while (log.children.length > 40) log.lastChild.remove();
+}
+
+function mostrarEstado(d) {
+  ultimoDato = Date.now();
+  const e = $("estado");
+  e.textContent = d.estado ?? "—";
+  e.style.background = css(COLOR_ESTADO[d.estado] || "--idle");
+  $("dist").textContent = d.dist == null || d.dist < 0 ? "sin lectura" : `${Math.round(d.dist)} cm`;
+  $("desnivel").textContent = d.desnivel ? "¡Sí!" : "No";
+  $("desnivel").style.color = d.desnivel ? css("--warn") : "";
+  $("uso").textContent = d.uso ? "Sí" : "No";
+  $("vbat").textContent = d.vbat > 0 ? `${d.vbat.toFixed(2)} V` : "—";
+  $("vbat").style.color = d.vbat > 0 && d.vbat < 3.4 ? css("--bad") : "";
+}
+
+function mostrarAlerta(d, retenido) {
+  const hayGps = ponerPunto(d.lat, d.lon, d.tipo === "caida");
+  const donde = hayGps ? `en ${coords(d.lat, d.lon)} (${d.sats} satélites)` : "sin ubicación GPS";
+  if (d.tipo === "caida") {
+    $("alertaDonde").textContent = `Caída detectada ${donde}`;
+    $("alertaHora").textContent = retenido
+      ? "Alerta activa recibida al conectar."
+      : `Hora: ${new Date().toLocaleTimeString()}`;
+    $("alerta").classList.add("visible");
+    sonar(true);
+    $("ultimaAlerta").textContent = `Última alerta: CAÍDA ${donde}.`;
+  } else if (d.tipo === "cancelada") {
+    $("alerta").classList.remove("visible");
+    sonar(false);
+    if (!retenido) avisar("Alerta cancelada por el usuario");
+    $("ultimaAlerta").textContent = `Última alerta: cancelada por el usuario (${new Date().toLocaleTimeString()}).`;
+  }
+}
+
+function mostrarGps(d) {
+  if (ponerPunto(d.lat, d.lon, $("alerta").classList.contains("visible")))
+    $("gpsTexto").textContent = `${coords(d.lat, d.lon)} · ${d.sats} satélites · hdop ${d.hdop}`;
+}
+
+// ---------- MQTT por WebSocket ----------
+let cliente = null;
+
+function ponerConexion(texto, color) {
+  $("conexion").textContent = texto;
+  $("conexion").style.setProperty("--pill", css(color));
+}
+
+function conectar() {
+  const topico = $("topico").value.trim().replace(/\/+$/, "");
+  const broker = $("broker").value;
+  const url = broker === "otro" ? $("url").value.trim() : broker;
+  guardarPref({ topico, broker, url: $("url").value.trim(), usuario: $("usuario").value.trim() });
+  if (!topico || !url) return avisar("Falta el tópico o la URL del broker");
+
+  if (cliente) cliente.end(true);
+  ponerConexion("Conectando…", "--warn");
+  const opciones = { clientId: "tablero-" + Math.random().toString(16).slice(2, 10), reconnectPeriod: 3000, connectTimeout: 8000 };
+  if (broker === "otro" && $("usuario").value.trim()) {
+    opciones.username = $("usuario").value.trim();
+    opciones.password = $("clave").value;
+  }
+  cliente = mqtt.connect(url, opciones);
+
+  cliente.on("connect", () => {
+    ponerConexion("Conectado", "--ok");
+    cliente.subscribe(`${topico}/#`);
+  });
+  cliente.on("reconnect", () => ponerConexion("Reconectando…", "--warn"));
+  cliente.on("offline", () => ponerConexion("Desconectado", "--bad"));
+  cliente.on("error", err => { ponerConexion("Error", "--bad"); avisar("Error MQTT: " + err.message); });
+
+  cliente.on("message", (t, buf, paquete) => {
+    const texto = buf.toString();
+    registrar(t, texto, paquete.retain);
+    let d;
+    try { d = JSON.parse(texto); } catch { return; }
+    if (t.endsWith("/estado")) mostrarEstado(d);
+    else if (t.endsWith("/alerta")) mostrarAlerta(d, paquete.retain);
+    else if (t.endsWith("/gps")) mostrarGps(d);
+  });
+}
+
+$("form").onsubmit = e => { e.preventDefault(); conectar(); };
+
+// El bastón publica el estado cada 5 s: más de 15 s sin datos es sospechoso.
+setInterval(() => {
+  const u = $("ultimo");
+  if (!ultimoDato) return;
+  const s = Math.round((Date.now() - ultimoDato) / 1000);
+  u.textContent = s < 15 ? `Datos hace ${s} s` : `Sin datos hace ${s} s`;
+  u.style.setProperty("--pill", css(s < 15 ? "--ok" : "--bad"));
+}, 1000);
+
+conectar();
+</script>
+</body>
+</html>

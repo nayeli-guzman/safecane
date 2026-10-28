@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "author": "SafeCane",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": 0, "attrs": {} },
+    { "type": "wokwi-hc-sr04", "id": "ultra", "top": -200, "left": -260, "attrs": { "distance": "150" } },
+    { "type": "wokwi-mpu6050", "id": "imu", "top": -170, "left": 190, "attrs": { "accelX": "0.7", "accelZ": "0.7" } },
+    { "type": "wokwi-slide-switch", "id": "ir", "top": 40, "left": -230, "attrs": { "value": "" } },
+    { "type": "wokwi-photoresistor-sensor", "id": "ldr", "top": 120, "left": -420, "attrs": { "lux": "500" } },
+    { "type": "wokwi-pushbutton", "id": "btn", "top": 230, "left": -230, "attrs": { "color": "red", "label": "Cancelar" } },
+    { "type": "wokwi-potentiometer", "id": "bat", "top": -100, "left": -120, "attrs": {} },
+    { "type": "wokwi-resistor", "id": "r1", "top": 300, "left": 180, "rotate": 90, "attrs": { "value": "220" } },
+    { "type": "wokwi-led", "id": "motor", "top": 360, "left": 170, "attrs": { "color": "orange", "label": "Motor" } },
+    { "type": "wokwi-buzzer", "id": "bz", "top": 330, "left": 260, "attrs": { "volume": "0.2" } },
+    { "type": "wokwi-resistor", "id": "r2", "top": 300, "left": 360, "rotate": 90, "attrs": { "value": "220" } },
+    { "type": "wokwi-led", "id": "luz", "top": 360, "left": 350, "attrs": { "color": "white", "label": "LED" } }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+
+    [ "ultra:VCC", "esp:5V", "red", [] ],
+    [ "ultra:GND", "esp:GND.1", "black", [] ],
+    [ "ultra:TRIG", "esp:5", "green", [] ],
+    [ "ultra:ECHO", "esp:18", "blue", [] ],
+
+    [ "imu:VCC", "esp:3V3", "red", [] ],
+    [ "imu:GND", "esp:GND.2", "black", [] ],
+    [ "imu:SDA", "esp:21", "green", [] ],
+    [ "imu:SCL", "esp:22", "blue", [] ],
+
+    [ "ir:1", "esp:GND.1", "black", [] ],
+    [ "ir:2", "esp:34", "violet", [] ],
+    [ "ir:3", "esp:3V3", "red", [] ],
+
+    [ "ldr:VCC", "esp:3V3", "red", [] ],
+    [ "ldr:GND", "esp:GND.1", "black", [] ],
+    [ "ldr:AO", "esp:32", "orange", [] ],
+
+    [ "btn:1.l", "esp:27", "green", [] ],
+    [ "btn:2.l", "esp:GND.1", "black", [] ],
+
+    [ "bat:VCC", "esp:3V3", "red", [] ],
+    [ "bat:GND", "esp:GND.1", "black", [] ],
+    [ "bat:SIG", "esp:VP", "gray", [] ],
+
+    [ "esp:25", "r1:1", "orange", [] ],
+    [ "r1:2", "motor:A", "orange", [] ],
+    [ "motor:C", "esp:GND.2", "black", [] ],
+
+    [ "bz:2", "esp:26", "purple", [] ],
+    [ "bz:1", "esp:GND.2", "black", [] ],
+
+    [ "esp:33", "r2:1", "white", [] ],
+    [ "r2:2", "luz:A", "white", [] ],
+    [ "luz:C", "esp:GND.3", "black", [] ]
+  ],
+  "dependencies": {}
+}
