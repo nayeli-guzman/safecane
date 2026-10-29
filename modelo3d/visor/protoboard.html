@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SafeCane Protoboard</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,sans-serif;background:#e9edf2;color:#1d2433;display:flex;height:100vh;overflow:hidden}
+#vista{flex:1;position:relative}canvas{display:block}
+#panel{width:340px;background:#fff;border-left:1px solid #d5dbe5;overflow:auto;padding:16px}
+h1{font-size:18px;margin:0 0 4px}.sub{color:#6b7589;font-size:12px;margin-bottom:12px}
+.btns{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+button,a.btn{background:#e3e8f1;color:#1d2433;border:0;border-radius:6px;padding:8px 10px;cursor:pointer;font-size:13px;text-decoration:none}button:hover,a.btn:hover{background:#cfd8e8}
+.item{padding:9px 10px;border-radius:6px;cursor:pointer;border:1px solid transparent;font-size:14px}
+.item:hover{background:#eef2f9}.item.act{background:#dbe8ff;border-color:#3b82f6}
+.item small{display:block;color:#6b7589;font-size:11px}
+#info{margin-top:14px;padding:12px;border-radius:8px;background:#f3f6fb;font-size:13px;line-height:1.5;display:none}
+#info b{font-size:15px;display:block;margin-bottom:4px}
+#info table{border-collapse:collapse;margin-top:6px;width:100%}#info td{padding:2px 4px;border-bottom:1px solid #dde3ee;font-size:12px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+#tip{position:absolute;pointer-events:none;background:#fff;color:#1d2433;border:1px solid #cfd8e8;border-radius:8px;padding:7px 11px;font-size:13px;box-shadow:0 4px 14px #0002;display:none;max-width:240px}
+#tip b{display:block}
+#tag{position:absolute;pointer-events:none;background:#fff;border:2px solid #3b82f6;color:#1d2433;padding:8px 12px;border-radius:10px;font-size:13px;box-shadow:0 6px 18px #0003;display:none;max-width:260px;transform:translate(36px,-50%)}
+#tag b{display:block;color:#2563eb;margin-bottom:2px}
+#ring{position:absolute;pointer-events:none;width:50px;height:50px;margin:-25px 0 0 -25px;border:3px solid #3b82f6;border-radius:50%;display:none;animation:p 1.2s infinite}
+@keyframes p{0%{transform:scale(.6);opacity:1}100%{transform:scale(1.5);opacity:0}}
+#error{position:absolute;top:12px;left:12px;right:12px;background:#b91c1c;color:#fff;padding:10px;border-radius:6px;display:none;font-size:13px}
+#ayuda{position:absolute;left:12px;bottom:10px;font-size:12px;color:#6b7589}
+</style></head><body>
+<div id="vista"><div id="error"></div><div id="tip"></div><div id="ring"></div><div id="tag"></div>
+<div id="ayuda">Arrastra para girar · rueda para zoom · pasa el mouse sobre una pieza o un cable · clic para acercarte</div></div>
+<div id="panel"><h1>SafeCane · Protoboard</h1><div class="sub">Tus piezas reales, conectadas según la guía</div>
+<div class="btns"><a class="btn" href="index.html">← Ver bastón</a><button id="general">Vista general</button></div>
+<div id="lista"></div><div id="info"></div></div>
+<script>addEventListener("error",e=>{const x=document.getElementById("error");x.style.display="block";x.textContent="Error: "+e.message});addEventListener("unhandledrejection",e=>{const x=document.getElementById("error");x.style.display="block";x.textContent="Error: "+(e.reason&&e.reason.message||e.reason)})</script>
+<script type="importmap">{"imports":{"three":"./lib/three.module.js","three/addons/":"./lib/addons/"}}</script>
+<script type="module">
+import * as THREE from "three";
+import {OrbitControls} from "three/addons/controls/OrbitControls.js";
+
+const cont = document.getElementById("vista");
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(devicePixelRatio); cont.prepend(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0xe9edf2);
+const camera = new THREE.PerspectiveCamera(32,1,1,3000);
+const controls = new OrbitControls(camera, renderer.domElement); controls.enableDamping = true; controls.maxPolarAngle = Math.PI/2.05;
+scene.add(new THREE.HemisphereLight(0xffffff,0x9aa7bd,2.6));
+const sol = new THREE.DirectionalLight(0xffffff,2.2); sol.position.set(200,400,250); scene.add(sol);
+const grid = new THREE.GridHelper(900,60,0xcdd5e2,0xdbe1ec); grid.position.y = -0.1; scene.add(grid);
+
+// ---------- utilidades ----------
+const mat = (c, o={}) => new THREE.MeshStandardMaterial({color:c, roughness:.7, metalness:0, ...o});
+const box = (w,h,d,c,x=0,y=0,z=0,o) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat(c,o)); m.position.set(x,y,z); return m; };
+const cyl = (r,h,c,x=0,y=0,z=0,o) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,28), mat(c,o)); m.position.set(x,y,z); return m; };
+const pinLen = 8;
+function pinsRow(g, pts, y=0){ pts.forEach(([x,z]) => g.add(cyl(.5,pinLen,0xb8a25a,x,y,z))); }
+
+const partes = {};   // id -> {group, info, pins}
+const cables = [];   // {mesh, from, to, desc, parte}
+
+function parte(id, group, pos, info, pins){
+  group.position.set(...pos); group.name = id; group.userData.id = id; scene.add(group);
+  group.updateMatrixWorld(true);
+  partes[id] = {group, info, pins, cables:[]};
+}
+const pinMundo = (id, nombre) => partes[id].group.localToWorld(partes[id].pins[nombre].clone());
+
+// ---------- protoboard ----------
+const pb = new THREE.Group();
+function texturaAgujeros(){
+  const c = document.createElement("canvas"); c.width = 1024; c.height = 360; const g = c.getContext("2d");
+  g.fillStyle = "#f4f4f1"; g.fillRect(0,0,1024,360);
+  g.fillStyle = "#d8d8d2"; g.fillRect(0,172,1024,16);
+  g.fillStyle = "#e2554f"; g.fillRect(14,20,996,3); g.fillRect(14,252,996,3);
+  g.fillStyle = "#4a7be0"; g.fillRect(14,34,996,3); g.fillRect(14,338,996,3);
+  g.fillStyle = "#8d8d85";
+  for (let i=0;i<60;i++){ const x = 24+i*16.4;
+    [48,64,80,96,112,128,144,198,214,230,246,262,278,294].forEach(y => g.fillRect(x,y,5,5));
+    [10,26,262,306,322].forEach(y => g.fillRect(x,y,0,0)); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+const pbTop = new THREE.Mesh(new THREE.BoxGeometry(165,9,56), [mat(0xe8e8e2),mat(0xe8e8e2),new THREE.MeshStandardMaterial({map:texturaAgujeros(),roughness:.8}),mat(0xe8e8e2),mat(0xe8e8e2),mat(0xe8e8e2)]);
+pbTop.position.y = 4.5; pb.add(pbTop); scene.add(pb);
+pb.userData.id = "protoboard";
+// el protoboard tiene su propia etiqueta
+partes.protoboard = {group:pb, info:{n:"Protoboard 830 puntos",d:"Sostiene el ESP32 y los componentes pasivos. Las filas de 5 agujeros están unidas por debajo; los rieles rojo y azul llevan 3,3 V/5 V y GND.",p:""}, pins:{}, cables:[]};
+
+// ---------- ESP32 DevKit (30 pines) ----------
+const FILA_A = ["EN","VP","VN","D34","D35","D32","D33","D25","D26","D27","D14","D12","D13","GND","VIN"];  // fondo
+const FILA_B = ["D23","D22","TX0","RX0","D21","D19","D18","D5","TX2","RX2","D4","D2","D15","GND","3V3"];  // frente
+const ESP_Y = 17;
+{
+  const g = new THREE.Group(), pins = {};
+  g.add(box(51,1.6,28,0x14171d,0,0,0));
+  g.add(box(18,2.6,25,0xc9ccd1,8,2.1,0));                       // módulo WROOM
+  g.add(box(6,1.4,5,0x888b90,-24,1.5,0));                        // conector micro-USB
+  g.add(box(5,1.8,4,0x888b90,-24,1.5,0)); g.children.at(-1).position.set(-23,1.7,0);
+  g.add(box(3,1.2,3,0x333333,-17,1.4,-7)); g.add(box(3,1.2,3,0x333333,-17,1.4,7));  // botones EN / BOOT
+  FILA_A.forEach((n,i) => { const x = -17.8+2.54*i; g.add(cyl(.55,pinLen+4,0x222222,x,-pinLen/2-.8,-12.7)); pins[n] = new THREE.Vector3(x,1,-12.7); });
+  FILA_B.forEach((n,i) => { const x = -17.8+2.54*i; g.add(cyl(.55,pinLen+4,0x222222,x,-pinLen/2-.8,12.7)); pins[n+"_B"] = new THREE.Vector3(x,1,12.7); pins[n] = pins[n] ; });
+  // para 3V3/GND/D5... de la fila B usamos claves con sufijo _B (GND y nombres repetidos)
+  parte("esp32", g, [0,ESP_Y,0], {n:"ESP32 DevKit V1",d:"Cerebro del bastón. Lee los sensores y comunica por Wi-Fi, MQTT y BLE. Su puerto micro-USB queda a la izquierda.",p:"Alimentación por USB o por VIN (5 V)"}, pins);
+}
+const espA = n => pinMundo("esp32", n);
+const espB = n => pinMundo("esp32", n+"_B");
+
+// etiquetas de pines usados en el ESP32
+function etiqueta(texto, pos, color="#1d2433"){
+  const c = document.createElement("canvas"); c.width = 128; c.height = 48; const g = c.getContext("2d");
+  g.fillStyle = "#ffffffd9"; g.beginPath(); g.roundRect(2,6,124,36,10); g.fill();
+  g.fillStyle = color; g.font = "bold 26px sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(texto,64,25);
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c), depthTest:false}));
+  s.scale.set(9,3.4,1); s.position.copy(pos); s.renderOrder = 10; scene.add(s); return s;
+}
+
+// ---------- HC-SR04 ----------
+{
+  const g = new THREE.Group(), pins = {};
+  g.add(box(45,1.6,20,0x1e5fb4,0,0,0));
+  [-11,11].forEach(x => { g.add(cyl(8,12,0xb9bec7,x,7,0)); g.add(cyl(6.2,1,0x2b2e33,x,13.2,0)); });
+  g.add(box(9,4,3,0xc9ccd1,0,2.5,0));
+  ["VCC","Trig","Echo","GND"].forEach((n,i) => { const x = -3.81+2.54*i; g.add(cyl(.5,pinLen,0xb8a25a,x,-0,-8.5)); pins[n] = new THREE.Vector3(x,4,-8.5); });
+  parte("hcsr04", g, [-5,0.8,100], {n:"HC-SR04 · Ultrasonido",d:"Mide la distancia a obstáculos (2–400 cm). En el bastón va al frente del tubo. Su Echo entrega 5 V: necesita el divisor de 1 kΩ y 2 kΩ.",p:""}, pins);
+}
+// ---------- MPU6050 ----------
+{
+  const g = new THREE.Group(), pins = {};
+  g.add(box(21,1.6,16,0x2f6fd0,0,0,0)); g.add(box(4,1.2,4,0x222222,1,1.4,0));
+  const nom = ["VCC","GND","SCL","SDA","XDA","XCL","AD0","INT"];
+  nom.forEach((n,i) => { const z = -8.9+2.54*i*0.7; g.add(cyl(.5,pinLen,0x222222,-9.5,0,-5.4+i*1.55)); pins[n] = new THREE.Vector3(-9.5,4,-5.4+i*1.55); });
+  parte("mpu6050", g, [112,0.8,40], {n:"MPU6050 · Acelerómetro",d:"Detecta caída libre, impacto e inclinación. Se comunica por I2C. En el bastón va en la base de la empuñadura, con el eje Z paralelo al tubo.",p:""}, pins);
+}
+// ---------- Módulo infrarrojo (el que tienes, con potenciómetro) ----------
+{
+  const g = new THREE.Group(), pins = {};
+  g.add(box(31,1.6,14,0x1e55b0,0,0,0));
+  g.add(cyl(2.4,9,0xe8f0f8,-9,5,-3,{transparent:true,opacity:.85})); g.add(cyl(2.4,9,0x15171a,-3,5,-3));
+  g.add(box(8,6,8,0x2d6cdf,9,3.5,-1)); g.add(box(4,4,2,0xe6e6e6,9,6.6,-1));
+  ["OUT","GND","VCC"].forEach((n,i) => { const x = -2.54+2.54*i; g.add(cyl(.5,pinLen,0xb8a25a,x,0,6)); pins[n] = new THREE.Vector3(x,4,6); });
+  parte("ir", g, [-112,0.8,-52], {n:"Módulo infrarrojo",d:"Detecta si hay una mano en la empuñadura. Ojo: este módulo trae potenciómetro y salida digital; la guía recomienda el TCRT5000 suelto para usar la lectura analógica diferencial.",p:""}, pins);
+}
+// ---------- TP4056 ----------
+{
+  const g = new THREE.Group(), pins = {};
+  g.add(box(26,1.6,17,0x1d52a8,0,0,0)); g.add(box(7,3,6,0xb7bcc4,-9.5,2.2,-5.5)); g.add(box(4,1.2,3,0x222222,3,1.4,0)); g.add(box(3,1,3,0x222222,8,1.4,-3));
+  [["OUT+",12.5,-6],["OUT-",12.5,6],["B+",-12.5,-6],["B-",-12.5,6]].forEach(([n,x,z]) => { g.add(cyl(.7,2,0xcdd2d8,x,1,z)); pins[n] = new THREE.Vector3(x,3,z); });
+  parte("tp4056", g, [-122,0.8,35], {n:"TP4056 · Cargador",d:"Carga la celda 18650 y corta la salida si baja de 2,5 V. Su micro-USB debe quedar accesible desde fuera de la empuñadura.",p:""}, pins);
+}
+// ---------- Portapilas 18650 ----------
+{
+  const g = new THREE.Group(), pins = {};
+  g.add(box(78,6,22,0x15171a,0,3,0)); g.add(box(78,10,3,0x15171a,0,5,-9.5)); g.add(box(78,10,3,0x15171a,0,5,9.5));
+  const cel = new THREE.Mesh(new THREE.CylinderGeometry(9.3,9.3,65,32), mat(0x6cc229)); cel.rotation.z = Math.PI/2; cel.position.set(0,11,0); g.add(cel);
+  const polo = cyl(3.5,3,0xd7d9dc,34,11,0); polo.rotation.z = Math.PI/2; g.add(polo);
+  pins["+"] = new THREE.Vector3(-39,8,-6); pins["-"] = new THREE.Vector3(-39,8,6);
+  parte("bateria", g, [-122,0,92], {n:"Celda 18650 y portapilas",d:"Energía portátil. La tuya dice 1200 mAh (la guía pide 3000 mAh reales): con 1200 mAh la autonomía será menor.",p:""}, pins);
+}
+// ---------- Motor vibrador (módulo) ----------
+{
+  const g = new THREE.Group(), pins = {};
+  g.add(box(25,1.6,15,0x15171a,0,0,0)); g.add(cyl(5,8,0x3a3d44,4,5,0)); g.children.at(-1).rotation.z = Math.PI/2;
+  ["S","+","-"].forEach((n,i) => { const z = -2.54+2.54*i; g.add(cyl(.5,pinLen,0xb8a25a,-11,0,z)); pins[n] = new THREE.Vector3(-11,4,z); });
+  parte("motor", g, [112,0.8,-42], {n:"Motor vibrador",d:"Avisa de obstáculos con vibración, más rápida cuanto más cerca. En el bastón va dentro de la empuñadura. La guía lo maneja con un transistor para no sobrecargar el pin.",p:""}, pins);
+}
+// ---------- Buzzer (módulo) ----------
+{
+  const g = new THREE.Group(), pins = {};
+  g.add(box(20,1.6,20,0x15171a,0,0,0)); g.add(cyl(6.5,8,0x1b1d21,2,5,0));
+  ["S","+","-"].forEach((n,i) => { const z = -2.54+2.54*i; g.add(cyl(.5,pinLen,0xb8a25a,-9,0,z)); pins[n] = new THREE.Vector3(-9,4,z); });
+  parte("buzzer", g, [118,0.8,-82], {n:"Buzzer",d:"Alarma sonora en estado ALERTA. Suena junto con el LED blanco hasta que se presiona el pulsador.",p:""}, pins);
+}
+// ---------- LED y LDR en el protoboard ----------
+{
+  const g = new THREE.Group(), pins = {};
+  g.add(cyl(2.5,6,0xf4f4ee,0,3,0,{transparent:true,opacity:.8})); g.add(new THREE.Mesh(new THREE.SphereGeometry(2.5,16,12),mat(0xf4f4ee,{transparent:true,opacity:.8}))); g.children.at(-1).position.y = 6;
+  g.add(cyl(.3,10,0xcfcfcf,-1.3,-2,0)); g.add(cyl(.3,8,0xcfcfcf,1.3,-1,0)); pins["+"] = new THREE.Vector3(-1.3,0,0);
+  parte("led", g, [48,9,-20], {n:"LED blanco",d:"Hace visible al usuario de noche. En el bastón va en el tubo medio, con una resistencia limitadora.",p:""}, pins);
+}
+{
+  const g = new THREE.Group(), pins = {};
+  g.add(cyl(4.5,1.6,0xb7791f,0,1,0)); g.add(cyl(.3,10,0xcfcfcf,-2,-4,0)); g.add(cyl(.3,10,0xcfcfcf,2,-4,0)); pins["+"] = new THREE.Vector3(-2,0,0);
+  parte("ldr", g, [66,9,-20], {n:"LDR · Fotorresistencia",d:"Mide la luz ambiente. Cuando oscurece, el firmware enciende el LED blanco.",p:""}, pins);
+}
+
+// ---------- cables ----------
+const COL = {rojo:0xdc2626,negro:0x1f2937,naranja:0xf59e0b,verde:0x16a34a,amarillo:0xeab308,azul:0x2563eb,gris:0x9ca3af,marron:0x92400e,morado:0x9333ea};
+const cableMat = {};
+function cable(parteId, pinMod, destino, color, desc, alto){
+  const a = pinMundo(parteId, pinMod), b = destino.clone();
+  const h = alto ?? 22;
+  const m1 = a.clone().lerp(b,.25); m1.y = Math.max(a.y,b.y)+h; const m2 = a.clone().lerp(b,.75); m2.y = m1.y;
+  const curva = new THREE.CatmullRomCurve3([a, a.clone().add(new THREE.Vector3(0,6,0)), m1, m2, b.clone().add(new THREE.Vector3(0,6,0)), b]);
+  const mm = mat(COL[color], {transparent:true});
+  const mesh = new THREE.Mesh(new THREE.TubeGeometry(curva,40,.9,8), mm);
+  mesh.userData = {cable:true, desc, parteId}; scene.add(mesh);
+  cables.push(mesh); partes[parteId].cables.push({desc, color});
+}
+const sub = (id) => partes[id].group.localToWorld(new THREE.Vector3(0,0,0));
+const alto = (k) => 10 + k*3.5;
+// HC-SR04
+cable("hcsr04","VCC",espA("VIN"),"rojo","HC-SR04 VCC → ESP32 VIN (5 V)",alto(0));
+cable("hcsr04","GND",espB("GND"),"negro","HC-SR04 GND → ESP32 GND",alto(1));
+cable("hcsr04","Trig",espB("D5"),"verde","HC-SR04 Trig → GPIO 5",alto(2));
+cable("hcsr04","Echo",espB("D18"),"amarillo","HC-SR04 Echo → GPIO 18 (con divisor 1k/2k)",alto(3));
+// MPU6050
+cable("mpu6050","VCC",espB("3V3"),"rojo","MPU6050 VCC → ESP32 3V3",alto(0));
+cable("mpu6050","GND",espB("GND"),"negro","MPU6050 GND → ESP32 GND",alto(1));
+cable("mpu6050","SDA",espB("D21"),"naranja","MPU6050 SDA → GPIO 21",alto(2));
+cable("mpu6050","SCL",espB("D22"),"azul","MPU6050 SCL → GPIO 22",alto(3));
+// Infrarrojo
+cable("ir","VCC",espB("3V3"),"rojo","Infrarrojo VCC → ESP32 3V3",alto(1));
+cable("ir","GND",espA("GND"),"negro","Infrarrojo GND → ESP32 GND",alto(2));
+cable("ir","OUT",espA("D34"),"morado","Infrarrojo OUT → GPIO 34",alto(0));
+// Motor y buzzer
+cable("motor","S",espA("D25"),"gris","Motor señal → GPIO 25",alto(0));
+cable("motor","+",espB("3V3"),"rojo","Motor + → ESP32 3V3",alto(2));
+cable("motor","-",espA("GND"),"negro","Motor − → GND",alto(3));
+cable("buzzer","S",espA("D26"),"marron","Buzzer señal → GPIO 26",alto(1));
+cable("buzzer","+",espA("VIN"),"rojo","Buzzer + → ESP32 VIN (5 V)",alto(4));
+cable("buzzer","-",espA("GND"),"negro","Buzzer − → GND",alto(5));
+// LED y LDR
+cable("led","+",espA("D33"),"verde","LED → GPIO 33 (vía transistor en el montaje final)",alto(0));
+cable("ldr","+",espA("D32"),"naranja","LDR → GPIO 32 (divisor con 10 kΩ)",alto(1));
+// Energía
+cable("tp4056","OUT+",espA("VIN"),"rojo","TP4056 OUT+ → ESP32 VIN",alto(3));
+cable("tp4056","OUT-",espA("GND"),"negro","TP4056 OUT− → GND",alto(4));
+cable("bateria","+",pinMundo("tp4056","B+"),"rojo","Celda (+) → TP4056 B+",8);
+cable("bateria","-",pinMundo("tp4056","B-"),"negro","Celda (−) → TP4056 B−",8);
+
+// etiquetas de pines usados
+[["D5","B"],["D18","B"],["D21","B"],["D22","B"],["3V3","B"],["GND","B"]].forEach(([n]) => etiqueta(n === "GND" ? "GND" : n, espB(n).clone().add(new THREE.Vector3(0,5,7))));
+[["D34"],["D32"],["D33"],["D25"],["D26"],["VIN"],["GND"]].forEach(([n]) => etiqueta(n, espA(n).clone().add(new THREE.Vector3(0,5,-7))));
+
+// ---------- interfaz ----------
+const lista = document.getElementById("lista"), info = document.getElementById("info");
+const ORDEN = ["esp32","hcsr04","mpu6050","ir","motor","buzzer","led","ldr","tp4056","bateria","protoboard"];
+ORDEN.forEach(id => { const d = partes[id].info; const e = document.createElement("div"); e.className = "item"; e.dataset.n = id;
+  e.innerHTML = d.n + (partes[id].cables.length ? `<small>${partes[id].cables.length} cables</small>` : ""); e.onclick = () => seleccionar(id); lista.append(e); });
+document.getElementById("general").onclick = () => general(false);
+
+const tip = document.getElementById("tip"), tag = document.getElementById("tag"), ring = document.getElementById("ring");
+let seleccion = null, vuelo = null;
+
+function volarA(p1, t1, ms=900){ vuelo = {t0:performance.now(), ms, p0:camera.position.clone(), t0v:controls.target.clone(), p1, t1}; }
+function general(inmediato){
+  const pos = new THREE.Vector3(300,250,400), tgt = new THREE.Vector3(0,0,15);
+  if (inmediato){ camera.position.copy(pos); controls.target.copy(tgt); } else volarA(pos,tgt);
+  seleccionar(null);
+}
+function seleccionar(id){
+  seleccion = id;
+  document.querySelectorAll(".item").forEach(e => e.classList.toggle("act", e.dataset.n === id));
+  tag.style.display = ring.style.display = info.style.display = id ? "block" : "none";
+  cables.forEach(c => c.material.opacity = !id || c.userData.parteId === id || id === "esp32" ? 1 : .18);
+  if (!id) return;
+  const p = partes[id], d = p.info;
+  tag.innerHTML = `<b>${d.n}</b>${d.d.split(".")[0]}.`;
+  let tabla = p.cables.length ? "<table>" + p.cables.map(c => `<tr><td><span class="dot" style="background:#${COL[c.color].toString(16).padStart(6,"0")}"></span>${c.desc}</td></tr>`).join("") + "</table>" : "";
+  if (id === "esp32") tabla = "<table>" + cables.map(c => `<tr><td>${c.userData.desc}</td></tr>`).join("") + "</table>";
+  info.innerHTML = `<b>${d.n}</b>${d.d}${tabla}`;
+  const caja = new THREE.Box3().setFromObject(p.group), centro = caja.getCenter(new THREE.Vector3());
+  const dist = Math.max(caja.getSize(new THREE.Vector3()).length()*2.3, 90);
+  const dir = new THREE.Vector3(.55,.8,.9).normalize();
+  volarA(centro.clone().add(dir.multiplyScalar(dist)), centro);
+}
+
+// hover y clic
+const ray = new THREE.Raycaster(), mouse = new THREE.Vector2(); let down = null;
+const objetos = () => [...Object.values(partes).map(p => p.group), ...cables];
+function bajo(e){
+  const r = renderer.domElement.getBoundingClientRect();
+  mouse.set(((e.clientX-r.left)/r.width)*2-1, -((e.clientY-r.top)/r.height)*2+1);
+  ray.setFromCamera(mouse,camera);
+  const hit = ray.intersectObjects(objetos(), true)[0]; if (!hit) return null;
+  let o = hit.object; if (o.userData.cable) return {cable:o};
+  while (o && !o.userData.id) o = o.parent; return o ? {id:o.userData.id} : null;
+}
+renderer.domElement.addEventListener("pointermove", e => {
+  const h = bajo(e), r = cont.getBoundingClientRect();
+  if (!h){ tip.style.display = "none"; renderer.domElement.style.cursor = ""; return; }
+  tip.style.display = "block"; renderer.domElement.style.cursor = "pointer";
+  tip.style.left = (e.clientX-r.left+16)+"px"; tip.style.top = (e.clientY-r.top+12)+"px";
+  tip.innerHTML = h.cable ? `<b>Cable</b>${h.cable.userData.desc}` : `<b>${partes[h.id].info.n}</b>clic para acercarte`;
+});
+renderer.domElement.addEventListener("pointerdown", e => down = [e.clientX,e.clientY]);
+renderer.domElement.addEventListener("pointerup", e => {
+  if (!down || Math.hypot(e.clientX-down[0],e.clientY-down[1]) > 5) return;
+  const h = bajo(e); if (h) seleccionar(h.cable ? h.cable.userData.parteId : h.id);
+});
+
+function ajustar(){ const w = cont.clientWidth, h = cont.clientHeight; renderer.setSize(w,h); camera.aspect = w/h; camera.updateProjectionMatrix(); }
+addEventListener("resize", ajustar); ajustar(); general(true);
+
+renderer.setAnimationLoop(() => {
+  if (vuelo){ let k = Math.min((performance.now()-vuelo.t0)/vuelo.ms,1); k = k<.5 ? 2*k*k : 1-Math.pow(-2*k+2,2)/2;
+    camera.position.lerpVectors(vuelo.p0,vuelo.p1,k); controls.target.lerpVectors(vuelo.t0v,vuelo.t1,k); if (k===1) vuelo = null; }
+  controls.update(); renderer.render(scene,camera);
+  if (seleccion){ const p = new THREE.Box3().setFromObject(partes[seleccion].group).getCenter(new THREE.Vector3()).project(camera);
+    const x = (p.x+1)/2*cont.clientWidth, y = (1-p.y)/2*cont.clientHeight;
+    ring.style.left = x+"px"; ring.style.top = y+"px"; tag.style.left = x+"px"; tag.style.top = y+"px"; }
+});
+</script></body></html>
