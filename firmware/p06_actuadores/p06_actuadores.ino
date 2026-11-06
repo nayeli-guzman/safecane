@@ -1,5 +1,4 @@
 // Fase 1, paso 6 — motor (rampa PWM), buzzer y LED
-#define WOKWI 1   // 1 = simulador (buzzer con tono, motor = LED naranja); 0 = hardware real
 
 const int MOTOR = 25, BUZZER = 26, LED = 33;
 
@@ -20,11 +19,7 @@ void motor(int duty) {
 }
 
 void buzzer(bool on) {
-#if WOKWI
-  if (on) tone(BUZZER, 2000); else noTone(BUZZER);   // el buzzer de Wokwi necesita un tono
-#else
   digitalWrite(BUZZER, on ? HIGH : LOW);             // el buzzer activo suena con nivel alto
-#endif
 }
 
 void setup() {

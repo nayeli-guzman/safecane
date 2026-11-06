@@ -1,4 +1,4 @@
-# Guía paso a paso del MVP IoT (FC-51 + Wokwi)
+# Guía paso a paso del MVP IoT (FC-51)
 
 Oct 28, 2026 · @Shupa
 
@@ -6,24 +6,7 @@ Oct 28, 2026 · @Shupa
 
 Esta guía reemplaza a `guia_safecane_infrarrojo.md` (versión del 22 de octubre) y a `guia_safecane.pdf`. Está pensada para una **demo ante el profesor**: un bastón que avisa de obstáculos, avisa cuando la punta llega a un escalón que baja, detecta caídas y envía la alerta con su ubicación a un tablero.
 
-**Dos caminos, el mismo código.** Todo se prueba primero en **Wokwi** (simulador gratuito en wokwi.com) y después en el **bastón real**. Los sketches son los mismos; los que se comportan distinto en el simulador tienen al inicio una línea `#define WOKWI 1` (simulador) o `0` (hardware). Así puedes avanzar mientras llegan las piezas, y en la demo tienes un **plan B** si algo físico falla.
-
-**Regla principal:** no pases a la sección siguiente hasta marcar todas las casillas de su bloque "Criterio exacto para avanzar". Las casillas marcadas con **(Wokwi)** se cumplen en el simulador; las marcadas con **(real)** solo con hardware.
-
-### Ruta solo Wokwi (para quien hace la simulación)
-
-Esta guía se basta sola para la parte de Wokwi: el circuito y todos los sketches están copiados dentro de ella, así que no hace falta la carpeta del proyecto. Sigue este orden y marca solo las casillas **(Wokwi)**:
-
-1. **Sección 2:** lee el mapa de pines y la tabla "Qué se simula en Wokwi y qué no".
-2. **Fase 0B:** crea el proyecto, pega el circuito y agrega las 3 librerías.
-3. **Fase 1A y 1B:** pega cada sketch en `sketch.ino` y cumple sus casillas (Wokwi). El sketch `p04a_gps_crudo` se salta: es solo para hardware.
-4. **Fase 2:** opcional en Wokwi.
-5. **Fase 3:** firmware completo, con las banderas de la fila "3 en Wokwi".
-6. **Fase 5:** red y tablero, con las banderas de la fila "5 en Wokwi". Para ver la alerta no instalas nada: abres `tablero/tablero.html` en el navegador. Acuerda con el equipo un `TOPICO` único y úsenlo todos igual.
-7. **Fase 6:** solo el bloque "En Wokwi" (batería baja con el potenciómetro).
-8. Se saltan la Fase 0 (salvo la tabla de software), la Fase 4 y la Fase 7: necesitan el bastón real.
-
-Al terminar, guarda el proyecto y comparte su enlace con el equipo: se usa como plan B en la demo (Anexo C). Si algo no coincide con lo que dice la guía, revisa la tabla "Wokwi" del Anexo A.
+**Regla principal:** no pases a la sección siguiente hasta marcar todas las casillas de su bloque "Criterio exacto para avanzar".
 
 ### Archivos del proyecto (ya creados)
 
@@ -32,10 +15,9 @@ project/
 ├── guia_safecane_infrarrojo.md   ← esta guía
 ├── lista_compras_mvp.md          ← lista de compras con estado
 ├── tablero/
-│   └── tablero.html              ← tablero web de la Fase 5 (doble clic para abrir)
-├── wokwi/
-│   ├── diagram.json              ← circuito completo para Wokwi
-│   └── libraries.txt             ← librerías que Wokwi debe instalar
+│   ├── tablero.html              ← tablero web de la Fase 5 (doble clic para abrir)
+│   ├── estilos.css, app.js       ← diseño y lógica del tablero
+│   └── demo.js                   ← datos de ejemplo (tablero.html?demo)
 └── firmware/
     ├── p00_blink/ … p06_actuadores/   ← pruebas de la Fase 0 y la Fase 1
     ├── p07_mqtt_hcsr04/                ← prueba de red: solo HC-SR04 → tablero (Fase 5)
@@ -44,7 +26,7 @@ project/
     └── calibracion/                    ← captura.py, metricas.py, desniveles.py (Fase 4)
 ```
 
-Todo el firmware está compilado con el core ESP32 3.3.12 que tienes en el Arduino IDE, en sus cinco combinaciones (Wokwi o hardware, con o sin red, con o sin batería). Lo que **no** pudo verificarse sin abrir Wokwi en el navegador es el comportamiento dentro del simulador: por eso la Fase 0B tiene sus propias casillas de comprobación.
+El firmware usa el core ESP32 3.3.12 que tienes en el Arduino IDE. Compílalo con y sin red y con y sin batería antes de subirlo.
 
 ### El sensor infrarrojo: FC-51
 
@@ -63,13 +45,13 @@ En el bastón va cerca de la punta, mirando al piso. Mientras ve el piso, todo s
 | Antes | Ahora | Por qué |
 | --- | --- | --- |
 | Módulo IR "FC-51 o TCRT5000" | **FC-51** confirmado | El TCRT5000 solo ve a 1–2 cm; no sirve en el bastón |
-| Motor de 3 V en el riel de 3,3 V | **Motor de 5 V** (el que tienes) en el riel de 5 V, base con 470 Ω | Coincide con la lista de compras |
-| LDR arriba y 10 kΩ abajo (más luz = número más alto) | **10 kΩ arriba y LDR abajo (más luz = número más bajo)** | Así se comporta el sensor de luz de Wokwi: un solo código para los dos |
+| Motor de 3 V en el riel de 3,3 V | **Módulo vibrador de 5 V** (el que tienes: IN, VCC, GND) en el riel de 5 V, IN directo a GPIO 25 | El módulo trae su propio transistor y diodo |
+| LDR arriba y 10 kΩ abajo (más luz = número más alto) | **10 kΩ arriba y LDR abajo (más luz = número más bajo)** | Es la lógica que usa el firmware |
 | El aviso de desnivel sonaba mientras no hubiera piso | Solo en ángulo de uso y máximo 1,5 s | No suena al levantar o cargar el bastón |
 | La inclinación se medía en el mismo instante del impacto | Se mide 0,5 s después del impacto | En el impacto el ángulo es aleatorio y anulaba caídas reales |
 | La alerta retenida en MQTT nunca se borraba | Al cancelar se publica `"tipo": "cancelada"` | El tablero ya no muestra caídas viejas |
 | Tablero en Node-RED (Node.js + 2 paquetes + flujo a mano) | **Una página `tablero/tablero.html`** que se abre con doble clic | Nada que instalar; funciona en cualquier laptop con internet |
-| Mosquitto en la Mac + Wi-Fi de casa | **Broker público + hotspot del celular** (Mosquitto queda como opción B) | Funciona en Wokwi, en la universidad y al aire libre |
+| Mosquitto en la Mac + Wi-Fi de casa | **Broker público + hotspot del celular** (Mosquitto queda como opción B) | Funciona en la universidad y al aire libre |
 | Fase 5 = aplicar 8 cambios a mano | **Un solo firmware** con banderas `USAR_RED`, `USAR_BATERIA` y `MODO_REGISTRO` | Menos errores al copiar |
 | Sin protección por batería baja | Bajo 3,3 V durante 10 s: 3 pitidos y apagado | Evita reinicios en bucle |
 | GPS "dentro del tubo" | GPS arriba de la caja de la empuñadura | El aluminio bloquea la señal y el módulo no cabe en el tubo |
@@ -79,7 +61,7 @@ En el bastón va cerca de la punta, mirando al piso. Mientras ve el piso, todo s
 
 - **Cadena de alimentación:** el MT3608 toma energía de la salida protegida del TP4056 (OUT+/OUT−), pasando por el interruptor.
 - **Aviso de obstáculos:** se comprueba `distancia > 0`, porque sin eco la distancia vale −1.
-- **Drivers:** 3 transistores 2N2222 (motor, buzzer y LED).
+- **Drivers:** 2 transistores 2N2222 (buzzer y LED). El módulo del motor trae su propio driver.
 - **Batería:** divisor 100 kΩ/100 kΩ hacia GPIO 36 para medirla.
 - **Red:** Wi-Fi/MQTT corren en el núcleo 0; los sensores, en el núcleo 1.
 - **ArduinoJson 7:** se usa `JsonDocument`.
@@ -87,7 +69,7 @@ En el bastón va cerca de la punta, mirando al piso. Mientras ve el piso, todo s
 
 ### Estructura fija de cada sección
 
-Cada fase tiene los mismos bloques: **Para qué sirve**, **Qué usas**, **Conexiones**, **Código**, **En Wokwi** y **Criterio exacto para avanzar**. Para cambiar algo, di la fase y el bloque: por ejemplo, "en Fase 3, cambia T\_DESNIVEL a 300".
+Cada fase tiene los mismos bloques: **Para qué sirve**, **Qué usas**, **Conexiones**, **Código** y **Criterio exacto para avanzar**. Para cambiar algo, di la fase y el bloque: por ejemplo, "en Fase 3, cambia T\_DESNIVEL a 300".
 
 ## 1. Lista de compras MVP
 
@@ -109,8 +91,8 @@ La lista con la columna de estado está en `lista_compras_mvp.md`. Resumen:
 
 | Componente | Especificación | Cant. | Para qué sirve | Se usa en |
 | --- | --- | --- | --- | --- |
-| Motor vibrador | **5 V** | 1 (**ya lo tienes**) | Aviso háptico | Fase 1, paso 6 |
-| Buzzer **activo** | 5 V, ≈85 dB | 1 | Alarma sonora | Fase 1, paso 6 |
+| Módulo motor vibrador | **5 V**; pines IN, VCC, GND (driver incluido) | 1 (**ya lo tienes**) | Aviso háptico | Fase 1, paso 6 |
+| Buzzer **activo** de 2 pines | 5 V, ≈85 dB | 1 | Alarma sonora | Fase 1, paso 6 |
 | LED blanco alto brillo | 5 mm | 1 | Visibilidad de noche | Fase 1, paso 6 |
 
 ### Alimentación
@@ -131,13 +113,12 @@ La lista con la columna de estado está en `lista_compras_mvp.md`. Resumen:
 | Resistencia | 10 kΩ | 4 | Divisor del LDR (1) + 3 de reserva |
 | Resistencia | 100 kΩ | 2 | Divisor de batería |
 | Resistencia | 1 kΩ | 3 | Divisor del Echo (1) + bases del buzzer y del LED (2) |
-| Resistencia | 470 Ω | 1 | Base del transistor del motor |
 | Resistencia | 2 kΩ (o 2 × 1 kΩ) | 1 | Divisor del Echo |
 | Resistencia | 100 Ω | 1 | LED blanco |
-| Transistor NPN 2N2222 | 600 mA | 3 | Motor, buzzer y LED |
-| Diodo 1N4007 | — | 2 | Rueda libre en motor y buzzer |
+| Transistor NPN 2N2222 | 600 mA | 2 | Buzzer y LED |
+| Diodo 1N4007 | — | 1 | Rueda libre del buzzer |
 | Capacitor electrolítico | 100–470 µF / 10 V | 2 | Rieles de 5 V y 3,3 V |
-| Capacitor cerámico | 100 nF | 7 | HC-SR04, MPU6050, GPS, FC-51, ESP32, bornes del motor y divisor de batería |
+| Capacitor cerámico | 100 nF | 7 | HC-SR04, MPU6050, GPS, FC-51, ESP32, VCC–GND del módulo del motor y divisor de batería |
 
 ### Mecánica y cableado
 
@@ -156,12 +137,10 @@ La lista con la columna de estado está en `lista_compras_mvp.md`. Resumen:
 
 Herramientas: **multímetro** (indispensable), cautín de 30–40 W con estaño, pelacables, pinza fina.
 
-**Para Wokwi no hay que comprar nada:** basta con una cuenta gratuita en wokwi.com.
-
 ## 2. Arquitectura y mapa de pines
 
 ```text
-ENTRADAS                          ESP32-WROOM-32                 SALIDAS (vía 2N2222)
+ENTRADAS                          ESP32-WROOM-32                 SALIDAS
 HC-SR04 (obstáculos)  Trig 5, Echo 18 ─┐  ┌────────────────────┐  ┌─ Motor vibrador 5 V  PWM 25
 MPU6050 (caídas)      SDA 21, SCL 22  ─┤  │ Núcleo 1: sensores │  ├─ Buzzer activo 5 V   26
 FC-51 (desnivel)      OUT 34          ─┼─►│ y máquina estados  │─►┼─ LED blanco 5 V      33
@@ -177,22 +156,20 @@ ALIMENTACIÓN (Fase 6): 18650 → TP4056 (OUT protegido) → interruptor → MT3
 
 ### Mapa de pines definitivo
 
-Es el mismo en el bastón real y en `wokwi/diagram.json`.
-
-| Señal | GPIO | Modo | Conexión real | En Wokwi |
-| --- | --- | --- | --- | --- |
-| HC-SR04 Trig | 5 | Salida | Directo | Directo |
-| HC-SR04 Echo | 18 | Entrada | Por divisor 1 kΩ / 2 kΩ | Directo (no hace falta divisor) |
-| MPU6050 SDA / SCL | 21 / 22 | I2C | Directo | Directo |
-| GPS TX → ESP32 | 16 | UART2 RX | Directo | Sin conectar: el firmware genera el GPS |
-| ESP32 → GPS RX | 17 | UART2 TX | Directo | Sin conectar |
-| FC-51 OUT | 34 | Entrada digital | Directo (el módulo trae pull-up) | Interruptor deslizante |
-| LDR | 32 | ADC1 | 3V3 → 10 kΩ → nodo → LDR → GND | Sensor de luz (AO) |
-| Batería | 36 (VP) | ADC1 | Divisor 100 kΩ / 100 kΩ desde TP4056 OUT+ | Potenciómetro |
-| Pulsador | 27 | `INPUT_PULLUP` | A GND | Pulsador "Cancelar" |
-| Motor vibrador | 25 | PWM | 470 Ω → base de Q1 | LED naranja "Motor" |
-| Buzzer | 26 | Salida | 1 kΩ → base de Q2 | Buzzer de Wokwi |
-| LED blanco | 33 | Salida | 1 kΩ → base de Q3 | LED blanco |
+| Señal | GPIO | Modo | Conexión real |
+| --- | --- | --- | --- |
+| HC-SR04 Trig | 5 | Salida | Directo |
+| HC-SR04 Echo | 18 | Entrada | Por divisor 1 kΩ / 2 kΩ |
+| MPU6050 SDA / SCL | 21 / 22 | I2C | Directo |
+| GPS TX → ESP32 | 16 | UART2 RX | Directo |
+| ESP32 → GPS RX | 17 | UART2 TX | Directo |
+| FC-51 OUT | 34 | Entrada digital | Directo (el módulo trae pull-up) |
+| LDR | 32 | ADC1 | 3V3 → 10 kΩ → nodo → LDR → GND |
+| Batería | 36 (VP) | ADC1 | Divisor 100 kΩ / 100 kΩ desde TP4056 OUT+ |
+| Pulsador | 27 | `INPUT_PULLUP` | A GND |
+| Motor vibrador | 25 | PWM | Directo a IN del módulo (driver incluido) |
+| Buzzer | 26 | Salida | 1 kΩ → base de Q1 |
+| LED blanco | 33 | Salida | 1 kΩ → base de Q2 |
 
 Tres reglas explican el mapa:
 
@@ -209,27 +186,6 @@ Tres reglas explican el mapa:
 
 El FC-51 va a **3,3 V**, no a 5 V: así su OUT nunca supera 3,3 V y no daña el GPIO 34.
 
-### Qué se simula en Wokwi y qué no
-
-| Parte real | En Wokwi | Cómo se maneja |
-| --- | --- | --- |
-| ESP32 DevKit | `board-esp32-devkit-c-v4` (mismos GPIO) | — |
-| HC-SR04 | `wokwi-hc-sr04` | Clic en el sensor → deslizador de distancia |
-| MPU6050 | `wokwi-mpu6050` | Clic → deslizadores accelX/Y/Z. La caída se simula escribiendo `c` en el Monitor Serie |
-| FC-51 | Interruptor deslizante | **Izquierda = ve el piso** (OUT a GND). **Derecha = vacío** (OUT a 3,3 V) |
-| GPS NEO-6M | No existe en Wokwi | Con `WOKWI 1`, el firmware genera las mismas frases NMEA (posición fija en UTEC) |
-| LDR + 10 kΩ | `wokwi-photoresistor-sensor` | Clic → deslizador de lux |
-| Pulsador | Pulsador rojo "Cancelar" | Clic |
-| Motor vibrador | LED naranja "Motor" | Su brillo es la intensidad del PWM |
-| Buzzer activo | `wokwi-buzzer` | Con `WOKWI 1` se maneja con `tone()`; activa el sonido del navegador |
-| LED blanco | LED blanco | — |
-| Celda + divisor | Potenciómetro en VP | Girado al máximo = 6,6 V; a dos tercios ≈ 4,4 V; a la mitad ≈ 3,3 V |
-| Transistores, diodos, capacitores, divisor del Echo, TP4056, MT3608 | **No se simulan** | Wokwi simula la lógica, no la electricidad: esto se prueba solo con hardware |
-| Wi-Fi | Red `Wokwi-GUEST` (sin clave) | Sale a internet: llega al broker público |
-| BLE | **No se simula** | Solo en hardware |
-
-**Lo que Wokwi no puede demostrar:** el ruido del motor, el consumo y la autonomía, el alcance real del FC-51 sobre cada piso y los umbrales de caída con movimientos reales. Para eso están las casillas **(real)**.
-
 ## Fase 0 — Preparar el entorno
 
 **Para qué sirve:** comprobar que la PC programa el ESP32 y que el chip ejecuta código.
@@ -242,8 +198,7 @@ En tu Mac ya están el Arduino IDE, el core ESP32 3.3.12 y las librerías TinyGP
 
 | Programa | Para qué | Cómo instalarlo | Se usa en |
 | --- | --- | --- | --- |
-| Cuenta en wokwi.com | Simulador | Registrarte con Google o GitHub | Fase 0B |
-| NimBLE-Arduino (h2zero) 2.x | BLE (solo hardware) | Arduino IDE → Herramientas → Administrar bibliotecas | Fase 5 |
+| NimBLE-Arduino (h2zero) 2.x | BLE | Arduino IDE → Herramientas → Administrar bibliotecas | Fase 5 |
 | Navegador (Chrome, Safari o Firefox) | Tablero `tablero/tablero.html` | Ya lo tienes | Fase 5 |
 | MQTT Explorer (opcional) | Ver los JSON crudos si el tablero falla | mqtt-explorer.com | Fase 5 |
 | nRF Connect (celular) | Probar BLE | Play Store / App Store | Fase 5 |
@@ -262,7 +217,7 @@ En tu Mac ya están el Arduino IDE, el core ESP32 3.3.12 y las librerías TinyGP
 ```cpp
 // Fase 0 — blink
 void setup() {
-  pinMode(2, OUTPUT);          // LED azul integrado del DevKit (Wokwi no lo dibuja)
+  pinMode(2, OUTPUT);          // LED azul integrado del DevKit
   Serial.begin(115200);
 }
 
@@ -273,110 +228,17 @@ void loop() {
 }
 ```
 
-### En Wokwi
-
-Esta prueba se hace en la Fase 0B, ya con el circuito completo.
-
 ### Criterio exacto para avanzar
 
-- [ ] **(real)** El LED azul de la placa parpadea una vez por segundo.
-- [ ] **(real)** El Monitor Serie imprime `ESP32 vivo`, una línea por segundo.
-- [ ] **(real)** El sketch se sube 3 veces seguidas sin errores.
-
-## Fase 0B — Montar el circuito en Wokwi
-
-**Para qué sirve:** tener el bastón completo en el simulador. Se arma una sola vez: todas las pruebas siguientes usan este mismo circuito, porque los pines son los del mapa de la sección 2.
-
-**Qué usas:** el navegador, tu cuenta de Wokwi y los archivos de la carpeta `wokwi/`.
-
-### Pasos
-
-1. Entra a **wokwi.com → New Project → ESP32**. Se abre un proyecto con tres pestañas: `sketch.ino`, `diagram.json` y `Library Manager`.
-2. Copia **todo** el bloque `diagram.json` de abajo (es el mismo que el archivo `wokwi/diagram.json`) y pégalo reemplazando el contenido de la pestaña `diagram.json`. A la derecha aparecen el ESP32, el HC-SR04, el MPU6050, el interruptor del FC-51, el sensor de luz, el pulsador, el potenciómetro de batería, el LED "Motor", el buzzer y el LED blanco.
-3. En la pestaña **Library Manager**, pulsa **+** y agrega `TinyGPSPlus`, `PubSubClient` y `ArduinoJson` (son las tres líneas de `wokwi/libraries.txt`). Escríbelas tal cual, respetando mayúsculas.
-4. Pega en `sketch.ino` el contenido de `firmware/p00_blink/p00_blink.ino` y pulsa ▶ (Start).
-5. Guarda el proyecto con **Save** y ponle de nombre `SafeCane`. Wokwi te da un enlace: guárdalo, sirve para la demo.
-
-### Circuito (`diagram.json`)
-
-```json
-{
-  "version": 1,
-  "author": "SafeCane",
-  "editor": "wokwi",
-  "parts": [
-    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": 0, "attrs": {} },
-    { "type": "wokwi-hc-sr04", "id": "ultra", "top": -200, "left": -260, "attrs": { "distance": "150" } },
-    { "type": "wokwi-mpu6050", "id": "imu", "top": -170, "left": 190, "attrs": { "accelX": "0.7", "accelZ": "0.7" } },
-    { "type": "wokwi-slide-switch", "id": "ir", "top": 40, "left": -230, "attrs": { "value": "" } },
-    { "type": "wokwi-photoresistor-sensor", "id": "ldr", "top": 120, "left": -420, "attrs": { "lux": "500" } },
-    { "type": "wokwi-pushbutton", "id": "btn", "top": 230, "left": -230, "attrs": { "color": "red", "label": "Cancelar" } },
-    { "type": "wokwi-potentiometer", "id": "bat", "top": -100, "left": -120, "attrs": {} },
-    { "type": "wokwi-resistor", "id": "r1", "top": 300, "left": 180, "rotate": 90, "attrs": { "value": "220" } },
-    { "type": "wokwi-led", "id": "motor", "top": 360, "left": 170, "attrs": { "color": "orange", "label": "Motor" } },
-    { "type": "wokwi-buzzer", "id": "bz", "top": 330, "left": 260, "attrs": { "volume": "0.2" } },
-    { "type": "wokwi-resistor", "id": "r2", "top": 300, "left": 360, "rotate": 90, "attrs": { "value": "220" } },
-    { "type": "wokwi-led", "id": "luz", "top": 360, "left": 350, "attrs": { "color": "white", "label": "LED" } }
-  ],
-  "connections": [
-    [ "esp:TX", "$serialMonitor:RX", "", [] ],
-    [ "esp:RX", "$serialMonitor:TX", "", [] ],
-
-    [ "ultra:VCC", "esp:5V", "red", [] ],
-    [ "ultra:GND", "esp:GND.1", "black", [] ],
-    [ "ultra:TRIG", "esp:5", "green", [] ],
-    [ "ultra:ECHO", "esp:18", "blue", [] ],
-
-    [ "imu:VCC", "esp:3V3", "red", [] ],
-    [ "imu:GND", "esp:GND.2", "black", [] ],
-    [ "imu:SDA", "esp:21", "green", [] ],
-    [ "imu:SCL", "esp:22", "blue", [] ],
-
-    [ "ir:1", "esp:GND.1", "black", [] ],
-    [ "ir:2", "esp:34", "violet", [] ],
-    [ "ir:3", "esp:3V3", "red", [] ],
-
-    [ "ldr:VCC", "esp:3V3", "red", [] ],
-    [ "ldr:GND", "esp:GND.1", "black", [] ],
-    [ "ldr:AO", "esp:32", "orange", [] ],
-
-    [ "btn:1.l", "esp:27", "green", [] ],
-    [ "btn:2.l", "esp:GND.1", "black", [] ],
-
-    [ "bat:VCC", "esp:3V3", "red", [] ],
-    [ "bat:GND", "esp:GND.1", "black", [] ],
-    [ "bat:SIG", "esp:VP", "gray", [] ],
-
-    [ "esp:25", "r1:1", "orange", [] ],
-    [ "r1:2", "motor:A", "orange", [] ],
-    [ "motor:C", "esp:GND.2", "black", [] ],
-
-    [ "bz:2", "esp:26", "purple", [] ],
-    [ "bz:1", "esp:GND.2", "black", [] ],
-
-    [ "esp:33", "r2:1", "white", [] ],
-    [ "r2:2", "luz:A", "white", [] ],
-    [ "luz:C", "esp:GND.3", "black", [] ]
-  ],
-  "dependencies": {}
-}
-```
-
-**Cómo usar cada sketch en Wokwi:** pega su contenido en `sketch.ino` (reemplazando el anterior) y pulsa ▶. Si el sketch tiene `#define WOKWI`, déjalo en `1`. Para escribir en el Monitor Serie, haz clic en la consola de abajo y escribe.
-
-**Los cables se dibujan rectos** y pueden cruzarse: es solo estético. Si quieres ordenarlos, arrastra las piezas; las conexiones no cambian.
-
-### Criterio exacto para avanzar
-
-- [ ] **(Wokwi)** El circuito muestra las 12 piezas sin avisos de conexión en rojo.
-- [ ] **(Wokwi)** Con `p00_blink`, el Monitor Serie imprime `ESP32 vivo` una vez por segundo.
-- [ ] **(Wokwi)** El proyecto está guardado y tienes su enlace.
+- [ ] El LED azul de la placa parpadea una vez por segundo.
+- [ ] El Monitor Serie imprime `ESP32 vivo`, una línea por segundo.
+- [ ] El sketch se sube 3 veces seguidas sin errores.
 
 ## Fase 1A — Sensores uno a uno: distancia, caídas y desniveles
 
 **Para qué sirve:** probar cada sensor solo para conocer su comportamiento real antes de mezclarlo con otros.
 
-**Regla en hardware:** un sensor a la vez en la protoboard. Desconecta el anterior antes de conectar el siguiente. En Wokwi todo está conectado siempre; no molesta, porque cada sketch solo lee su sensor.
+**Regla:** un sensor a la vez en la protoboard. Desconecta el anterior antes de conectar el siguiente.
 
 ### Paso 1 — HC-SR04 (obstáculos)
 
@@ -418,15 +280,12 @@ void loop() {
 }
 ```
 
-**En Wokwi:** haz clic en el HC-SR04 mientras corre la simulación y mueve el deslizador de distancia.
-
 **Criterio exacto para avanzar:**
 
-- [ ] **(Wokwi)** Con el deslizador en 20, 100 y 300 cm, imprime esos valores con menos de 2 cm de diferencia.
-- [ ] **(real)** Contra una pared lisa a 20, 50, 100 y 200 cm (con cinta métrica), el error es menor a 3 cm.
-- [ ] **(real)** Entre lecturas seguidas, la variación es menor a 2 cm.
-- [ ] **(real)** Sin obstáculo en 4 m imprime `-1.00`.
-- [ ] **(real)** Anotaste las lecturas contra concreto, vidrio y tela (la tela absorbe el ultrasonido).
+- [ ] Contra una pared lisa a 20, 50, 100 y 200 cm (con cinta métrica), el error es menor a 3 cm.
+- [ ] Entre lecturas seguidas, la variación es menor a 2 cm.
+- [ ] Sin obstáculo en 4 m imprime `-1.00`.
+- [ ] Anotaste las lecturas contra concreto, vidrio y tela (la tela absorbe el ultrasonido).
 
 ### Paso 2 — MPU6050 (caídas)
 
@@ -500,15 +359,12 @@ void loop() {
 
 La inclinación se mide respecto del **eje Z del GY-521**, que en el bastón debe quedar **paralelo al tubo**. Con el bastón vertical, la inclinación es 0°; acostado, 90°; en uso normal, entre 30° y 60°.
 
-**En Wokwi:** haz clic en el MPU6050 para ver los deslizadores. El `diagram.json` arranca con accelX = 0,7 y accelZ = 0,7: es el bastón inclinado 45°, como al caminar.
-
 **Criterio exacto para avanzar:**
 
-- [ ] **(Wokwi y real)** El escáner imprime `Dispositivo en 0x68`.
-- [ ] **(Wokwi)** Con accelX = 0, accelY = 0, accelZ = 1: `svm=1.00` e `incl=0`. Con accelX = 0,7 y accelZ = 0,7: `incl=45`. Si en reposo `svm` sale 0,25 o 4,00 en vez de 1,00, mira el Anexo A.
-- [ ] **(real)** Quieto sobre la mesa con Z vertical: `svm` entre 0,97 y 1,03 g e `incl` menor a 5°.
-- [ ] **(real)** Sacudido con fuerza: `svm` supera 3 g.
-- [ ] **(real)** Girado 90°: `incl` entre 80° y 100°.
+- [ ] El escáner imprime `Dispositivo en 0x68`.
+- [ ] Quieto sobre la mesa con Z vertical: `svm` entre 0,97 y 1,03 g e `incl` menor a 5°.
+- [ ] Sacudido con fuerza: `svm` supera 3 g.
+- [ ] Girado 90°: `incl` entre 80° y 100°.
 
 ### Paso 3 — FC-51 (escaleras que bajan)
 
@@ -543,9 +399,7 @@ void loop() {
 }
 ```
 
-**En Wokwi:** el interruptor deslizante hace de FC-51. A la izquierda imprime `piso=1`; a la derecha, `piso=0` y `sin_piso_hace` empieza a crecer.
-
-**Calibración del potenciómetro (real):**
+**Calibración del potenciómetro:**
 
 1. Fija el FC-51 con cinta a **4–6 cm de la punta**, con las lentes mirando al piso y un poco hacia adelante (20–30°). Sujeta el bastón con el ángulo con que caminas: las lentes quedan a **2–4 cm del piso**.
 2. Gira el potenciómetro hasta que se encienda el LED de detección (`piso=1`) sobre el piso de la sala.
@@ -564,12 +418,11 @@ void loop() {
 
 **Criterio exacto para avanzar:**
 
-- [ ] **(Wokwi)** El interruptor a la izquierda da `piso=1`, y a la derecha da `piso=0` con `sin_piso_hace` creciendo.
-- [ ] **(real)** Sobre losa clara, losa oscura y vereda, con el bastón en su ángulo de uso, `piso=1` en 20 de 20 lecturas.
-- [ ] **(real)** Con el módulo sobre el borde de un escalón de bajada de 15 cm o más, `piso=0` en 10 de 10 intentos.
-- [ ] **(real)** Anotaste si funciona al sol directo.
-- [ ] **(real)** Con VCC en 3V3, el multímetro mide en OUT entre 0 y 3,3 V, nunca más.
-- [ ] **(real)** Elegiste el piso de la demo (el más claro y sin sol directo) y lo probaste ahí.
+- [ ] Sobre losa clara, losa oscura y vereda, con el bastón en su ángulo de uso, `piso=1` en 20 de 20 lecturas.
+- [ ] Con el módulo sobre el borde de un escalón de bajada de 15 cm o más, `piso=0` en 10 de 10 intentos.
+- [ ] Anotaste si funciona al sol directo.
+- [ ] Con VCC en 3V3, el multímetro mide en OUT entre 0 y 3,3 V, nunca más.
+- [ ] Elegiste el piso de la demo (el más claro y sin sol directo) y lo probaste ahí.
 
 ## Fase 1B — Ubicación, luz, pulsador y actuadores
 
@@ -581,10 +434,10 @@ void loop() {
 
 **Conexiones:** VCC → 5V/VIN, GND → GND, **TX del GPS → GPIO 16**, **RX del GPS → GPIO 17**. Se cruzan: el TX de uno va al RX del otro.
 
-Prueba cruda, **solo hardware** (`firmware/p04a_gps_crudo/`):
+Prueba cruda (`firmware/p04a_gps_crudo/`):
 
 ```cpp
-// Fase 1, paso 4a — GPS, NMEA crudo (solo hardware: Wokwi no tiene GPS)
+// Fase 1, paso 4a — GPS, NMEA crudo
 void setup() {
   Serial.begin(115200);
   Serial2.begin(9600, SERIAL_8N1, 16, 17);
@@ -600,30 +453,10 @@ Decodificado (`firmware/p04b_gps/`):
 
 ```cpp
 // Fase 1, paso 4b — GPS decodificado
-#define WOKWI 1   // 1 = simulador Wokwi (frases NMEA generadas); 0 = NEO-6M real
 
 #include <TinyGPSPlus.h>
 TinyGPSPlus gps;
 
-#if WOKWI
-// Wokwi no tiene GPS: se generan cada segundo las mismas frases que manda el NEO-6M
-// (posición fija en UTEC, Barranco) y pasan por el mismo decodificador.
-void gpsSimulado() {
-  static unsigned long t = 0;
-  if (millis() - t < 1000) return;
-  t = millis();
-  const char* frases[] = {
-    "GPGGA,120000.00,1208.11500,S,07701.32900,W,1,08,0.9,95.0,M,10.0,M,,",
-    "GPRMC,120000.00,A,1208.11500,S,07701.32900,W,0.0,0.0,261026,,,A"};
-  for (const char* f : frases) {
-    byte cs = 0;
-    for (const char* p = f; *p; p++) cs ^= *p;             // checksum NMEA
-    char linea[100];
-    snprintf(linea, sizeof(linea), "$%s*%02X\r\n", f, cs);
-    for (char* p = linea; *p; p++) gps.encode(*p);
-  }
-}
-#endif
 
 void setup() {
   Serial.begin(115200);
@@ -631,9 +464,6 @@ void setup() {
 }
 
 void loop() {
-#if WOKWI
-  gpsSimulado();
-#endif
   while (Serial2.available()) gps.encode(Serial2.read());
   if (gps.location.isUpdated()) {
     Serial.printf("%.6f, %.6f  sats=%d  hdop=%.1f  t=%lus\n",
@@ -645,13 +475,10 @@ void loop() {
 
 Sal al aire libre con la antena cerámica hacia arriba. Dentro del laboratorio no va a fijar.
 
-**En Wokwi:** con `#define WOKWI 1`, el sketch genera cada segundo las mismas frases que manda un NEO-6M, con una posición fija en UTEC. Pasan por el mismo decodificador TinyGPSPlus, así que el resto del código no cambia. Para el bastón real, cambia a `#define WOKWI 0`.
-
 **Criterio exacto para avanzar:**
 
-- [ ] **(Wokwi)** Imprime `-12.135250, -77.022150  sats=8  hdop=0.9` una vez por segundo. Pegada en Google Maps, la coordenada cae en UTEC.
-- [ ] **(real)** Al aire libre, la primera coordenada aparece antes de `t=120s`, con `sats` 4 o más.
-- [ ] **(real)** En Google Maps la coordenada cae donde estás. Anota el error en metros (referencia: 4,63 m de Fitriandini et al.).
+- [ ] Al aire libre, la primera coordenada aparece antes de `t=120s`, con `sats` 4 o más.
+- [ ] En Google Maps la coordenada cae donde estás. Anota el error en metros (referencia: 4,63 m de Fitriandini et al.).
 
 ### Paso 5 — LDR y pulsador
 
@@ -664,7 +491,7 @@ Sal al aire libre con la antena cerámica hacia arriba. Dentro del laboratorio n
 | LDR | 3V3 → **10 kΩ** → nodo → GPIO 32; del nodo, **LDR → GND** |
 | Pulsador | Un terminal a GPIO 27, el otro a GND (pull-up interno) |
 
-Con esta conexión, **más luz da un número más bajo**, igual que el sensor de luz de Wokwi. Ponle al pulsador un capuchón alto: el usuario debe encontrarlo al tacto después de una caída.
+Con esta conexión, **más luz da un número más bajo**. Ponle al pulsador un capuchón alto: el usuario debe encontrarlo al tacto después de una caída.
 
 ```cpp
 // Fase 1, paso 5 — LDR y pulsador
@@ -677,40 +504,46 @@ void setup() {
 }
 
 void loop() {
-  // Más luz = número más bajo (igual en Wokwi y en el circuito real)
+  // Más luz = número más bajo
   Serial.printf("ldr=%d  boton=%s\n", analogRead(LDR),
                 digitalRead(BOTON) == LOW ? "PRESIONADO" : "suelto");
   delay(100);
 }
 ```
 
-**En Wokwi:** haz clic en el sensor de luz y mueve el deslizador de lux. Haz clic en el pulsador rojo.
-
 **Criterio exacto para avanzar:**
 
-- [ ] **(Wokwi)** Con 1000 lux, `ldr` sale bajo (unas 700); con 10 lux, alto (unas 3400). El umbral del firmware para Wokwi es 3000.
-- [ ] **(Wokwi y real)** 10 de 10 pulsaciones muestran `PRESIONADO`, y al soltar vuelve a `suelto`.
-- [ ] **(real)** Al tapar el LDR con la mano, `ldr` sube al menos al doble. Anota el valor con luz de sala y tapado: el punto medio será `UMBRAL_LDR` en el firmware (por defecto 2000).
+- [ ] 10 de 10 pulsaciones muestran `PRESIONADO`, y al soltar vuelve a `suelto`.
+- [ ] Al tapar el LDR con la mano, `ldr` sube al menos al doble. Anota el valor con luz de sala y tapado: el punto medio será `UMBRAL_LDR` en el firmware (por defecto 2000).
 
 ### Paso 6 — Motor vibrador, buzzer y LED
 
 **Para qué sirven:** el motor avisa de obstáculos, desniveles y la pre-alerta. El buzzer suena en ALERTA y en los desniveles. El LED hace visible al usuario de noche.
 
-**Qué usas:** 3 transistores 2N2222, resistencias de 470 Ω (1) y 1 kΩ (2), 2 diodos 1N4007, una resistencia de 100 Ω y un capacitor de 100 nF.
+**Qué usas:** el módulo del motor vibrador (IN, VCC, GND), el buzzer activo de 2 pines, 2 transistores 2N2222, 2 resistencias de 1 kΩ, 1 diodo 1N4007, una resistencia de 100 Ω y un capacitor de 100 nF.
 
-**Conexiones** (2N2222 visto de frente, cara plana hacia ti: E – B – C; confírmalo en la hoja de datos de tu encapsulado):
+**Conexiones del módulo del motor** (no lleva transistor ni diodo externos: ya vienen en su placa):
+
+| Pin del módulo | Va a |
+| --- | --- |
+| IN | GPIO 25 (directo) |
+| VCC | **5V/VIN** |
+| GND | GND |
+| Capacitor 100 nF | Entre VCC y GND, junto al módulo |
+
+**Conexiones del buzzer y del LED** (2N2222 visto de frente, cara plana hacia ti: E – B – C; confírmalo en la hoja de datos de tu encapsulado):
 
 | Actuador | Base | Colector | Emisor | Alimentación y protección |
 | --- | --- | --- | --- | --- |
-| Motor 5 V | GPIO 25 → **470 Ω** → B (Q1) | Motor (−) | GND | Motor (+) → **5V/VIN**. 1N4007 en paralelo, cátodo (franja) hacia 5 V. 100 nF entre los bornes del motor |
-| Buzzer activo | GPIO 26 → 1 kΩ → B (Q2) | Buzzer (−) | GND | Buzzer (+) → **5V/VIN**. 1N4007 en paralelo, cátodo hacia 5 V |
-| LED blanco | GPIO 33 → 1 kΩ → B (Q3) | Cátodo del LED (pata corta) | GND | 5V/VIN → 100 Ω → ánodo del LED (≈ 17 mA) |
+| Buzzer activo | GPIO 26 → 1 kΩ → B (Q1) | Buzzer (−) | GND | Buzzer (+), pata larga → **5V/VIN**. 1N4007 en paralelo, cátodo (franja) hacia 5 V |
+| LED blanco | GPIO 33 → 1 kΩ → B (Q2) | Cátodo del LED (pata corta) | GND | 5V/VIN → 100 Ω → ánodo del LED (≈ 17 mA) |
 
-Nunca conectes el motor directo a un GPIO: consume 80–120 mA y el pin entrega unos 12 mA cómodos. Sin el 1N4007, el pico al apagar el motor reinicia el ESP32. Mide con el multímetro la corriente del motor: si pasa de 150 mA, cambia la resistencia de base a 330 Ω.
+El GPIO solo da la orden por IN: la corriente del motor (80–120 mA) sale de VCC a través del transistor del módulo. Por eso VCC va a 5 V y no a un GPIO. Si el motor vibra con IN en GND y se detiene con IN en 3V3, tu módulo es activo en bajo: avísame y se invierte el PWM en el firmware.
+
+**Prueba del buzzer antes de cablearlo:** conecta su + (pata larga) a 5V/VIN y su − a GND, sin ESP32 de por medio. Si pita solo, es activo: sirve tal cual. Si solo hace un clic, es pasivo: cámbialo por uno activo. Con el circuito armado, `firmware/p06b_buzzer_prueba/` lo confirma.
 
 ```cpp
 // Fase 1, paso 6 — motor (rampa PWM), buzzer y LED
-#define WOKWI 1   // 1 = simulador (buzzer con tono, motor = LED naranja); 0 = hardware real
 
 const int MOTOR = 25, BUZZER = 26, LED = 33;
 
@@ -731,11 +564,7 @@ void motor(int duty) {
 }
 
 void buzzer(bool on) {
-#if WOKWI
-  if (on) tone(BUZZER, 2000); else noTone(BUZZER);   // el buzzer de Wokwi necesita un tono
-#else
   digitalWrite(BUZZER, on ? HIGH : LOW);             // el buzzer activo suena con nivel alto
-#endif
 }
 
 void setup() {
@@ -752,14 +581,11 @@ void loop() {
 }
 ```
 
-**En Wokwi:** el LED naranja "Motor" sube de brillo en cada ciclo. Para oír el buzzer, activa el sonido del navegador (Wokwi lo pide la primera vez). Para el bastón real, cambia a `#define WOKWI 0`: el buzzer activo se maneja con nivel alto, no con un tono.
-
 **Criterio exacto para avanzar (cierre de la Fase 1):**
 
-- [ ] **(Wokwi)** El LED "Motor" sube de brillo de forma gradual; el buzzer y el LED blanco se encienden juntos 0,3 s por ciclo.
-- [ ] **(real)** El motor sube de intensidad de forma gradual en cada ciclo.
-- [ ] **(real)** Buzzer y LED se encienden juntos 0,3 s por ciclo.
-- [ ] **(real)** Durante 5 minutos, el ESP32 no se reinicia (sin texto de arranque en el Monitor Serie).
+- [ ] El motor sube de intensidad de forma gradual en cada ciclo.
+- [ ] Buzzer y LED se encienden juntos 0,3 s por ciclo.
+- [ ] Durante 5 minutos, el ESP32 no se reinicia (sin texto de arranque en el Monitor Serie).
 
 ## Fase 2 — Integración eléctrica en protoboard
 
@@ -878,41 +704,33 @@ void loop() {
 }
 ```
 
-### En Wokwi
-
-Corre igual, pero no prueba lo importante de esta fase (ruido y caídas de tensión), porque Wokwi no simula la electricidad. Úsalo solo para ver que todas las lecturas cambian al mover cada control. `sats` queda en 0: este sketch no incluye el GPS simulado.
-
 ### Criterio exacto para avanzar
 
 Deja correr el sketch **10 minutos seguidos** con el GPS cerca de una ventana, y compara las líneas con `motor=1` contra las de `motor=0`:
 
-- [ ] **(Wokwi)** Al mover cada control (distancia, accelZ, interruptor, lux, pulsador), cambia su campo en el Monitor Serie.
-- [ ] **(real)** `=== ARRANQUE ===` aparece una sola vez en los 10 minutos.
-- [ ] **(real)** Con el montaje quieto, `svm` se mantiene entre 0,97 y 1,03 con motor encendido y apagado.
-- [ ] **(real)** Contra una pared fija, `dist` varía menos de 2 cm entre `motor=1` y `motor=0`.
-- [ ] **(real)** Con el FC-51 mirando al piso, `piso=1` con `motor=1` y con `motor=0`. Apuntándolo al aire, `piso=0`.
-- [ ] **(real)** `sats` no cae a 0 cuando el motor se enciende. Si cae, falta desacoplo.
-- [ ] **(real)** Al presionar el pulsador, `boton=0`.
+- [ ] `=== ARRANQUE ===` aparece una sola vez en los 10 minutos.
+- [ ] Con el montaje quieto, `svm` se mantiene entre 0,97 y 1,03 con motor encendido y apagado.
+- [ ] Contra una pared fija, `dist` varía menos de 2 cm entre `motor=1` y `motor=0`.
+- [ ] Con el FC-51 mirando al piso, `piso=1` con `motor=1` y con `motor=0`. Apuntándolo al aire, `piso=0`.
+- [ ] `sats` no cae a 0 cuando el motor se enciende. Si cae, falta desacoplo.
+- [ ] Al presionar el pulsador, `boton=0`.
 
 ## Fase 3 — Firmware integrado con máquina de estados
 
 **Para qué sirve:** reunir todo en un solo programa que nunca se detiene. Avisa de obstáculos y de escalones que bajan, y detecta caídas. Todavía sin red.
 
-**Qué usas:** el montaje de la Fase 2 (real) o el circuito de la Fase 0B (Wokwi).
+**Qué usas:** el montaje de la Fase 2.
 
 ### Un firmware para todas las fases
 
-`firmware/safecane/safecane.ino` es el **único** firmware desde aquí hasta la demo. Lo que cambia entre fases son cuatro banderas al inicio del archivo:
+`firmware/safecane/safecane.ino` es el **único** firmware desde aquí hasta la demo. Lo que cambia entre fases son tres banderas al inicio del archivo:
 
-| Fase | `WOKWI` | `USAR_RED` | `USAR_BATERIA` | `MODO_REGISTRO` |
-| --- | --- | --- | --- | --- |
-| 3 en Wokwi | 1 | 0 | 0 | 0 |
-| 3 en el bastón | 0 | 0 | 0 | 0 |
-| 4 (calibración, solo real) | 0 | 0 | 0 | 1 |
-| 5 en Wokwi | 1 | 1 | 0 | 0 |
-| 5 en el bastón | 0 | 1 | 0 | 0 |
-| 6–8 y demo en el bastón | 0 | 1 | 1 | 0 |
-| Demo en Wokwi (plan B) | 1 | 1 | 1 | 0 |
+| Fase | `USAR_RED` | `USAR_BATERIA` | `MODO_REGISTRO` |
+| --- | --- | --- | --- |
+| 3 | 0 | 0 | 0 |
+| 4 (calibración) | 0 | 0 | 1 |
+| 5 | 1 | 0 | 0 |
+| 6–8 y demo | 1 | 1 | 0 |
 
 ### Tiempos de cada tarea
 
@@ -956,7 +774,7 @@ Mientras dura, el motor y el buzzer pulsan juntos (100 ms sí, 100 ms no), con p
      ▲  │                                                         │
      │  └──────────────────────────── pulsador ◄──────────────────┘
      │  │
-     │  ▼ 5 min sin movimiento (2 min en Wokwi)
+     │  ▼ 5 min sin movimiento
   REPOSO (actuadores apagados)
      └─ ▲ movimiento → vuelve a NORMAL
 ```
@@ -970,12 +788,11 @@ Los umbrales del inicio se ajustan con los valores de la Fase 1 (`UMBRAL_LDR`) y
 ```cpp
 // ===== SafeCane — firmware único (Fases 3 a 8) =====
 // Cambia estas banderas según la fase (tabla en la guía, Fase 3).
-#define WOKWI         1   // 1 = simulador Wokwi; 0 = bastón real
 #define USAR_RED      0   // 0 = Fases 3–4 (sin red); 1 = Fase 5 en adelante
-#define USAR_BATERIA  0   // 1 desde la Fase 6 (en Wokwi, el potenciómetro hace de celda)
+#define USAR_BATERIA  0   // 1 desde la Fase 6
 #define MODO_REGISTRO 0   // 1 = imprime CSV a 50 Hz para la Fase 4
 
-#define USAR_BLE (USAR_RED && !WOKWI)   // Wokwi no simula Bluetooth
+#define USAR_BLE USAR_RED
 
 #include <Wire.h>
 #include <TinyGPSPlus.h>
@@ -992,13 +809,8 @@ Los umbrales del inicio se ajustan con los valores de la Fase 1 (`UMBRAL_LDR`) y
 
 // ---------- Red (Fase 5) ----------
 #if USAR_RED
-#if WOKWI
-const char* WIFI_SSID = "Wokwi-GUEST";        // red virtual de Wokwi, sin clave
-const char* WIFI_PASS = "";
-#else
 const char* WIFI_SSID = "TU_HOTSPOT";         // hotspot del celular en 2,4 GHz
 const char* WIFI_PASS = "TU_CLAVE";
-#endif
 const char* MQTT_HOST = "broker.hivemq.com";  // broker público (opción B: IP de tu Mac con Mosquitto)
 const int   MQTT_PORT = 1883;
 const char* MQTT_USER = "";                   // vacío en el broker público
@@ -1021,12 +833,12 @@ const unsigned long VENTANA_IMPACTO  = 1000;     // ms entre caída libre e impa
 const unsigned long T_ASENTAR        = 500;      // ms tras el impacto antes de medir la inclinación
 const unsigned long INCLIN_SOSTENIDA = 2000;     // ms tumbado para confirmar
 const unsigned long T_CANCELACION    = 10000;    // ms para cancelar con el pulsador
-const unsigned long T_REPOSO         = WOKWI ? 120000 : 300000;   // sin movimiento
+const unsigned long T_REPOSO         = 300000;   // sin movimiento
 const unsigned long T_DESNIVEL       = 200;      // ms sin ver el piso = desnivel
 const unsigned long T_DESNIVEL_MAX   = 1500;     // ms: el aviso de desnivel no dura más
 const float INCL_USO_MIN = 20.0, INCL_USO_MAX = 75.0;   // grados: bastón en ángulo de uso
 const float UMBRAL_MOVIMIENTO = 0.15;            // g: |svm - 1| que cuenta como movimiento
-const int   UMBRAL_LDR = WOKWI ? 3000 : 2000;    // por encima = oscuro (Fase 1, paso 5)
+const int   UMBRAL_LDR = 2000;    // por encima = oscuro (Fase 1, paso 5)
 const float VBAT_MIN   = 3.3;                    // V: por debajo 10 s, apagado ordenado
 
 const int MPU = 0x68;
@@ -1077,14 +889,7 @@ void motor(int duty) {
 }
 
 void buzzer(bool on) {
-#if WOKWI
-  static bool sonando = false;                     // el buzzer de Wokwi necesita un tono
-  if (on && !sonando) tone(BUZZER, 2000);
-  if (!on && sonando) noTone(BUZZER);
-  sonando = on;
-#else
   digitalWrite(BUZZER, on ? HIGH : LOW);           // buzzer activo
-#endif
 }
 
 // ---------- Sensores ----------
@@ -1095,24 +900,8 @@ void initMPU() {
   Wire.beginTransmission(MPU); Wire.write(0x1A); Wire.write(0x03); Wire.endTransmission(true);  // DLPF 44 Hz
 }
 
-#if WOKWI
-unsigned long tSimCaida = 0;   // 'c' en el Monitor Serie inicia una caída simulada
-
-bool caidaSimulada(unsigned long ahora) {
-  if (tSimCaida == 0) return false;
-  unsigned long t = ahora - tSimCaida;
-  if (t < 300)        { ax = 0.0; ay = 0.0; az = 0.1; }   // caída libre
-  else if (t < 400)   { ax = 2.0; ay = 2.0; az = 2.0; }   // impacto de 3,5 g
-  else if (t < 15000) { ax = 1.0; ay = 0.0; az = 0.0; }   // bastón tumbado
-  else { tSimCaida = 0; return false; }                   // vuelve a los deslizadores
-  return true;
-}
-#endif
 
 void leerAcel() {
-#if WOKWI
-  if (caidaSimulada(millis())) return;
-#endif
   Wire.beginTransmission(MPU);
   Wire.write(0x3B);
   Wire.endTransmission(false);
@@ -1132,24 +921,6 @@ float medirDistancia() {
   return (t * 0.0343) / 2.0;
 }
 
-#if WOKWI
-// Wokwi no tiene GPS: genera las frases NMEA del NEO-6M (posición fija en UTEC, Barranco)
-void gpsSimulado(unsigned long ahora) {
-  static unsigned long t = 0;
-  if (ahora - t < 1000) return;
-  t = ahora;
-  const char* frases[] = {
-    "GPGGA,120000.00,1208.11500,S,07701.32900,W,1,08,0.9,95.0,M,10.0,M,,",
-    "GPRMC,120000.00,A,1208.11500,S,07701.32900,W,0.0,0.0,261026,,,A"};
-  for (const char* f : frases) {
-    byte cs = 0;
-    for (const char* p = f; *p; p++) cs ^= *p;
-    char linea[100];
-    snprintf(linea, sizeof(linea), "$%s*%02X\r\n", f, cs);
-    for (char* p = linea; *p; p++) gps.encode(*p);
-  }
-}
-#endif
 
 void procesarGPS() {
   while (Serial2.available()) gps.encode(Serial2.read());
@@ -1305,15 +1076,6 @@ void atenderBoton(unsigned long ahora) {
   }
 }
 
-void atenderSerial(unsigned long ahora) {
-  while (Serial.available()) {
-    char c = Serial.read();
-#if WOKWI
-    if (c == 'c') { tSimCaida = ahora; Serial.println("SIM: caida simulada"); }
-#endif
-  }
-}
-
 void imprimirEstado() {
   Serial.printf("%s dist=%.0f svm=%.2f incl=%.0f piso=%d desnivel=%d uso=%d luz=%d sats=%d vbat=%.2f",
                 NOMBRE_ESTADO[estado], distancia, svm, inclinacion, pisoVisto, desnivel,
@@ -1393,11 +1155,7 @@ void initBLE() {
 
 void tareaRed(void*) {
   WiFi.mode(WIFI_STA);
-#if WOKWI
-  WiFi.begin(WIFI_SSID, WIFI_PASS, 6);           // canal 6: Wokwi conecta más rápido
-#else
   WiFi.begin(WIFI_SSID, WIFI_PASS);
-#endif
   mqtt.setServer(MQTT_HOST, MQTT_PORT);
   mqtt.setSocketTimeout(2);
   unsigned long tEstado = 0, tGps = 0, tAlerta = 0, tReintento = 0;
@@ -1428,7 +1186,7 @@ void tareaRed(void*) {
 
 void setup() {
   Serial.begin(115200);
-  Serial.printf("=== SafeCane (%s) ===\n", WOKWI ? "Wokwi" : "hardware");
+  Serial.println("=== SafeCane ===");
   Serial2.begin(9600, SERIAL_8N1, GPS_RX, GPS_TX);
   pinMode(TRIG, OUTPUT); pinMode(ECHO, INPUT);
   pinMode(IR_OUT, INPUT);
@@ -1447,16 +1205,10 @@ void setup() {
   xTaskCreatePinnedToCore(tareaRed, "red", 8192, nullptr, 1, nullptr, 0);
 #endif
   if (MODO_REGISTRO) Serial.println("millis,ax,ay,az,svm,incl,piso,desnivel,estado");
-#if WOKWI
-  Serial.println("Wokwi: escribe c y Enter en el Monitor Serie para simular una caida");
-#endif
 }
 
 void loop() {
   unsigned long ahora = millis();
-#if WOKWI
-  gpsSimulado(ahora);
-#endif
   procesarGPS();                                          // vaciar UART cada vuelta
   if (ahora - tIR     >= 10)  { tIR     = ahora; tareaIR(ahora); }
   if (ahora - tIMU    >= 20)  { tIMU    = ahora; tareaIMU(); }
@@ -1466,46 +1218,29 @@ void loop() {
   if (!MODO_REGISTRO && ahora - tLog >= 1000) { tLog = ahora; imprimirEstado(); }
   maquinaEstados(ahora);
   atenderBoton(ahora);
-  atenderSerial(ahora);
 }
 ```
 
-### En Wokwi
-
-Pega `safecane.ino` en `sketch.ino` con las banderas de la fila "3 en Wokwi" y pulsa ▶. Cómo probar cada cosa:
-
-| Qué probar | Qué haces |
-| --- | --- |
-| Obstáculos | Mueve la distancia del HC-SR04: 30, 70 y 150 cm. Mira el LED "Motor" |
-| Desnivel | Deja el MPU en accelX = 0,7 y accelZ = 0,7 (45°) y pasa el interruptor a la derecha |
-| Desnivel con el bastón levantado | Pon accelX = 0 y accelZ = 1 (vertical) y pasa el interruptor a la derecha: no debe avisar |
-| Caída | Haz clic en el Monitor Serie, escribe `c` y pulsa Enter. El firmware reproduce una caída libre de 0,3 s, un impacto de 3,5 g y 15 s con el bastón tumbado |
-| Cancelar | Haz clic en el pulsador rojo durante la PRE\_ALERTA o la ALERTA |
-| Luz | Baja el sensor de luz a 10 lux: se enciende el LED blanco |
-| REPOSO | No toques nada durante 2 minutos. Para despertarlo, sube accelZ a 1,5 un instante |
-
 ### Criterio exacto para avanzar
 
-- [ ] **(Wokwi y real)** Obstáculo a 30 cm: vibración continua. A 70 cm: pulsos rápidos. A 150 cm: pulsos lentos. A más de 2 m: nada.
-- [ ] **(Wokwi)** Con el MPU a 45° y el interruptor a la derecha, aparece `DESNIVEL` y el motor y el buzzer pulsan juntos unos 1,5 s y se callan. Con el MPU vertical, no aparece.
-- [ ] **(Wokwi)** Con `c` aparece `NORMAL -> PRE_ALERTA` unos 3 s después, y `PRE_ALERTA -> ALERTA` 10 s más tarde con buzzer y LED intermitentes. El pulsador vuelve a `NORMAL`.
-- [ ] **(Wokwi)** Con `c` y el pulsador antes de 10 s aparece `PRE_ALERTA -> NORMAL`.
-- [ ] **(real)** Con el bastón (o la protoboard con el MPU) inclinado unos 45° sobre el piso, `piso=1`. Al llevar el FC-51 al borde de un escalón aparece `DESNIVEL`. **Con el MPU plano sobre la mesa no avisa: es lo esperado.**
-- [ ] **(real)** Caída simulada sobre colchoneta sujetando el bastón: aparece `NORMAL -> PRE_ALERTA` y el motor cambia al patrón de 600 ms.
-- [ ] **(real)** Durante 1 minuto caminando en plano no aparece ningún `DESNIVEL`.
-- [ ] **(real)** Con `T_REPOSO` cambiado temporalmente a `30000`, el bastón quieto pasa a `REPOSO` a los 30 s y vuelve a `NORMAL` al levantarlo. Después devuélvelo a su valor.
+- [ ] Obstáculo a 30 cm: vibración continua. A 70 cm: pulsos rápidos. A 150 cm: pulsos lentos. A más de 2 m: nada.
+- [ ] Con el bastón (o la protoboard con el MPU) inclinado unos 45° sobre el piso, `piso=1`. Al llevar el FC-51 al borde de un escalón aparece `DESNIVEL`. **Con el MPU plano sobre la mesa no avisa: es lo esperado.**
+- [ ] Caída simulada sobre colchoneta sujetando el bastón: aparece `NORMAL -> PRE_ALERTA` y el motor cambia al patrón de 600 ms.
+- [ ] Sin tocar nada, 10 s después aparece `PRE_ALERTA -> ALERTA` con buzzer y LED intermitentes. El pulsador vuelve a `NORMAL`.
+- [ ] Si pulsas antes de los 10 s, aparece `PRE_ALERTA -> NORMAL`.
+- [ ] Al tapar el LDR se enciende el LED blanco; al destaparlo se apaga.
+- [ ] Durante 1 minuto caminando en plano no aparece ningún `DESNIVEL`.
+- [ ] Con `T_REPOSO` cambiado temporalmente a `30000`, el bastón quieto pasa a `REPOSO` a los 30 s y vuelve a `NORMAL` al levantarlo. Después devuélvelo a su valor.
 
-## Fase 4 — Calibración del algoritmo (solo hardware)
+## Fase 4 — Calibración del algoritmo
 
 **Para qué sirve:** reemplazar los umbrales de diseño (0,5 g, 2,5 g, 60°, `T_DESNIVEL`) por valores medidos en tu propio bastón. Produce la evidencia experimental del informe: sensibilidad y especificidad de caídas, y detección de escalones.
-
-**Por qué no en Wokwi:** en el simulador los datos los inventas tú con los deslizadores; calibrar con ellos no demuestra nada.
 
 **Qué usas:** el bastón con el firmware en `MODO_REGISTRO 1`, una colchoneta y la laptop **en una mochila** conectada con el cable USB de 2 m (la batería llega en la Fase 6).
 
 ### Paso 1 — Activar el modo registro
 
-Pon `#define MODO_REGISTRO 1`, con `WOKWI 0` y `USAR_RED 0`, y súbelo. El Monitor Serie mostrará 50 líneas por segundo:
+Pon `#define MODO_REGISTRO 1` y `USAR_RED 0`, y súbelo. El Monitor Serie mostrará 50 líneas por segundo:
 
 ```csv
 millis,ax,ay,az,svm,incl,piso,desnivel,estado
@@ -1629,17 +1364,17 @@ Anota los valores iniciales, los finales y por qué cambiaste cada uno: ese razo
 
 ### Criterio exacto para avanzar
 
-- [ ] **(real)** Tienes las repeticiones de la tabla.
-- [ ] **(real)** Sensibilidad **≥ 90 %** (27 de 30 caídas) con los umbrales finales.
-- [ ] **(real)** Aviso de desnivel en al menos 9 de 10 `escalon_*` y 9 de 10 `bordillo_*`.
-- [ ] **(real)** Anotaste los falsos avisos por minuto en `plano_01` y las pre-alertas en `soltar_*`.
-- [ ] **(real)** Los umbrales finales están en el firmware y `MODO_REGISTRO` vuelve a `0`.
+- [ ] Tienes las repeticiones de la tabla.
+- [ ] Sensibilidad **≥ 90 %** (27 de 30 caídas) con los umbrales finales.
+- [ ] Aviso de desnivel en al menos 9 de 10 `escalon_*` y 9 de 10 `bordillo_*`.
+- [ ] Anotaste los falsos avisos por minuto en `plano_01` y las pre-alertas en `soltar_*`.
+- [ ] Los umbrales finales están en el firmware y `MODO_REGISTRO` vuelve a `0`.
 
 ## Fase 5 — Comunicación: Wi-Fi, MQTT, BLE y tablero
 
 **Para qué sirve:** que una caída confirmada llegue a un tablero, con su ubicación, en menos de 5 s, y que un celular cercano la reciba por BLE. La alerta local (buzzer y vibración) nunca depende de la red: la red corre en el núcleo 0 y los sensores en el núcleo 1.
 
-**Qué usas:** el navegador de tu laptop con `tablero/tablero.html` y, para el bastón real, el **hotspot del celular**.
+**Qué usas:** el navegador de tu laptop con `tablero/tablero.html` y el **hotspot del celular**.
 
 ### Paso 1 — Elegir broker y red
 
@@ -1648,9 +1383,8 @@ Anota los valores iniciales, los finales y por qué cambiaste cada uno: ese razo
 - Broker: `broker.hivemq.com`, puerto 1883, sin usuario. Si no responde, usa `test.mosquitto.org`.
 - Es público: cualquiera que conozca el tópico puede leerlo. Por eso `TOPICO` debe ser único, por ejemplo `safecane/utec-grupo3-x7k2`. No publiques datos personales.
 - Red del bastón: el **hotspot del celular en 2,4 GHz** (el ESP32 no ve redes de 5 GHz). En iPhone: Compartir Internet → activar **Maximizar compatibilidad**. En Android: punto de acceso → banda **2,4 GHz**. Así funciona en la universidad, en la calle y en la demo, sin depender del Wi-Fi del lugar.
-- En Wokwi la red es `Wokwi-GUEST` y llega sola al broker público: no hay que configurar nada.
 
-**Opción B (si te piden seguridad): Mosquitto en la Mac con usuario y contraseña.** Solo sirve con el bastón real, con la Mac y el bastón en el mismo hotspot:
+**Opción B (si te piden seguridad): Mosquitto en la Mac con usuario y contraseña.** Solo sirve con la Mac y el bastón en el mismo hotspot:
 
 ```bash
 brew install mosquitto
@@ -1677,7 +1411,7 @@ En `safecane.ino`:
 
 1. Pon `#define USAR_RED 1`.
 2. Cambia `TOPICO` por tu tópico único.
-3. Solo para el bastón real: pon el nombre y la clave del hotspot en `WIFI_SSID` y `WIFI_PASS`, y verifica que NimBLE-Arduino esté instalada (el BLE se activa solo con `WOKWI 0`).
+3. Pon el nombre y la clave del hotspot en `WIFI_SSID` y `WIFI_PASS`, y verifica que NimBLE-Arduino esté instalada.
 
 El firmware con BLE ocupa el 92 % de la partición por defecto, así que entra sin cambiar nada. Si algún día el IDE dice `Sketch too big`, elige **Herramientas → Partition Scheme → Huge APP**.
 
@@ -1691,13 +1425,13 @@ El firmware con BLE ocupa el 92 % de la partición por defecto, así que entra s
 
 Comprueba en el tablero (Paso 5) que llegan los tres tópicos: su panel **Mensajes** muestra cada JSON con su tópico y la hora.
 
-### Paso 4 — BLE con nRF Connect (solo hardware)
+### Paso 4 — BLE con nRF Connect
 
 En nRF Connect, escanea, conecta a **SafeCane**, abre el servicio `6E400001-…` y activa las notificaciones de la característica `6E400003-…`. Llega el JSON de estado cada 5 s, y el de alerta al confirmarse una caída.
 
 ### Paso 5 — Tablero web (`tablero/tablero.html`)
 
-El tablero es una sola página HTML: no hay que instalar Node.js ni nada más. Se conecta al mismo broker que el bastón, pero por **WebSocket** (el navegador no puede usar el puerto 1883), y muestra:
+El tablero es una página web en la carpeta `tablero/`: no hay que instalar Node.js ni nada más. Se conecta al mismo broker que el bastón, pero por **WebSocket** (el navegador no puede usar el puerto 1883), y muestra:
 
 - **Estado** del bastón (NORMAL, PRE\_ALERTA, ALERTA, REPOSO), **distancia** al obstáculo, **desnivel**, **uso** y **batería**, de `<TOPICO>/estado`.
 - Un **aviso rojo** con la ubicación cuando llega una caída, con sonido, y "Alerta cancelada" cuando se cancela, de `<TOPICO>/alerta`.
@@ -1707,30 +1441,27 @@ El tablero es una sola página HTML: no hay que instalar Node.js ni nada más. S
 Pasos:
 
 1. Abre `tablero/tablero.html` con doble clic. Necesita internet: el mapa y la librería MQTT se cargan de la web.
-2. En **Conexión**, escribe el mismo `TOPICO` del firmware y elige el broker: `broker.hivemq.com` (el del firmware) o `test.mosquitto.org` si cambiaste `MQTT_HOST`. Pulsa **Conectar**. El navegador recuerda estos datos para la próxima vez.
+2. Pulsa **Conexión** (arriba a la derecha), escribe el mismo `TOPICO` del firmware y elige el broker: `broker.hivemq.com` (el del firmware) o `test.mosquitto.org` si cambiaste `MQTT_HOST`. Pulsa **Conectar**. El navegador recuerda estos datos para la próxima vez.
 3. El indicador de arriba pasa a verde ("Conectado"). Con el bastón publicando, el estado aparece en menos de 5 s.
 4. Haz un clic en cualquier parte de la página: los navegadores no dejan sonar la alarma hasta que el usuario interactúa con ella.
 
 En la opción B, elige **Personalizado** y escribe `ws://localhost:9001`, usuario `baston` y su clave.
 
-Si el profesor quiere verlo en otra laptop, basta con copiarle el archivo.
+Si el profesor quiere verlo en otra laptop, cópiale la carpeta `tablero/` completa.
+
+Para ver el diseño sin bastón, en **Conexión** elige **Ver con datos de ejemplo**. Una franja avisa que esos datos no vienen del bastón. Para la demo real, sal de ese modo con **Salir**.
 
 ### Paso 6 — Prueba rápida con un solo sensor (opcional)
 
-Si quieres ver el tablero funcionando antes de tener todo el bastón, `firmware/p07_mqtt_hcsr04/` usa solo el ESP32 y el HC-SR04 (Trig 5, Echo 18, el mismo cableado de la Fase 1A). Pon el nombre y la clave del hotspot y tu `TOPICO`, súbelo y abre el tablero: la distancia se actualiza cada segundo al acercar la mano. No hace falta Wokwi.
-
-### En Wokwi
-
-Con las banderas de la fila "5 en Wokwi", en el Monitor Serie aparece `wifi=1 mqtt=1` a los pocos segundos. Escribe `c`, espera la ALERTA y mira el tablero: llega la notificación y el punto rojo en UTEC. Al pulsar "Cancelar", el tablero muestra "Alerta cancelada" y el punto pasa a azul. **Este es tu plan B para la demo:** todo el flujo de la alerta funciona sin hardware.
+Si quieres ver el tablero funcionando antes de tener todo el bastón, `firmware/p07_mqtt_hcsr04/` usa solo el ESP32 y el HC-SR04 (Trig 5, Echo 18, el mismo cableado de la Fase 1A). Pon el nombre y la clave del hotspot y tu `TOPICO`, súbelo y abre el tablero: la distancia se actualiza cada segundo al acercar la mano.
 
 ### Criterio exacto para avanzar
 
-- [ ] **(Wokwi)** `wifi=1 mqtt=1` en menos de 15 s y el tablero recibe `<TOPICO>/estado` cada 5 s.
-- [ ] **(Wokwi)** Con `c`, el tablero muestra la caída en UTEC; al cancelar, muestra "Alerta cancelada".
-- [ ] **(real)** Con el hotspot, `wifi=1 mqtt=1` en menos de 15 s tras el arranque.
-- [ ] **(real)** nRF Connect ve **SafeCane** y recibe notificaciones.
-- [ ] **(real)** Caída simulada al aire libre con GPS fijado: el tablero muestra la notificación y el punto rojo. Mide con cronómetro desde `PRE_ALERTA -> ALERTA` en el Monitor Serie hasta la notificación. En 10 repeticiones, el promedio es **menor a 5 s** (referencia: 4,71 s de Fitriandini et al.).
-- [ ] **(real)** Con el hotspot apagado, el bastón sigue vibrando ante obstáculos y entra en PRE\_ALERTA/ALERTA con buzzer igual que en la Fase 3. Al volver el hotspot, una alerta aún activa llega al tablero.
+- [ ] Con el hotspot, `wifi=1 mqtt=1` en menos de 15 s tras el arranque, y el tablero recibe `<TOPICO>/estado` cada 5 s.
+- [ ] nRF Connect ve **SafeCane** y recibe notificaciones.
+- [ ] Caída simulada al aire libre con GPS fijado: el tablero muestra la notificación y el punto rojo. Mide con cronómetro desde `PRE_ALERTA -> ALERTA` en el Monitor Serie hasta la notificación. En 10 repeticiones, el promedio es **menor a 5 s** (referencia: 4,71 s de Fitriandini et al.).
+- [ ] Al cancelar con el pulsador, el tablero muestra "Alerta cancelada".
+- [ ] Con el hotspot apagado, el bastón sigue vibrando ante obstáculos y entra en PRE\_ALERTA/ALERTA con buzzer igual que en la Fase 3. Al volver el hotspot, una alerta aún activa llega al tablero.
 
 ## Fase 6 — Alimentación autónoma
 
@@ -1775,18 +1506,13 @@ El PDF estima 15 h con 170 mA promedio. Con la celda llena, `vbat` debe marcar 4
 
 **Pregunta abierta:** el objetivo dice "≥ 1 día" y la estimación es 15 h. Define en el informe si "1 día" es una jornada de uso (≈ 15 h) o 24 h continuas.
 
-### En Wokwi
-
-Con `USAR_BATERIA 1`, el potenciómetro hace de celda. Gíralo a dos tercios: `vbat` ≈ 4,4 V. Bájalo por debajo de la mitad: a los 10 s aparece `BATERIA BAJA`, suenan 3 pitidos y la simulación se detiene (el ESP32 entró en sueño profundo). Para volver, reinicia la simulación.
-
 ### Criterio exacto para avanzar
 
-- [ ] **(Wokwi)** Con el potenciómetro bajo la mitad, aparecen `BATERIA BAJA` y los 3 pitidos.
-- [ ] **(real)** El MT3608 marca 5,0–5,1 V **sin carga** y no baja de 4,8 V con todo conectado y el motor vibrando.
-- [ ] **(real)** El bastón arranca con el interruptor, sin USB, y llega a `wifi=1 mqtt=1` (míralo en el tablero).
-- [ ] **(real)** `vbat` difiere en menos de 0,1 V de lo que mide el multímetro en la celda.
-- [ ] **(real)** Tienes anotadas las tres corrientes y la autonomía en horas.
-- [ ] **(real)** Al conectar el cargador en el micro-USB del TP4056, con el interruptor apagado, el LED rojo indica carga.
+- [ ] El MT3608 marca 5,0–5,1 V **sin carga** y no baja de 4,8 V con todo conectado y el motor vibrando.
+- [ ] El bastón arranca con el interruptor, sin USB, y llega a `wifi=1 mqtt=1` (míralo en el tablero).
+- [ ] `vbat` difiere en menos de 0,1 V de lo que mide el multímetro en la celda.
+- [ ] Tienes anotadas las tres corrientes y la autonomía en horas.
+- [ ] Al conectar el cargador en el micro-USB del TP4056, con el interruptor apagado, el LED rojo indica carga.
 
 ## Fase 7 — Montaje en el bastón
 
@@ -1798,7 +1524,7 @@ Con `USAR_BATERIA 1`, el potenciómetro hace de celda. Gíralo a dos tercios: `v
 
 | Zona | Qué va ahí | Requisito |
 | --- | --- | --- |
-| Caja impresa junto a la empuñadura | ESP32, celda, TP4056, MT3608, perfboard, motor, buzzer | Micro-USB del ESP32 y del TP4056 accesibles desde fuera. El motor pegado a la pared de la caja que toca la mano |
+| Caja impresa junto a la empuñadura | ESP32, celda, TP4056, MT3608, perfboard, módulo del motor, buzzer | Micro-USB del ESP32 y del TP4056 accesibles desde fuera. El módulo del motor, con cinta doble faz o silicona caliente, contra la pared de la caja que toca la palma; lejos de la base donde va el MPU6050 |
 | Tapa superior de la caja | **GPS**, antena cerámica hacia arriba | Nada metálico encima. Nunca dentro del tubo de aluminio |
 | Frente de la caja | Pulsador con capuchón alto | Alcanzable con el pulgar |
 | Base de la caja | MPU6050 | **Eje Z paralelo al tubo**; fijo con tornillos, no con velcro |
@@ -1829,11 +1555,11 @@ Con `USAR_BATERIA 1`, el potenciómetro hace de celda. Gíralo a dos tercios: `v
 
 ### Criterio exacto para avanzar
 
-- [ ] **(real)** 20 barridos y 10 golpes de la punta contra el piso sin que se suelte nada ni se pierda ninguna lectura.
-- [ ] **(real)** Recalibraste el FC-51 ya montado y cumple de nuevo el paso 3 de la Fase 1.
-- [ ] **(real)** 15 minutos de caminata sin reinicios (ningún `=== SafeCane` nuevo en el Monitor Serie ni hueco en el tablero).
-- [ ] **(real)** Se recarga y se reprograma sin abrir la caja.
-- [ ] **(real)** El GPS fija al aire libre con el bastón sujetado normalmente.
+- [ ] 20 barridos y 10 golpes de la punta contra el piso sin que se suelte nada ni se pierda ninguna lectura.
+- [ ] Recalibraste el FC-51 ya montado y cumple de nuevo el paso 3 de la Fase 1.
+- [ ] 15 minutos de caminata sin reinicios (ningún `=== SafeCane` nuevo en el Monitor Serie ni hueco en el tablero).
+- [ ] Se recarga y se reprograma sin abrir la caja.
+- [ ] El GPS fija al aire libre con el bastón sujetado normalmente.
 
 ## Fase 8 — Validación final
 
@@ -1855,7 +1581,6 @@ Con `USAR_BATERIA 1`, el potenciómetro hace de celda. Gíralo a dos tercios: `v
 | Error de posición GPS | — |  | Fase 1, paso 4 | 4,63 m (Fitriandini et al.) |
 | Latencia de alerta al tablero | < 5 s |  | Fase 5 | 4,71 s (Fitriandini et al.) |
 | Autonomía | ≥ 1 día (definir) |  | Fase 6 | ≈ 50 h (ref. \[9\] del informe) |
-| Lógica completa validada en simulación | Sí |  | Fases 0B–6 (Wokwi) | Enlace al proyecto de Wokwi |
 
 ### Limitaciones a declarar
 
@@ -1902,34 +1627,18 @@ Nuevas, por el FC-51:
 | Tablero conectado pero sin datos | `TOPICO` distinto al del firmware (las mayúsculas cuentan) o broker distinto | Copia el tópico exacto de `safecane.ino`; usa el mismo broker que `MQTT_HOST` |
 | La caída llega pero el mapa no muestra el punto | Sin fix: lat y lon llegan en 0 | Sal al aire libre; el aviso dice "sin ubicación GPS" |
 | La alarma del tablero no suena | El navegador bloquea el audio hasta un clic | Haz un clic en la página antes de la demo |
-| El buzzer no suena en el bastón | Quedó `#define WOKWI 1` | Ponlo en `0` |
 | Se apaga con 3 pitidos recién cargado | `vbat` mal medido: divisor ausente o mal soldado | Revisa el divisor; mientras tanto, `USAR_BATERIA 0` |
 | `uso=0` mientras camina | `UMBRAL_MOVIMIENTO` alto | Bájalo de 0,15 a 0,10 g |
 | No arranca con algo conectado | Algo en un pin de arranque | Libera GPIO 0, 2, 12 y 15 |
-
-### Wokwi
-
-| Síntoma | Causa más probable | Solución |
-| --- | --- | --- |
-| `fatal error: TinyGPSPlus.h` (o PubSubClient / ArduinoJson) | Falta la librería en el proyecto | Pestaña Library Manager → **+** → agrégala |
-| `NimBLEDevice.h: No such file` | Quedó `WOKWI 0` con `USAR_RED 1` | En Wokwi, `#define WOKWI 1` (Wokwi no simula BLE) |
-| En reposo `svm` no es 1,00 (por ejemplo 4,00) | El MPU simulado no aplica el rango ±8 g | Solo en Wokwi: `LSB_8G` = 4096 × `svm` medida (4,00 → `16384.0`). Vuelve a 4096 para el bastón |
-| La caída `c` no hace nada | El Monitor Serie no tenía el foco | Haz clic en la consola, escribe `c` y pulsa Enter |
-| No suena el buzzer | El navegador tiene el audio bloqueado | Clic en el ícono de sonido de la simulación |
-| Nunca aparece `DESNIVEL` | MPU vertical (incl = 0°) | accelX = 0,7 y accelZ = 0,7 |
-| Pasa a REPOSO mientras pruebas | 2 min sin cambios en el MPU | Sube accelZ a 1,5 un instante |
-| `wifi=1` pero `mqtt=0` | Broker público caído | Cambia `MQTT_HOST` a `test.mosquitto.org` |
-| `ledcAttach` no compila | Wokwi con core 2.x | El código ya tiene la alternativa para 2.x; revisa que copiaste las funciones `motorInit` y `motor` |
-| Las piezas aparecen pero sin cables | `diagram.json` pegado incompleto | Vuelve a copiar el archivo entero |
 
 ## Anexo B — Plan por semanas
 
 Ajústalo a la fecha de la demo. Si tienes menos de 6 semanas, junta las semanas 4 y 5 y recorta el tablero (texto y mapa bastan), nunca la calibración.
 
-1. **Semana 1:** compras. Mientras llegan, Fases 0B, 1, 3 y 5 **en Wokwi** (casillas Wokwi).
-2. **Semana 2:** Fase 0 y Fase 1 en hardware (casillas reales).
-3. **Semana 3:** Fases 2 y 3 en hardware.
-4. **Semana 4:** Fase 4 (calibración) y Fase 5 en hardware.
+1. **Semana 1:** compras.
+2. **Semana 2:** Fase 0 y Fase 1.
+3. **Semana 3:** Fases 2 y 3.
+4. **Semana 4:** Fase 4 (calibración) y Fase 5.
 5. **Semana 5:** Fases 6 y 7 (batería y montaje).
 6. **Semana 6:** Fase 8, informe y ensayo de la demo (Anexo C).
 
@@ -1944,7 +1653,7 @@ Ajústalo a la fecha de la demo. Si tienes menos de 6 semanas, junta las semanas
 | 2–3 | Llevas la punta al borde de un escalón o de una tarima | El FC-51 deja de ver el piso: motor y buzzer pulsan juntos. Limitación: avisa al llegar al borde |
 | 3–5 | Caída sobre colchoneta; luego otra cancelada con el pulsador | PRE\_ALERTA, 10 s para cancelar, ALERTA con buzzer; el tablero muestra la caída en el mapa |
 | 5–6 | Tabla de resultados (Fase 8) | Sensibilidad, detección de escalones, latencia, autonomía |
-| 6–7 | Proyecto de Wokwi abierto | Todo el firmware es verificable en simulación; limitaciones y trabajo futuro |
+| 6–7 | Limitaciones (Fase 8) | Limitaciones y trabajo futuro |
 
 ### Checklist
 
@@ -1954,6 +1663,5 @@ Ajústalo a la fecha de la demo. Si tienes menos de 6 semanas, junta las semanas
 - [ ] El tablero (`tablero/tablero.html`) está en verde y recibe `<TOPICO>/estado` antes de empezar. Haz un clic en la página para habilitar el sonido.
 - [ ] GPS con fix confirmado al aire libre (o explicar que dentro del aula no fija y mostrar la última posición).
 - [ ] Colchoneta para la caída.
-- [ ] Proyecto de Wokwi abierto en otra pestaña con `WOKWI 1`, `USAR_RED 1` (**plan B** si falla el hardware).
 - [ ] Sketches de prueba a mano por si algo falla en vivo.
-- [ ] Plan C sin red: mostrar la alerta local (buzzer + vibración).
+- [ ] Plan B sin red: mostrar la alerta local (buzzer + vibración).

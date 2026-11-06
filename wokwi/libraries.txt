@@ -1,3 +1,0 @@
-TinyGPSPlus
-PubSubClient
-ArduinoJson

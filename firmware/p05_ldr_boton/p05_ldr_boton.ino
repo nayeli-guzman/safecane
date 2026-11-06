@@ -8,7 +8,7 @@ void setup() {
 }
 
 void loop() {
-  // Más luz = número más bajo (igual en Wokwi y en el circuito real)
+  // Más luz = número más bajo
   Serial.printf("ldr=%d  boton=%s\n", analogRead(LDR),
                 digitalRead(BOTON) == LOW ? "PRESIONADO" : "suelto");
   delay(100);

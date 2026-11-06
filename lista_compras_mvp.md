@@ -1,6 +1,6 @@
 # Lista de compras MVP — SafeCane (FC-51, demo)
 
-Actualizada: 2026-10-26. Base: `guia_safecane_infrarrojo.md` (versión FC-51 + Wokwi). Para la parte en Wokwi no hay que comprar nada.
+Actualizada: 2026-10-26. Base: `guia_safecane_infrarrojo.md`.
 
 Estados: `Pendiente` · `Comprado` · `Tengo`. Cambia la columna **Estado** a medida que compres.
 
@@ -20,8 +20,8 @@ Estados: `Pendiente` · `Comprado` · `Tengo`. Cambia la columna **Estado** a me
 
 | # | Componente | Especificación | Cant. | Para qué | Estado | Nota |
 | --- | --- | --- | --- | --- | --- | --- |
-| 8 | Motor vibrador | 5 V | 1 | Aviso háptico | Tengo | Riel de 5 V, base con 470 Ω |
-| 9 | Buzzer activo | 5 V, ≈85 dB | 1 | Alarma sonora | Pendiente | Que diga "activo" (suena con solo darle 5 V) |
+| 8 | Módulo motor vibrador | 5 V; pines IN, VCC, GND (driver incluido) | 1 | Aviso háptico | Tengo | VCC a 5 V, IN directo a GPIO 25 |
+| 9 | Buzzer activo de 2 pines | 5 V, ≈85 dB | 1 | Alarma sonora | Pendiente | Que diga "activo" (suena con solo darle 5 V). Va con 2N2222 + 1 kΩ + 1N4007 |
 | 10 | LED blanco alto brillo | 5 mm | 1 | Visibilidad nocturna | Pendiente | |
 
 ## Alimentación
@@ -42,13 +42,13 @@ Estados: `Pendiente` · `Comprado` · `Tengo`. Cambia la columna **Estado** a me
 | 17 | Resistencia | 10 kΩ | 4 | Divisor del LDR (1) + 3 de reserva | Pendiente |
 | 18 | Resistencia | 100 kΩ | 2 | Divisor de batería | Pendiente |
 | 19 | Resistencia | 1 kΩ | 3 | Divisor del Echo (1) + bases del buzzer y del LED (2) | Pendiente |
-| 20 | Resistencia | 470 Ω | 1 | Base del transistor del motor | Pendiente |
+| 20 | ~~Resistencia 470 Ω~~ | — | 0 | Ya no hace falta: el módulo del motor trae su driver | — |
 | 21 | Resistencia | 2 kΩ (o 2 × 1 kΩ) | 1 | Divisor del Echo | Pendiente |
 | 22 | Resistencia | 100 Ω | 1 | LED blanco | Pendiente |
-| 23 | Transistor NPN 2N2222 | 600 mA | 3 | Motor, buzzer y LED | Pendiente |
-| 24 | Diodo 1N4007 | — | 2 | Rueda libre en motor y buzzer | Pendiente |
+| 23 | Transistor NPN 2N2222 | 600 mA | 2 | Buzzer y LED | Pendiente |
+| 24 | Diodo 1N4007 | — | 1 | Rueda libre del buzzer | Pendiente |
 | 25 | Capacitor electrolítico | 100–470 µF / 10 V | 2 | Rieles de 5 V y 3,3 V | Pendiente |
-| 26 | Capacitor cerámico | 100 nF | 7 | HC-SR04, MPU6050, GPS, FC-51, ESP32, bornes del motor, divisor de batería | Pendiente |
+| 26 | Capacitor cerámico | 100 nF | 7 | HC-SR04, MPU6050, GPS, FC-51, ESP32, VCC–GND del módulo del motor, divisor de batería | Pendiente |
 
 ## Mecánica y cableado
 

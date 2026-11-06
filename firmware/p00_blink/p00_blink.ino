@@ -1,6 +1,6 @@
 // Fase 0 — blink
 void setup() {
-  pinMode(2, OUTPUT);          // LED azul integrado del DevKit (Wokwi no lo dibuja)
+  pinMode(2, OUTPUT);          // LED azul integrado del DevKit
   Serial.begin(115200);
 }
 

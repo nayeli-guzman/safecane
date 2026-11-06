@@ -1,11 +1,10 @@
 // ===== SafeCane — firmware único (Fases 3 a 8) =====
 // Cambia estas banderas según la fase (tabla en la guía, Fase 3).
-#define WOKWI         0   // 1 = simulador Wokwi; 0 = bastón real
 #define USAR_RED      1   // 0 = Fases 3–4 (sin red); 1 = Fase 5 en adelante
-#define USAR_BATERIA  0   // 1 desde la Fase 6 (en Wokwi, el potenciómetro hace de celda)
+#define USAR_BATERIA  0   // 1 desde la Fase 6
 #define MODO_REGISTRO 0   // 1 = imprime CSV a 50 Hz para la Fase 4
 
-#define USAR_BLE (USAR_RED && !WOKWI)   // Wokwi no simula Bluetooth
+#define USAR_BLE USAR_RED
 
 #include <Wire.h>
 #include <TinyGPSPlus.h>
@@ -22,13 +21,8 @@
 
 // ---------- Red (Fase 5) ----------
 #if USAR_RED
-#if WOKWI
-const char* WIFI_SSID = "Wokwi-GUEST";        // red virtual de Wokwi, sin clave
-const char* WIFI_PASS = "";
-#else
 const char* WIFI_SSID = "nay";                // hotspot del celular en 2,4 GHz
 const char* WIFI_PASS = "72126102";
-#endif
 const char* MQTT_HOST = "broker.hivemq.com";  // broker público (opción B: IP de tu Mac con Mosquitto)
 const int   MQTT_PORT = 1883;
 const char* MQTT_USER = "";                   // vacío en el broker público
@@ -51,12 +45,12 @@ const unsigned long VENTANA_IMPACTO  = 1000;     // ms entre caída libre e impa
 const unsigned long T_ASENTAR        = 500;      // ms tras el impacto antes de medir la inclinación
 const unsigned long INCLIN_SOSTENIDA = 2000;     // ms tumbado para confirmar
 const unsigned long T_CANCELACION    = 10000;    // ms para cancelar con el pulsador
-const unsigned long T_REPOSO         = WOKWI ? 120000 : 300000;   // sin movimiento
+const unsigned long T_REPOSO         = 300000;   // sin movimiento
 const unsigned long T_DESNIVEL       = 200;      // ms sin ver el piso = desnivel
 const unsigned long T_DESNIVEL_MAX   = 1500;     // ms: el aviso de desnivel no dura más
 const float INCL_USO_MIN = 20.0, INCL_USO_MAX = 75.0;   // grados: bastón en ángulo de uso
 const float UMBRAL_MOVIMIENTO = 0.15;            // g: |svm - 1| que cuenta como movimiento
-const int   UMBRAL_LDR = WOKWI ? 3000 : 2000;    // por encima = oscuro (Fase 1, paso 5)
+const int   UMBRAL_LDR = 2000;    // por encima = oscuro (Fase 1, paso 5)
 const float VBAT_MIN   = 3.3;                    // V: por debajo 10 s, apagado ordenado
 
 const int MPU = 0x68;
@@ -107,14 +101,7 @@ void motor(int duty) {
 }
 
 void buzzer(bool on) {
-#if WOKWI
-  static bool sonando = false;                     // el buzzer de Wokwi necesita un tono
-  if (on && !sonando) tone(BUZZER, 2000);
-  if (!on && sonando) noTone(BUZZER);
-  sonando = on;
-#else
   digitalWrite(BUZZER, on ? HIGH : LOW);           // buzzer activo
-#endif
 }
 
 // ---------- Sensores ----------
@@ -125,24 +112,8 @@ void initMPU() {
   Wire.beginTransmission(MPU); Wire.write(0x1A); Wire.write(0x03); Wire.endTransmission(true);  // DLPF 44 Hz
 }
 
-#if WOKWI
-unsigned long tSimCaida = 0;   // 'c' en el Monitor Serie inicia una caída simulada
-
-bool caidaSimulada(unsigned long ahora) {
-  if (tSimCaida == 0) return false;
-  unsigned long t = ahora - tSimCaida;
-  if (t < 300)        { ax = 0.0; ay = 0.0; az = 0.1; }   // caída libre
-  else if (t < 400)   { ax = 2.0; ay = 2.0; az = 2.0; }   // impacto de 3,5 g
-  else if (t < 15000) { ax = 1.0; ay = 0.0; az = 0.0; }   // bastón tumbado
-  else { tSimCaida = 0; return false; }                   // vuelve a los deslizadores
-  return true;
-}
-#endif
 
 void leerAcel() {
-#if WOKWI
-  if (caidaSimulada(millis())) return;
-#endif
   Wire.beginTransmission(MPU);
   Wire.write(0x3B);
   Wire.endTransmission(false);
@@ -162,24 +133,6 @@ float medirDistancia() {
   return (t * 0.0343) / 2.0;
 }
 
-#if WOKWI
-// Wokwi no tiene GPS: genera las frases NMEA del NEO-6M (posición fija en UTEC, Barranco)
-void gpsSimulado(unsigned long ahora) {
-  static unsigned long t = 0;
-  if (ahora - t < 1000) return;
-  t = ahora;
-  const char* frases[] = {
-    "GPGGA,120000.00,1208.11500,S,07701.32900,W,1,08,0.9,95.0,M,10.0,M,,",
-    "GPRMC,120000.00,A,1208.11500,S,07701.32900,W,0.0,0.0,261026,,,A"};
-  for (const char* f : frases) {
-    byte cs = 0;
-    for (const char* p = f; *p; p++) cs ^= *p;
-    char linea[100];
-    snprintf(linea, sizeof(linea), "$%s*%02X\r\n", f, cs);
-    for (char* p = linea; *p; p++) gps.encode(*p);
-  }
-}
-#endif
 
 void procesarGPS() {
   while (Serial2.available()) gps.encode(Serial2.read());
@@ -335,15 +288,6 @@ void atenderBoton(unsigned long ahora) {
   }
 }
 
-void atenderSerial(unsigned long ahora) {
-  while (Serial.available()) {
-    char c = Serial.read();
-#if WOKWI
-    if (c == 'c') { tSimCaida = ahora; Serial.println("SIM: caida simulada"); }
-#endif
-  }
-}
-
 void imprimirEstado() {
   Serial.printf("%s dist=%.0f svm=%.2f incl=%.0f piso=%d desnivel=%d uso=%d luz=%d sats=%d vbat=%.2f",
                 NOMBRE_ESTADO[estado], distancia, svm, inclinacion, pisoVisto, desnivel,
@@ -423,11 +367,7 @@ void initBLE() {
 
 void tareaRed(void*) {
   WiFi.mode(WIFI_STA);
-#if WOKWI
-  WiFi.begin(WIFI_SSID, WIFI_PASS, 6);           // canal 6: Wokwi conecta más rápido
-#else
   WiFi.begin(WIFI_SSID, WIFI_PASS);
-#endif
   mqtt.setServer(MQTT_HOST, MQTT_PORT);
   mqtt.setSocketTimeout(2);
   unsigned long tEstado = 0, tGps = 0, tAlerta = 0, tReintento = 0;
@@ -458,7 +398,7 @@ void tareaRed(void*) {
 
 void setup() {
   Serial.begin(115200);
-  Serial.printf("=== SafeCane (%s) ===\n", WOKWI ? "Wokwi" : "hardware");
+  Serial.println("=== SafeCane ===");
   Serial2.begin(9600, SERIAL_8N1, GPS_RX, GPS_TX);
   pinMode(TRIG, OUTPUT); pinMode(ECHO, INPUT);
   pinMode(IR_OUT, INPUT);
@@ -477,16 +417,10 @@ void setup() {
   xTaskCreatePinnedToCore(tareaRed, "red", 8192, nullptr, 1, nullptr, 0);
 #endif
   if (MODO_REGISTRO) Serial.println("millis,ax,ay,az,svm,incl,piso,desnivel,estado");
-#if WOKWI
-  Serial.println("Wokwi: escribe c y Enter en el Monitor Serie para simular una caida");
-#endif
 }
 
 void loop() {
   unsigned long ahora = millis();
-#if WOKWI
-  gpsSimulado(ahora);
-#endif
   procesarGPS();                                          // vaciar UART cada vuelta
   if (ahora - tIR     >= 10)  { tIR     = ahora; tareaIR(ahora); }
   if (ahora - tIMU    >= 20)  { tIMU    = ahora; tareaIMU(); }
@@ -496,5 +430,4 @@ void loop() {
   if (!MODO_REGISTRO && ahora - tLog >= 1000) { tLog = ahora; imprimirEstado(); }
   maquinaEstados(ahora);
   atenderBoton(ahora);
-  atenderSerial(ahora);
 }
