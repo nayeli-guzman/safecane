@@ -1,0 +1,19 @@
+[
+    {
+        "id": "b1f68a363672e8c7",
+        "type": "debug",
+        "z": "d8115edf91d663dd",
+        "name": "debug gps",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 870,
+        "y": 280,
+        "wires": []
+    }
+]

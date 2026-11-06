@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SafeCane 3D</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,sans-serif;background:#12151c;color:#e8ecf3;display:flex;height:100vh;overflow:hidden}
+#vista{flex:1;position:relative}canvas{display:block}
+#panel{width:340px;background:#1a1f2b;border-left:1px solid #2b3345;overflow:auto;padding:16px}
+h1{font-size:18px;margin:0 0 4px}.sub{color:#8b95a9;font-size:12px;margin-bottom:12px}
+.btns{display:flex;gap:8px;margin-bottom:14px}
+button{background:#2b3345;color:#e8ecf3;border:0;border-radius:6px;padding:8px 10px;cursor:pointer;font-size:13px}button:hover{background:#3a4560}
+h2{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#8b95a9;margin:16px 0 6px}
+.item{padding:9px 10px;border-radius:6px;cursor:pointer;border:1px solid transparent;font-size:14px}
+.item:hover{background:#242c3d}.item.act{background:#223a63;border-color:#4d8dff}
+.item small{display:block;color:#8b95a9;font-size:11px}
+#info{margin-top:14px;padding:12px;border-radius:8px;background:#0f131b;font-size:13px;line-height:1.5;display:none}
+#info b{font-size:15px;display:block;margin-bottom:4px}#info .pin{color:#ffc247;margin-top:6px}
+#tag{position:absolute;pointer-events:none;transform:translate(14px,-50%);background:#4d8dff;color:#fff;padding:5px 10px;border-radius:6px;font-size:13px;font-weight:600;display:none;white-space:nowrap}
+#tag::before{content:"";position:absolute;left:-26px;top:50%;width:26px;height:2px;background:#4d8dff}
+#ring{position:absolute;pointer-events:none;width:46px;height:46px;margin:-23px 0 0 -23px;border:3px solid #4d8dff;border-radius:50%;display:none;animation:p 1.2s infinite}
+@keyframes p{0%{transform:scale(.6);opacity:1}100%{transform:scale(1.5);opacity:0}}
+#ayuda{position:absolute;left:12px;bottom:10px;font-size:12px;color:#6c768b}
+</style></head><body>
+<div id="vista"><div id="ring"></div><div id="tag"></div><div id="error" style="position:absolute;top:12px;left:12px;right:12px;background:#7a1f1f;padding:10px;border-radius:6px;display:none;font-size:13px"></div><div id="ayuda">Arrastra para girar · rueda para zoom · clic en una pieza para acercarte</div></div>
+<div id="panel"><h1>SafeCane 3D</h1><div class="sub">Bastón inteligente · maqueta</div>
+<div class="btns"><a href="protoboard.html" style="background:#2b3345;color:#e8ecf3;border-radius:6px;padding:8px 10px;font-size:13px;text-decoration:none">Ver protoboard →</a><button id="general">Vista general</button><button id="carcasa">Carcasa transparente</button></div>
+<div id="lista"></div><div id="info"></div></div>
+<script>addEventListener("error",e=>{const x=document.getElementById("error");x.style.display="block";x.textContent="Error: "+e.message});addEventListener("unhandledrejection",e=>{const x=document.getElementById("error");x.style.display="block";x.textContent="Error: "+(e.reason&&e.reason.message||e.reason)})</script>
+<script type="importmap">{"imports":{"three":"./lib/three.module.js","three/addons/":"./lib/addons/"}}</script>
+<script type="module">
+import * as THREE from "three";
+import {GLTFLoader} from "three/addons/loaders/GLTFLoader.js";
+import {OrbitControls} from "three/addons/controls/OrbitControls.js";
+
+// nombre del nodo en el .glb -> información (pines según la guía)
+const INFO = {
+  hcsr04:{g:"Sensores",n:"HC-SR04 · Ultrasonido",d:"Mide la distancia a obstáculos al frente (2–400 cm). Inclinado 10° hacia abajo.",p:"Trig GPIO 5 · Echo GPIO 18 (divisor 1k/2k)"},
+  mpu6050:{g:"Sensores",n:"MPU6050 · Acelerómetro",d:"Detecta caída libre, impacto e inclinación. Eje Z paralelo al tubo.",p:"SDA GPIO 21 · SCL GPIO 22"},
+  tcrt5000:{g:"Sensores",n:"TCRT5000 · Infrarrojo",d:"Detecta si hay una mano sujetando la empuñadura, mirando por la ventana de 6×10 mm.",p:"Receptor GPIO 34 · LED IR GPIO 19"},
+  piezo:{g:"Sensores",n:"Piezo · Golpeteo",d:"En la contera: cuenta cada golpe de la punta contra el suelo.",p:"GPIO 35 (con diodos 1N4148)"},
+  gps:{g:"Sensores",n:"GPS NEO-6M",d:"Da la ubicación que se envía con cada alerta. Antena cerámica hacia arriba.",p:"TX→GPIO 16 · RX←GPIO 17"},
+  ldr:{g:"Sensores",n:"LDR · Luz",d:"Decide cuándo encender el LED blanco al oscurecer.",p:"GPIO 32"},
+  pulsador:{g:"Sensores",n:"Pulsador",d:"Cancela una pre-alerta o alerta. Capuchón alto, al alcance del pulgar.",p:"GPIO 27 (pull-up interno)"},
+  led:{g:"Actuadores",n:"LED blanco",d:"Hace visible al usuario de noche y parpadea en ALERTA.",p:"GPIO 33 vía 2N2222"},
+  esp32:{g:"Procesamiento y energía",n:"ESP32 DevKit V1",d:"Cerebro: lee sensores (núcleo 1) y comunica por Wi-Fi/MQTT/BLE (núcleo 0).",p:"—"},
+  bateria:{g:"Procesamiento y energía",n:"Celda 18650",d:"3000 mAh. Energía portátil del bastón.",p:"Medida en GPIO 36 (divisor 100k/100k)"},
+  tp4056:{g:"Procesamiento y energía",n:"TP4056 · Cargador",d:"Carga la celda y la protege bajo 2,5 V. Puerto micro-USB accesible.",p:"—"},
+  mt3608:{g:"Procesamiento y energía",n:"MT3608 · Elevador 5 V",d:"Sube 3,7 V de la celda a 5,0 V para el riel de 5 V.",p:"—"},
+};
+const INTERIOR = new Set(["esp32","bateria","tp4056","mt3608","mpu6050","tcrt5000","gps"]);
+const CARCASA = ["mango_a","mango_b"];
+
+const cont = document.getElementById("vista");
+try{document.createElement("canvas").getContext("webgl2")||document.createElement("canvas").getContext("webgl")||(()=>{throw new Error("tu navegador tiene WebGL desactivado")})()}catch(e){document.getElementById("error").style.display="block";document.getElementById("error").textContent="Error: "+e.message}
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(devicePixelRatio); cont.prepend(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x12151c);
+const camera = new THREE.PerspectiveCamera(40,1,1,5000);
+const controls = new OrbitControls(camera, renderer.domElement); controls.enableDamping = true;
+scene.add(new THREE.HemisphereLight(0xffffff,0x667799,3.2));
+const sol = new THREE.DirectionalLight(0xffffff,2.2); sol.position.set(300,600,400); scene.add(sol);
+
+const piezas = {}; let seleccion = null, vuelo = null;
+const tag = document.getElementById("tag"), ring = document.getElementById("ring"), info = document.getElementById("info");
+
+new GLTFLoader().load("safecane.glb", g => {
+  scene.add(g.scene); g.scene.updateMatrixWorld(true);
+  g.scene.traverse(o => { if (o.name && !o.isMesh || o.isMesh) {
+    const nombre = o.isMesh ? o.name : o.name;
+    if (INFO[nombre] || CARCASA.includes(nombre) || nombre==="tubo"||nombre==="contera") piezas[nombre] = o;
+    if (o.isMesh) { o.material = o.material.clone(); o.material.transparent = true; }
+  }});
+  general(true); armarLista();
+});
+
+function cajaDe(o){ return new THREE.Box3().setFromObject(o); }
+function setCarcasa(transp){
+  CARCASA.forEach(n => piezas[n]?.traverse(m => { if (m.isMesh) m.material.opacity = transp ? 0.12 : 1; m.material.depthWrite = !transp; }));
+  document.getElementById("carcasa").textContent = transp ? "Carcasa opaca" : "Carcasa transparente";
+  carcasaTransp = transp;
+}
+let carcasaTransp = false;
+
+function volarA(destPos, destTarget, ms=900){
+  vuelo = {t0:performance.now(), ms, p0:camera.position.clone(), t0v:controls.target.clone(), p1:destPos, t1:destTarget};
+}
+function general(inmediato){
+  const c = cajaDe(piezas.tubo), mg = cajaDe(piezas.mango_a);
+  const caja = new THREE.Box3().union(c).union(mg);
+  const centro = caja.getCenter(new THREE.Vector3()), alto = caja.getSize(new THREE.Vector3()).y;
+  const pos = centro.clone().add(new THREE.Vector3(alto*1.2, alto*0.3, alto*1.5));
+  if (inmediato){ camera.position.copy(pos); controls.target.copy(centro); } else volarA(pos, centro);
+  seleccionar(null);
+}
+function seleccionar(nombre){
+  if (seleccion && piezas[seleccion]) piezas[seleccion].traverse(m => { if (m.isMesh && m.material.emissive) m.material.emissive.setHex(0); });
+  seleccion = nombre;
+  document.querySelectorAll(".item").forEach(e => e.classList.toggle("act", e.dataset.n === nombre));
+  tag.style.display = ring.style.display = info.style.display = nombre ? "block" : "none";
+  if (!nombre) return;
+  const d = INFO[nombre];
+  tag.textContent = d.n; info.innerHTML = `<b>${d.n}</b>${d.d}<div class="pin">${d.p}</div>`;
+  piezas[nombre].traverse(m => { if (m.isMesh && m.material.emissive) m.material.emissive.setHex(0x335599); });
+  if (INTERIOR.has(nombre) && !carcasaTransp) setCarcasa(true);
+  const caja = cajaDe(piezas[nombre]), centro = caja.getCenter(new THREE.Vector3());
+  const dist = Math.max(caja.getSize(new THREE.Vector3()).length()*2.6, 60);
+  const dir = camera.position.clone().sub(controls.target).normalize();
+  volarA(centro.clone().add(dir.multiplyScalar(dist)), centro);
+}
+function armarLista(){
+  const lista = document.getElementById("lista"); const grupos = {};
+  Object.entries(INFO).forEach(([k,v]) => (grupos[v.g] ||= []).push([k,v]));
+  for (const [g, items] of Object.entries(grupos)){
+    lista.insertAdjacentHTML("beforeend", `<h2>${g}</h2>`);
+    items.forEach(([k,v]) => { const e = document.createElement("div"); e.className="item"; e.dataset.n=k;
+      e.innerHTML = `${v.n}<small>${v.p}</small>`; e.onclick = () => seleccionar(k); lista.append(e); });
+  }
+}
+document.getElementById("general").onclick = () => general(false);
+document.getElementById("carcasa").onclick = () => setCarcasa(!carcasaTransp);
+
+// clic sobre el modelo (sin confundirlo con arrastrar)
+const ray = new THREE.Raycaster(), mouse = new THREE.Vector2(); let down = null;
+renderer.domElement.addEventListener("pointerdown", e => down = [e.clientX,e.clientY]);
+renderer.domElement.addEventListener("pointerup", e => {
+  if (!down || Math.hypot(e.clientX-down[0], e.clientY-down[1]) > 5) return;
+  const r = renderer.domElement.getBoundingClientRect();
+  mouse.set(((e.clientX-r.left)/r.width)*2-1, -((e.clientY-r.top)/r.height)*2+1);
+  ray.setFromCamera(mouse, camera);
+  const objs = Object.entries(piezas).filter(([n]) => INFO[n]).map(([,o]) => o);
+  const hit = ray.intersectObjects(objs, true)[0];
+  if (hit){ let o = hit.object; while (o && !INFO[o.name]) o = o.parent; if (o) seleccionar(o.name); }
+});
+
+function ajustar(){ const w = cont.clientWidth, h = cont.clientHeight; renderer.setSize(w,h); camera.aspect = w/h; camera.updateProjectionMatrix(); }
+addEventListener("resize", ajustar); ajustar();
+
+renderer.setAnimationLoop(() => {
+  if (vuelo){ let k = Math.min((performance.now()-vuelo.t0)/vuelo.ms, 1); k = k<.5 ? 2*k*k : 1-Math.pow(-2*k+2,2)/2;
+    camera.position.lerpVectors(vuelo.p0, vuelo.p1, k); controls.target.lerpVectors(vuelo.t0v, vuelo.t1, k); if (k===1) vuelo = null; }
+  controls.update(); renderer.render(scene, camera);
+  if (seleccion){ const p = controls.target.clone(); if (piezas[seleccion]) cajaDe(piezas[seleccion]).getCenter(p);
+    p.project(camera); const x = (p.x+1)/2*cont.clientWidth, y = (1-p.y)/2*cont.clientHeight;
+    ring.style.left = x+"px"; ring.style.top = y+"px"; tag.style.left = (x+30)+"px"; tag.style.top = y+"px"; }
+});
+</script></body></html>
