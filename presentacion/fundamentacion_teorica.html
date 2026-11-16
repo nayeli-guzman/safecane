@@ -1,1293 +1,1235 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SafeCane · Fundamentación</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SafeCane · Fundamentación teórica</title>
+
+<!-- Tipografías: Big Shoulders Display (titulares, estilo señalética), IBM Plex Sans (texto) e IBM Plex Mono (etiquetas) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
 <style>
+/* ===========================================
+   TEMA (variables CSS)
+   Cambia estos valores para cambiar todo el aspecto.
+   Paleta: verde petróleo + durazno, inspirada en el piso podotáctil.
+   =========================================== */
 :root {
-  --outer: #EDEDEA;
-  --bg: #FAFAF8;
-  --surface: #FFFFFF;
-  --sunken: #F3F3F0;
-  --ink: #17171A;
-  --ink-2: #4E4E56;
-  --ink-3: #8F8F98;
-  --line: #E3E3DF;
-  --line-2: #D2D2CC;
-  --accent: #DC4A26;
-  --accent-ink: #B33A1B;
-  --accent-soft: #FCEBE5;
-  --blue: #2F5FD8;
-  --blue-soft: #E8EEFC;
-  --green: #1D8556;
-  --green-soft: #E3F3EA;
-  --amber: #B7791F;
-  --amber-soft: #FBF1DF;
+  --stage-bg: #03100f;      /* fuera del lienzo 16:9 */
+  --slide-bg: #0D2422;      /* fondo de cada diapositiva */
+  --bg-2: #12302D;          /* paneles */
+  --bg-3: #173a36;          /* paneles realzados */
+  --line: #25463f;          /* bordes y rejillas */
+  --glow: #163834;          /* halo del fondo */
+  --acc: #FFB38A;           /* acento durazno */
+  --dome: #e08e62;          /* relieve podotáctil */
+  --ring: #ffd2b8;
+  --mint: #8FD9C6;          /* acento frío secundario (desnivel, red) */
+  --paper: #F2EEE6;         /* texto principal */
+  --sub: #c8d6d2;           /* texto secundario */
+  --dim: #7f9e98;           /* etiquetas */
+
+  --f-display: 'Big Shoulders Display', 'Arial Narrow', sans-serif;
+  --f-body: 'IBM Plex Sans', sans-serif;
+  --f-mono: 'IBM Plex Mono', monospace;
 
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
-  --sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --outer: #070708;
-    --bg: #111113;
-    --surface: #18181B;
-    --sunken: #1D1D21;
-    --ink: #F2F2F3;
-    --ink-2: #B0B0B8;
-    --ink-3: #74747E;
-    --line: #2A2A2F;
-    --line-2: #3A3A40;
-    --accent: #FF6B47;
-    --accent-ink: #FF8A6B;
-    --accent-soft: #2B1812;
-    --blue: #7C9CFF;
-    --blue-soft: #18203A;
-    --green: #4CC38A;
-    --green-soft: #12261C;
-    --amber: #E9B252;
-    --amber-soft: #2A2112;
-  }
-}
-:root[data-theme="dark"] {
-  --outer: #070708;
-  --bg: #111113;
-  --surface: #18181B;
-  --sunken: #1D1D21;
-  --ink: #F2F2F3;
-  --ink-2: #B0B0B8;
-  --ink-3: #74747E;
-  --line: #2A2A2F;
-  --line-2: #3A3A40;
-  --accent: #FF6B47;
-  --accent-ink: #FF8A6B;
-  --accent-soft: #2B1812;
-  --blue: #7C9CFF;
-  --blue-soft: #18203A;
-  --green: #4CC38A;
-  --green-soft: #12261C;
-  --amber: #E9B252;
-  --amber-soft: #2A2112;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* ===========================================
+   FIXED 16:9 STAGE: MANDATORY BASE STYLES
+   (viewport-base.css, contenido completo)
+   =========================================== */
+html,
 body {
-  background: var(--outer);
-  color: var(--ink);
-  font-family: var(--sans);
-  -webkit-font-smoothing: antialiased;
-  overflow: hidden;
-  font-feature-settings: "ss01", "tnum";
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: var(--stage-bg, #000);
 }
-
-/* ---------- Escenario 1280×720 escalado ---------- */
-#deck {
-  position: absolute;
-  left: 50%; top: 50%;
-  width: 1280px; height: 720px;
-  transform-origin: center;
-  background: var(--bg);
-  border-radius: 14px;
-  box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 12px 40px rgba(0,0,0,.08);
-  overflow: hidden;
+.deck-viewport {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    background: var(--stage-bg, #000);
+}
+.deck-stage {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    transform-origin: 0 0;
+    background: var(--slide-bg, #fff);
 }
 .slide {
-  position: absolute; inset: 0;
-  padding: 56px 80px 64px;
-  display: flex; flex-direction: column;
+    position: absolute;
+    inset: 0;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    display: block;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    background: var(--slide-bg, #fff);
+}
+.slide.active,
+.slide.visible {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    z-index: 1;
+}
+img,
+video,
+canvas,
+svg {
+    max-width: 100%;
+    max-height: 100%;
+}
+.deck-controls {
+    position: fixed;
+    left: 50%;
+    bottom: 22px;
+    transform: translateX(-50%);
+    z-index: 1000;
+}
+@media print {
+    html,
+    body {
+        width: 1920px;
+        height: auto;
+        overflow: visible;
+        background: #fff;
+    }
+    .deck-viewport {
+        position: static;
+        overflow: visible;
+        background: #fff;
+    }
+    .deck-stage {
+        position: static;
+        width: auto;
+        height: auto;
+        transform: none !important;
+        background: none;
+    }
+    .slide {
+        position: relative;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        width: 1920px;
+        height: 1080px;
+        break-after: page;
+        page-break-after: always;
+    }
+    .slide:last-child {
+        break-after: auto;
+        page-break-after: auto;
+    }
+    .deck-controls {
+        display: none !important;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.2s !important;
+    }
+}
+
+/* ===========================================
+   TRANSICIÓN ENTRE DIAPOSITIVAS
+   Fundido corto; el movimiento lo aportan los elementos .reveal
+   =========================================== */
+.slide {
+  transition: opacity 320ms ease, visibility 0s linear 320ms;
+  color: var(--paper);
+  font-family: var(--f-body);
+  background:
+    radial-gradient(1100px 700px at 82% 18%, var(--glow), transparent 70%),
+    var(--slide-bg);
+}
+.slide.active { transition: opacity 360ms ease, visibility 0s; }
+
+/* Grano sutil sobre el fondo (textura de asfalto) */
+.slide::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background-image: radial-gradient(#ffffff09 1px, transparent 1.4px);
+  background-size: 6px 6px; opacity: .6;
+}
+
+/* ===========================================
+   ANIMACIONES DE ENTRADA
+   .reveal sube y aparece; --i define el orden (lo asigna el JS)
+   =========================================== */
+.reveal {
   opacity: 0;
-  visibility: hidden;
-  transform: translateX(28px);
-  transition:
-    transform 340ms var(--ease-out),
-    opacity 220ms ease,
-    visibility 0s linear 340ms;
+  transform: translateY(28px);
+  transition: opacity 0s linear 360ms, transform 0s linear 360ms;
 }
-.slide.past { transform: translateX(-28px); }
-.slide.active {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(0);
-  transition:
-    transform 340ms var(--ease-out),
-    opacity 260ms ease 40ms,
-    visibility 0s;
-}
-
-/* Revelado escalonado al entrar */
-.r {
-  opacity: 0; transform: translateY(8px);
-  transition: opacity 0s linear 340ms, transform 0s linear 340ms;
-}
-.slide.active .r {
+.slide.visible .reveal {
   opacity: 1; transform: translateY(0);
-  transition: opacity 360ms ease, transform 420ms var(--ease-out);
-  transition-delay: calc(var(--i, 0) * 45ms + 90ms);
+  transition: opacity 600ms ease, transform 800ms var(--ease-out);
+  transition-delay: calc(var(--i, 0) * 70ms + 120ms);
 }
 
-/* ---------- Tipografía ---------- */
-.kicker {
-  font-family: var(--mono);
-  font-size: 13px; letter-spacing: .04em; text-transform: uppercase;
-  color: var(--ink-3);
-  display: flex; align-items: center; gap: 10px;
-  margin-bottom: 18px;
+/* ===========================================
+   SEÑAS DE IDENTIDAD: RELIEVE PODOTÁCTIL Y BASTÓN
+   =========================================== */
+.tactile {
+  position: absolute; top: 0; bottom: 0; right: 0;
+  background-color: var(--acc);
+  background-image: radial-gradient(circle at 50% 50%, var(--dome) 0 17px, var(--ring) 18px 21px, transparent 22px);
+  background-size: 72px 72px;
+  background-position: 18px 18px;
+  clip-path: inset(0 0 0 100%);
 }
-.kicker b { color: var(--accent); font-weight: 500; }
-.kicker::after { content: ""; flex: 1; height: 1px; background: var(--line); }
-h1 { font-size: 64px; line-height: 1.02; letter-spacing: -0.035em; font-weight: 600; }
-h2 { font-size: 40px; line-height: 1.08; letter-spacing: -0.028em; font-weight: 600; max-width: 980px; }
-h3 { font-size: 19px; line-height: 1.25; letter-spacing: -0.01em; font-weight: 600; }
-p, li { font-size: 18px; line-height: 1.5; color: var(--ink-2); }
-.lead { font-size: 21px; line-height: 1.5; color: var(--ink-2); max-width: 900px; margin-top: 16px; }
-.small { font-size: 14px; line-height: 1.45; }
-.muted { color: var(--ink-3); }
-.mono { font-family: var(--mono); }
-.accent { color: var(--accent); }
-em { font-style: normal; color: var(--ink); font-weight: 500; }
-.cite { font-family: var(--mono); font-size: 12px; color: var(--ink-3); letter-spacing: .01em; }
-
-.body { flex: 1; min-height: 0; margin-top: 28px; display: flex; flex-direction: column; }
-.grid { display: grid; gap: 16px; }
-.g2 { grid-template-columns: 1fr 1fr; }
-.g3 { grid-template-columns: repeat(3, 1fr); }
-.g4 { grid-template-columns: repeat(4, 1fr); }
-
-.card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 20px 22px;
+.slide.visible .tactile {
+  clip-path: inset(0 0 0 0);
+  transition: clip-path 1100ms var(--ease-in-out) 60ms;
 }
-.card p { font-size: 16px; margin-top: 6px; }
-.card .tag {
-  display: inline-block; font-family: var(--mono); font-size: 11.5px; letter-spacing: .03em;
-  padding: 3px 8px; border-radius: 999px; background: var(--sunken); color: var(--ink-2);
-  margin-bottom: 12px;
+.cane {
+  position: absolute; width: 18px; height: 1400px; top: -120px;
+  background: linear-gradient(var(--paper) 0 80%, #e5484d 80% 100%);
+  transform: rotate(-22deg); transform-origin: top center;
+  opacity: 0;
 }
-.pill {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-family: var(--mono); font-size: 12px; padding: 4px 9px; border-radius: 999px;
-  background: var(--sunken); color: var(--ink-2); white-space: nowrap;
+.slide.visible .cane { opacity: 1; transition: opacity 700ms ease 700ms; }
+
+/* Relieve como marcador Sí / No en tablas */
+.dome { display: inline-block; width: 30px; height: 30px; border-radius: 50%; vertical-align: middle;
+  background: radial-gradient(circle, var(--dome) 0 9px, var(--ring) 10px 12px, var(--acc) 13px); }
+.ring { display: inline-block; width: 30px; height: 30px; border-radius: 50%; vertical-align: middle; border: 2px solid var(--line); }
+.na { font-family: var(--f-mono); color: var(--dim); font-size: 26px; }
+
+/* ===========================================
+   TIPOGRAFÍA Y BLOQUES REUTILIZABLES
+   =========================================== */
+.pad { position: absolute; inset: 96px 128px 104px; display: flex; flex-direction: column; }
+.tag {
+  font: 500 22px var(--f-mono); letter-spacing: .16em; text-transform: uppercase; color: var(--dim);
+  display: flex; align-items: center; gap: 18px;
 }
-.pill.a { background: var(--accent-soft); color: var(--accent-ink); }
-.pill.b { background: var(--blue-soft); color: var(--blue); }
-.pill.g { background: var(--green-soft); color: var(--green); }
-.pill.y { background: var(--amber-soft); color: var(--amber); }
+.tag b { color: var(--acc); font-weight: 500; }
+.h1 { font: 900 200px/.84 var(--f-display); text-transform: uppercase; letter-spacing: -.005em; }
+.h2 { font: 800 112px/.9 var(--f-display); text-transform: uppercase; margin-top: 36px; max-width: 1500px; }
+.h3 { font: 800 54px/1 var(--f-display); text-transform: uppercase; letter-spacing: .01em; }
+.lead { font-size: 40px; line-height: 1.38; color: var(--sub); max-width: 1300px; }
+.txt { font-size: 30px; line-height: 1.45; color: var(--sub); }
+.src { font: 400 20px var(--f-mono); color: var(--dim); letter-spacing: .04em; }
+.acc { color: var(--acc); }
+.mint { color: var(--mint); }
+em { font-style: normal; color: var(--paper); font-weight: 600; }
 
-.stat .big { font-size: 44px; font-weight: 600; letter-spacing: -0.03em; color: var(--ink); line-height: 1; }
-.stat .big small { font-size: 22px; font-weight: 500; color: var(--ink-3); letter-spacing: -0.01em; }
-.stat p { font-size: 15.5px; margin-top: 12px; }
+.panel { background: var(--bg-2); border: 1px solid var(--line); border-radius: 6px; padding: 44px 44px 40px; }
+.cols { display: grid; gap: 28px; }
+.c2 { grid-template-columns: 1fr 1fr; }
+.c3 { grid-template-columns: repeat(3, 1fr); }
+.c4 { grid-template-columns: repeat(4, 1fr); }
+.grow { flex: 1; min-height: 0; }
+.bottom { margin-top: auto; }
 
-.callout {
-  border-left: 3px solid var(--accent);
-  padding: 4px 0 4px 18px;
-  font-size: 22px; line-height: 1.45; color: var(--ink); letter-spacing: -0.01em;
+/* Número pequeño de ítem (01, 02…) */
+.idx { font: 500 22px var(--f-mono); color: var(--acc); letter-spacing: .08em; }
+
+/* ===========================================
+   PORTADA Y CIERRE
+   =========================================== */
+.cover .tactile { width: 760px; }
+.cover .cane { right: 300px; }
+.cover .h1 { position: absolute; left: 112px; top: 220px; width: 1050px; }
+.cover .sub { position: absolute; left: 120px; top: 775px; width: 860px; font-size: 32px; line-height: 1.42; color: var(--sub); }
+.cover .tag { position: absolute; left: 120px; top: 110px; }
+.people { position: absolute; left: 120px; bottom: 84px; width: 940px; display: flex; flex-wrap: wrap; gap: 14px 40px; font: 500 20px var(--f-mono); letter-spacing: .06em; color: var(--dim); }
+.people i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--acc); margin-right: 12px; vertical-align: 1px; }
+
+/* ===========================================
+   SEPARADOR DE SECCIÓN
+   =========================================== */
+.section .tactile { width: 520px; }
+.section .cane { right: 180px; }
+.section .num {
+  position: absolute; left: 112px; top: 120px;
+  font: 900 520px/.8 var(--f-display);
+  color: transparent; -webkit-text-stroke: 3px var(--acc);
 }
+.section .h2 { position: absolute; left: 120px; bottom: 150px; width: 1200px; font-size: 150px; }
+.section .tag { position: absolute; left: 124px; bottom: 96px; }
 
-table { width: 100%; border-collapse: collapse; font-size: 15.5px; }
-th, td { text-align: left; padding: 11px 10px; border-bottom: 1px solid var(--line); vertical-align: top; color: var(--ink-2); }
-th { font-family: var(--mono); font-size: 11.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-3); font-weight: 500; }
-td b { color: var(--ink); font-weight: 600; }
-tr.us td { background: var(--accent-soft); color: var(--ink); border-bottom-color: transparent; }
-tr.us td.yes { color: var(--accent-ink); font-weight: 500; }
-.t-lg td { font-size: 18px; padding: 16px 10px; line-height: 1.45; }
-tr.us td:first-child { border-radius: 8px 0 0 8px; }
-tr.us td:last-child { border-radius: 0 8px 8px 0; }
-.yes, .no { font-family: var(--mono); font-size: 13px; }
-.yes { color: var(--green); }
-.no { color: var(--ink-3); }
+/* ===========================================
+   CIFRA GRANDE (estadísticas)
+   =========================================== */
+.stat-n { font: 900 360px/.8 var(--f-display); color: var(--acc); letter-spacing: -.01em; white-space: nowrap; }
+.stat-n small { font-size: 140px; color: var(--paper); margin-left: 16px; }
+.stat-wrap { display: grid; grid-template-columns: auto 1fr; gap: 80px; align-items: end; margin-top: auto; }
+.stat-wrap .lead { font-size: 46px; color: var(--paper); padding-bottom: 18px; }
 
-.formula {
-  font-family: var(--mono); font-size: 22px; color: var(--ink);
-  background: var(--sunken); border-radius: 10px; padding: 16px 20px; display: inline-block;
+/* ===========================================
+   TABLAS
+   =========================================== */
+table { width: 100%; border-collapse: collapse; }
+th { font: 500 19px var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--dim); text-align: left; padding: 0 16px 18px; }
+td { font-size: 27px; color: var(--sub); padding: 20px 16px; border-top: 1px solid var(--line); vertical-align: middle; }
+td b { color: var(--paper); font-weight: 600; }
+td.c, th.c { text-align: center; }
+tr.us td { background: var(--bg-3); color: var(--paper); border-top-color: var(--acc); }
+
+/* ===========================================
+   ONDAS DE VIBRACIÓN (patrones de aviso)
+   =========================================== */
+.wave { height: 34px; border-radius: 4px; }
+.w-cont { background: var(--acc); }
+.w-fast { background: repeating-linear-gradient(90deg, var(--acc) 0 14px, transparent 14px 28px); }
+.w-slow { background: repeating-linear-gradient(90deg, var(--acc) 0 44px, transparent 44px 88px); opacity: .8; }
+.w-step { background: repeating-linear-gradient(90deg, var(--mint) 0 14px, transparent 14px 28px); }
+.w-pre  { background: repeating-linear-gradient(90deg, var(--ring) 0 84px, transparent 84px 140px); }
+.w-alert{ background: repeating-linear-gradient(90deg, #ff7a6b 0 35px, transparent 35px 70px); }
+.wrow { display: grid; grid-template-columns: 420px 1fr 260px; gap: 40px; align-items: center; padding: 22px 0; border-top: 1px solid var(--line); }
+.wrow b { font: 800 40px/1 var(--f-display); text-transform: uppercase; display: block; }
+.wrow span { font: 400 20px var(--f-mono); color: var(--dim); }
+.wrow .ms { text-align: right; font: 500 22px var(--f-mono); color: var(--sub); }
+
+/* ===========================================
+   SVG (diagramas)
+   =========================================== */
+svg text { font-family: var(--f-body); fill: var(--paper); }
+svg .t2 { fill: var(--sub); }
+svg .t3 { fill: var(--dim); }
+svg .mono { font-family: var(--f-mono); }
+svg .box { fill: var(--bg-2); stroke: var(--line); stroke-width: 1.5; }
+svg .box-a { fill: #2a2b24; stroke: var(--acc); stroke-width: 2; }
+svg .box-m { fill: #143a35; stroke: var(--mint); stroke-width: 1.5; }
+svg .box-s { fill: var(--bg-3); }
+svg .w { stroke: var(--dim); stroke-width: 1.6; fill: none; }
+svg .wa { stroke: var(--acc); stroke-width: 2; fill: none; }
+svg .wm { stroke: var(--mint); stroke-width: 2; fill: none; }
+svg .dash { stroke-dasharray: 6 7; }
+svg .ah { fill: var(--dim); }
+svg .aha { fill: var(--acc); }
+svg .ahm { fill: var(--mint); }
+svg .ta { fill: var(--acc); }
+svg .tm { fill: var(--mint); }
+svg .gl { stroke: var(--line); stroke-width: 1; }
+.trace { stroke: var(--acc); stroke-width: 3; fill: none; stroke-linejoin: round; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
+.slide.visible .trace { stroke-dashoffset: 0; transition: stroke-dashoffset 1600ms var(--ease-in-out) 500ms; }
+
+/* ===========================================
+   REFERENCIAS
+   =========================================== */
+.refs { columns: 2; column-gap: 72px; margin-top: 44px; }
+.refs p { font-size: 19px; line-height: 1.45; color: var(--sub); margin-bottom: 13px; break-inside: avoid; }
+.refs p b { color: var(--paper); font-weight: 600; }
+
+/* Notas del expositor: ocultas en la diapositiva, se muestran con N */
+.notes { display: none; }
+
+/* ===========================================
+   CONTROLES (fuera del lienzo)
+   =========================================== */
+.progress { position: fixed; left: 0; top: 0; height: 3px; width: 100%; background: var(--acc); transform-origin: left; transform: scaleX(0); transition: transform 400ms var(--ease-out); z-index: 1000; }
+.counter { position: fixed; right: 20px; bottom: 16px; font: 500 13px var(--f-mono); letter-spacing: .1em; color: var(--dim); z-index: 1000; }
+.counter b { color: var(--paper); font-weight: 500; }
+.notes-panel {
+  position: fixed; left: 50%; bottom: 20px; transform: translate(-50%, 16px); width: min(920px, calc(100% - 32px));
+  background: #071816f2; border: 1px solid var(--line); border-radius: 10px; padding: 18px 22px;
+  font: 400 16px/1.55 var(--f-body); color: var(--sub); z-index: 1001;
+  opacity: 0; pointer-events: none; transition: opacity 200ms ease, transform 260ms var(--ease-out);
 }
-.formula sub, .formula sup { font-size: 13px; }
-
-ol.steps { list-style: none; counter-reset: s; display: grid; gap: 10px; }
-ol.steps li { counter-increment: s; display: grid; grid-template-columns: 34px 1fr; gap: 12px; font-size: 17px; }
-ol.steps li::before {
-  content: counter(s, decimal-leading-zero);
-  font-family: var(--mono); font-size: 13px; color: var(--accent);
-  padding-top: 4px;
-}
-
-/* ---------- SVG ---------- */
-svg text { font-family: var(--sans); fill: var(--ink); }
-svg .t2 { fill: var(--ink-2); }
-svg .t3 { fill: var(--ink-3); }
-svg .mono { font-family: var(--mono); }
-svg .box { fill: var(--surface); stroke: var(--line-2); stroke-width: 1; }
-svg .box-s { fill: var(--sunken); stroke: none; }
-svg .box-a { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.25; }
-svg .box-b { fill: var(--blue-soft); stroke: var(--blue); stroke-width: 1; }
-svg .box-g { fill: var(--green-soft); stroke: var(--green); stroke-width: 1; }
-svg .wire { stroke: var(--ink-3); stroke-width: 1.25; fill: none; }
-svg .wire-a { stroke: var(--accent); stroke-width: 1.5; fill: none; }
-svg .grid-l { stroke: var(--line); stroke-width: 1; }
-svg .dash { stroke-dasharray: 4 5; }
-svg .ah { fill: var(--ink-3); }
-svg .ah-a { fill: var(--accent); }
-svg .ta { fill: var(--accent); }
-svg .tb { fill: var(--blue); }
-svg .tg { fill: var(--green); }
-
-.trace {
-  stroke: var(--accent); stroke-width: 2.25; fill: none;
-  stroke-linejoin: round; stroke-linecap: round;
-  stroke-dasharray: 1; stroke-dashoffset: 1;
-}
-.slide.active .trace { stroke-dashoffset: 0; transition: stroke-dashoffset 1400ms var(--ease-in-out) 350ms; }
-
-/* ---------- Portada ---------- */
-.cover { justify-content: space-between; padding: 64px 80px; }
-.cover .brand { display: flex; align-items: center; gap: 12px; font-family: var(--mono); font-size: 13px; color: var(--ink-3); letter-spacing: .04em; text-transform: uppercase; }
-.cover .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 5px var(--accent-soft); }
-.cover h1 { max-width: 1000px; }
-.cover .sub { font-size: 22px; color: var(--ink-2); margin-top: 22px; max-width: 820px; line-height: 1.45; }
-.cover .authors { display: flex; gap: 40px; border-top: 1px solid var(--line); padding-top: 22px; }
-.cover .authors div { font-size: 16px; color: var(--ink); }
-.cover .authors span { display: block; font-family: var(--mono); font-size: 12px; color: var(--ink-3); margin-top: 4px; letter-spacing: .02em; }
-
-/* Agenda */
-.agenda { display: grid; grid-template-columns: 1fr 1fr; gap: 0 56px; margin-top: 8px; }
-.agenda a {
-  display: grid; grid-template-columns: 56px 1fr auto; align-items: baseline;
-  padding: 20px 0; border-bottom: 1px solid var(--line); text-decoration: none;
-  color: var(--ink); font-size: 23px; letter-spacing: -0.015em; font-weight: 500;
-  transition: color 160ms ease;
-}
-.agenda a .num { font-family: var(--mono); font-size: 14px; color: var(--accent); font-weight: 400; }
-.agenda a .go { font-family: var(--mono); font-size: 13px; color: var(--ink-3); font-weight: 400; }
-@media (hover: hover) and (pointer: fine) {
-  .agenda a:hover { color: var(--accent); }
-}
-
-/* Zonas de vibración */
-.zones { display: grid; grid-template-columns: 1fr 1fr 2fr 1.1fr; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
-.zone { padding: 14px 14px 12px; background: var(--surface); border-right: 1px solid var(--line); }
-.zone:last-child { border-right: 0; background: var(--sunken); }
-.zone .bar { height: 10px; border-radius: 3px; margin-bottom: 12px; }
-.zone b { display: block; font-size: 15px; color: var(--ink); font-weight: 600; }
-.zone span { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
-.z1 .bar { background: var(--accent); }
-.z2 .bar { background: repeating-linear-gradient(90deg, var(--accent) 0 8px, transparent 8px 14px); }
-.z3 .bar { background: repeating-linear-gradient(90deg, var(--accent) 0 8px, transparent 8px 26px); opacity: .7; }
-.z4 .bar { background: var(--line); }
-
-/* Patrones de aviso */
-.pattern { display: grid; grid-template-columns: 210px 1fr 150px; gap: 18px; align-items: center; padding: 13px 0; border-bottom: 1px solid var(--line); }
-.pattern:last-child { border-bottom: 0; }
-.pattern b { font-size: 16.5px; color: var(--ink); font-weight: 600; display: block; }
-.pattern .who { font-size: 13.5px; color: var(--ink-3); }
-.wave { height: 22px; border-radius: 4px; }
-.w-cont { background: var(--accent); }
-.w-fast { background: repeating-linear-gradient(90deg, var(--accent) 0 10px, transparent 10px 20px); }
-.w-slow { background: repeating-linear-gradient(90deg, var(--accent) 0 30px, transparent 30px 60px); opacity: .75; }
-.w-step { background: repeating-linear-gradient(90deg, var(--blue) 0 10px, transparent 10px 20px); }
-.w-pre  { background: repeating-linear-gradient(90deg, var(--amber) 0 60px, transparent 60px 100px); }
-.w-alert{ background: repeating-linear-gradient(90deg, var(--accent) 0 25px, transparent 25px 50px); }
-.pattern .ms { font-family: var(--mono); font-size: 12.5px; color: var(--ink-2); text-align: right; }
-
-/* Referencias */
-.refs { columns: 2; column-gap: 48px; }
-.refs p { font-size: 12.5px; line-height: 1.45; margin-bottom: 9px; break-inside: avoid; color: var(--ink-2); }
-.refs p b { color: var(--ink); font-weight: 500; }
-
-/* ---------- Controles ---------- */
-.chrome {
-  position: fixed; left: 0; right: 0; bottom: 0;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 16px;
-  pointer-events: none;
-}
-.chrome > * { pointer-events: auto; }
-.counter { font-family: var(--mono); font-size: 12px; color: var(--ink-3); letter-spacing: .04em; }
-.counter b { color: var(--ink); font-weight: 500; }
-.btns { display: flex; gap: 6px; }
-.btn {
-  appearance: none; border: 1px solid var(--line-2); background: var(--surface); color: var(--ink);
-  height: 34px; min-width: 34px; padding: 0 10px; border-radius: 9px;
-  font-family: var(--mono); font-size: 12px; cursor: pointer;
-  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  transition: transform 140ms var(--ease-out), background-color 160ms ease, border-color 160ms ease;
-}
-.btn:active { transform: scale(0.96); }
-.btn:disabled { opacity: .35; cursor: default; }
-.btn:disabled:active { transform: none; }
-.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-@media (hover: hover) and (pointer: fine) {
-  .btn:not(:disabled):hover { background: var(--sunken); border-color: var(--ink-3); }
-}
-.progress {
-  position: fixed; left: 0; top: 0; height: 2px; width: 100%;
-  background: var(--accent); transform-origin: left; transform: scaleX(0);
-  transition: transform 340ms var(--ease-out);
-}
-.hint {
-  position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
-  font-family: var(--mono); font-size: 11.5px; color: var(--ink-3);
-  background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px;
-  opacity: 1; transition: opacity 400ms ease;
-}
+.notes-panel.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+.notes-panel b { font: 500 12px var(--f-mono); letter-spacing: .12em; color: var(--acc); display: block; margin-bottom: 6px; }
+.hint { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); font: 400 12px var(--f-mono); color: var(--dim); background: #071816e6; border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; z-index: 1000; transition: opacity 500ms ease; }
 .hint.gone { opacity: 0; }
 
-@media (prefers-reduced-motion: reduce) {
-  .slide, .slide.past { transform: none; }
-  .slide, .slide.active { transition: opacity 200ms ease, visibility 0s linear 200ms; }
-  .slide.active { transition: opacity 200ms ease, visibility 0s; }
-  .r { transform: none; }
-  .slide.active .r { transition: opacity 200ms ease; transition-delay: 0ms; }
-  .trace { stroke-dashoffset: 0; }
-  .slide.active .trace { transition: none; }
-  .progress, .btn { transition: none; }
+/* Edición en línea (E o esquina superior izquierda) */
+.edit-hotzone { position: fixed; top: 0; left: 0; width: 80px; height: 80px; z-index: 10000; cursor: pointer; }
+.edit-toggle {
+  position: fixed; top: 16px; left: 16px; z-index: 10001; height: 36px; padding: 0 14px; border-radius: 8px;
+  background: var(--bg-3); color: var(--paper); border: 1px solid var(--line); font: 500 13px var(--f-mono); cursor: pointer;
+  opacity: 0; pointer-events: none; transition: opacity 300ms ease, transform 140ms var(--ease-out);
 }
+.edit-toggle.show, .edit-toggle.active { opacity: 1; pointer-events: auto; }
+.edit-toggle.active { background: var(--acc); color: #0D2422; border-color: var(--acc); }
+.edit-toggle:active { transform: scale(0.96); }
+body.editing [contenteditable="true"] { outline: 2px dashed #ffb38a66; outline-offset: 6px; }
 
-/* ---------- Impresión: una diapositiva por página ---------- */
-@media print {
-  @page { size: 1280px 720px; margin: 0; }
-  body { overflow: visible; background: var(--bg); }
-  #deck { position: static; transform: none !important; border-radius: 0; box-shadow: none; overflow: visible; width: auto; height: auto; }
-  .slide { position: relative; width: 1280px; height: 720px; opacity: 1; visibility: visible; transform: none; break-after: page; }
-  .r { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .reveal { transform: none; }
+  .slide.visible .tactile { transition: none; }
   .trace { stroke-dashoffset: 0; }
-  .chrome, .progress, .hint { display: none; }
+}
+@media print {
+  .reveal { opacity: 1 !important; transform: none !important; }
+  .tactile { clip-path: none !important; }
+  .cane { opacity: 1 !important; }
+  .trace { stroke-dashoffset: 0 !important; }
+  .progress, .counter, .notes-panel, .hint, .edit-hotzone, .edit-toggle { display: none !important; }
 }
 </style>
 </head>
 <body>
 
 <div class="progress" id="progress"></div>
-<div class="hint" id="hint">← → para avanzar · F pantalla completa · T tema</div>
+<div class="hint" id="hint">← → avanzar · N notas · F pantalla completa · E editar</div>
 
-<main id="deck" aria-live="polite">
+<div class="deck-viewport">
+<main class="deck-stage" id="deckStage">
 
-<!-- ============ 01 PORTADA ============ -->
+<!-- =========================================================
+     01 · PORTADA
+     ========================================================= -->
 <section class="slide cover" data-title="Portada">
-  <div class="brand r"><span class="dot"></span>CS5055 · Internet of Things · UTEC</div>
-  <div>
-    <h1 class="r">SafeCane: bastón inteligente IoT para personas con discapacidad visual y adultos mayores</h1>
-    <p class="sub r">Fundamentación teórica: detección de obstáculos, desniveles y caídas, con la ubicación de cada alerta enviada a un tablero en tiempo real.</p>
-  </div>
-  <div class="authors r">
-    <div>Nayeli Fernanda Guzman Huayta</div>
-    <div>Jazmin Nicole Soto Quiñones</div>
-    <div>Manyory Estefany Cueva Mendoza</div>
-    <div style="margin-left:auto;text-align:right">Lima, Perú<span>2026-2</span></div>
-  </div>
+  <div class="tactile"></div><div class="cane"></div>
+  <div class="tag reveal">CS5055 · Internet of Things · <b>UTEC 2026-2</b></div>
+  <h1 class="h1 reveal">Safe<span class="acc">Cane</span><br>bastón que<br>anticipa</h1>
+  <p class="sub reveal">Fundamentación teórica de un bastón inteligente IoT para personas con discapacidad visual y adultos mayores.</p>
+  <div class="people reveal"><span><i></i>Nayeli Fernanda Guzman Huayta</span><span><i></i>Jazmin Nicole Soto Quiñones</span><span><i></i>Manyory Estefany Cueva Mendoza</span></div>
+  <aside class="notes">Presentar al equipo y el curso. SafeCane es un bastón inteligente IoT que detecta obstáculos, desniveles y caídas, y envía la ubicación de cada alerta en tiempo real.</aside>
 </section>
 
-<!-- ============ 02 AGENDA ============ -->
-<section class="slide" data-title="Agenda">
-  <div class="kicker r">Contenido</div>
-  <h2 class="r">Seis partes, del problema a la solución</h2>
-  <div class="body">
-    <nav class="agenda">
-      <a class="r" href="#3"><span class="num">01</span>Problemática y contexto<span class="go">03</span></a>
-      <a class="r" href="#9"><span class="num">04</span>Estado del arte y antecedentes<span class="go">09</span></a>
-      <a class="r" href="#5"><span class="num">02</span>Objetivos general y específicos<span class="go">05</span></a>
-      <a class="r" href="#12"><span class="num">05</span>Fundamentos teóricos y tecnologías<span class="go">12</span></a>
-      <a class="r" href="#7"><span class="num">03</span>Justificación de la solución<span class="go">07</span></a>
-      <a class="r" href="#18"><span class="num">06</span>Desarrollo conceptual<span class="go">18</span></a>
-    </nav>
-  </div>
-</section>
-
-<!-- ============ 03 CONTEXTO ============ -->
-<section class="slide" data-title="Contexto">
-  <div class="kicker r"><b>01</b> Problemática y contexto</div>
-  <h2 class="r">La discapacidad visual y las caídas afectan al mismo grupo de personas</h2>
-  <div class="body">
-    <div class="grid g4">
-      <div class="card stat r">
-        <div class="big">2 200<small> M</small></div>
-        <p>personas en el mundo tienen algún deterioro de la visión cercana o lejana.</p>
-        <p class="cite">OMS, 2026</p>
-      </div>
-      <div class="card stat r">
-        <div class="big">1,55<small> M</small></div>
-        <p>peruanos tienen dificultad para ver aun con anteojos: el 48,3 % de las personas con discapacidad del país.</p>
-        <p class="cite">INEI, 2017</p>
-      </div>
-      <div class="card stat r">
-        <div class="big">684 000</div>
-        <p>muertes por caídas cada año. Es la segunda causa de muerte por lesiones no intencionales.</p>
-        <p class="cite">OMS, 2021</p>
-      </div>
-      <div class="card stat r">
-        <div class="big accent">+40<small> %</small></div>
-        <p>de riesgo de caída en personas ciegas, y +16 % en personas con baja visión.</p>
-        <p class="cite">Shri Harini et al., 2026</p>
-      </div>
-    </div>
-    <div style="margin-top:auto" class="grid g2">
-      <p class="r">La prevalencia de discapacidad crece con la edad y llega a su máximo después de los <em>60 años</em>. En ese grupo una caída tiene peores consecuencias.</p>
-      <p class="r">Más del <em>80 %</em> de las muertes por caídas ocurre en países de ingresos bajos y medianos, como el Perú. Cada año, 37,3 millones de caídas requieren atención médica.</p>
+<!-- =========================================================
+     02 · CONTENIDO
+     ========================================================= -->
+<section class="slide" data-title="Contenido">
+  <div class="pad">
+    <div class="tag reveal">Contenido</div>
+    <h2 class="h2 reveal">Seis partes</h2>
+    <div class="cols c3 bottom" style="row-gap:56px">
+      <div class="reveal"><div class="idx">01</div><div class="h3" style="margin-top:14px">Problemática<br>y contexto</div></div>
+      <div class="reveal"><div class="idx">02</div><div class="h3" style="margin-top:14px">Objetivos</div></div>
+      <div class="reveal"><div class="idx">03</div><div class="h3" style="margin-top:14px">Justificación</div></div>
+      <div class="reveal"><div class="idx">04</div><div class="h3" style="margin-top:14px">Estado del arte</div></div>
+      <div class="reveal"><div class="idx">05</div><div class="h3" style="margin-top:14px">Fundamentos<br>y tecnologías</div></div>
+      <div class="reveal"><div class="idx">06</div><div class="h3" style="margin-top:14px">Desarrollo<br>conceptual</div></div>
     </div>
   </div>
+  <aside class="notes">Recorrido: del problema a la solución, pasando por los objetivos, el estado del arte y la teoría que sostiene cada decisión.</aside>
 </section>
 
-<!-- ============ 04 LIMITACIONES BASTÓN ============ -->
+<!-- =========================================================
+     03 · SECCIÓN 01
+     ========================================================= -->
+<section class="slide section" data-title="01 Problemática">
+  <div class="tactile"></div><div class="cane"></div>
+  <div class="num reveal">01</div>
+  <h2 class="h2 reveal">Problemática<br>y contexto</h2>
+  <div class="tag reveal">SafeCane · Fundamentación teórica</div>
+</section>
+
+<!-- 04 · Cifra OMS -->
+<section class="slide" data-title="Visión en el mundo">
+  <div class="pad">
+    <div class="tag reveal"><b>01</b> Problemática y contexto</div>
+    <div class="stat-wrap">
+      <div class="stat-n reveal">2 200<small>M</small></div>
+      <div class="reveal"><p class="lead">personas en el mundo tienen algún deterioro de la visión cercana o lejana.</p><p class="src" style="margin-top:20px">OMS · 2026</p></div>
+    </div>
+  </div>
+  <aside class="notes">Según la OMS, al menos 2 200 millones de personas tienen algún deterioro de la visión; en al menos 1 000 millones se pudo prevenir o aún no se ha atendido.</aside>
+</section>
+
+<!-- 05 · Cifra Perú -->
+<section class="slide" data-title="Perú">
+  <div class="pad">
+    <div class="tag reveal"><b>01</b> Problemática y contexto</div>
+    <div class="stat-wrap">
+      <div class="stat-n reveal">1,55<small>M</small></div>
+      <div class="reveal"><p class="lead">peruanos tienen dificultad para ver aun usando anteojos: la discapacidad más frecuente del país.</p><p class="src" style="margin-top:20px">INEI · Perfil sociodemográfico de la población con discapacidad, 2017</p></div>
+    </div>
+  </div>
+  <aside class="notes">El INEI registró 3 209 261 personas con discapacidad (10,3 % de la población). De ellas, 1 550 196 (48,3 %) tienen dificultad para ver. Le siguen moverse o caminar (15,1 %) y oír (7,6 %). La prevalencia crece con la edad y alcanza su máximo después de los 60 años.</aside>
+</section>
+
+<!-- 06 · Cifra caídas -->
+<section class="slide" data-title="Caídas">
+  <div class="pad">
+    <div class="tag reveal"><b>01</b> Problemática y contexto</div>
+    <div class="stat-wrap">
+      <div class="stat-n reveal">684 000</div>
+      <div class="reveal"><p class="lead">muertes por caídas al año: la segunda causa de muerte por lesiones no intencionales.</p><p class="src" style="margin-top:20px">OMS · Falls, 2021</p></div>
+    </div>
+  </div>
+  <aside class="notes">Cada año ocurren 37,3 millones de caídas que requieren atención médica. Los mayores de 60 años concentran las caídas fatales, y más del 80 % de esas muertes ocurre en países de ingresos bajos y medianos, como el Perú.</aside>
+</section>
+
+<!-- 07 · Visión y caídas -->
+<section class="slide" data-title="Visión y caídas">
+  <div class="pad">
+    <div class="tag reveal"><b>01</b> Problemática y contexto</div>
+    <h2 class="h2 reveal">Ver menos es caer más</h2>
+    <div class="cols c2 bottom" style="gap:80px">
+      <div class="reveal"><div class="stat-n" style="font-size:280px">+40<small style="font-size:110px">%</small></div><p class="lead" style="margin-top:24px">de riesgo de caída en personas ciegas</p></div>
+      <div class="reveal"><div class="stat-n" style="font-size:280px;color:var(--ring)">+16<small style="font-size:110px">%</small></div><p class="lead" style="margin-top:24px">en personas con baja visión</p></div>
+    </div>
+    <p class="src reveal" style="margin-top:40px">Legood et al., 2002 · Shri Harini et al., 2026</p>
+  </div>
+  <aside class="notes">Una revisión de 31 estudios concluyó que las personas con discapacidad visual tienen más caídas y lesiones que la población general. Trabajos recientes cuantifican ese exceso.</aside>
+</section>
+
+<!-- 08 · Limitaciones del bastón blanco -->
+<section class="slide" data-title="El bastón blanco">
+  <div class="pad">
+    <div class="tag reveal"><b>01</b> Problemática y contexto</div>
+    <h2 class="h2 reveal">El bastón blanco solo sabe lo que toca su punta</h2>
+    <div class="cols c3 bottom">
+      <div class="panel reveal"><div class="idx">01</div><div class="h3" style="margin:18px 0 16px">No anticipa</div><p class="txt">No avisa de lo que se acerca ni de un escalón que baja.</p></div>
+      <div class="panel reveal"><div class="idx">02</div><div class="h3" style="margin:18px 0 16px">No avisa</div><p class="txt">Si la persona cae, nadie se entera.</p></div>
+      <div class="panel reveal"><div class="idx">03</div><div class="h3" style="margin:18px 0 16px">No localiza</div><p class="txt">La familia no sabe dónde está.</p></div>
+    </div>
+  </div>
+  <aside class="notes">El bastón blanco es barato y simple, pero pasivo. Quien camina solo puede quedarse horas en el suelo tras una caída, y esa demora agrava la lesión.</aside>
+</section>
+
+<!-- 09 · Enunciado del problema -->
 <section class="slide" data-title="El problema">
-  <div class="kicker r"><b>01</b> Problemática y contexto</div>
-  <h2 class="r">El bastón blanco es barato y simple, pero solo informa de lo que toca su punta</h2>
-  <div class="body">
-    <div class="grid g3">
-      <div class="card r">
-        <svg width="44" height="44" viewBox="0 0 44 44" aria-hidden="true"><rect x="1" y="1" width="42" height="42" rx="10" class="box-s"/><path d="M14 31 L28 13" class="wire-a"/><circle cx="31" cy="31" r="4" class="ah-a"/><path d="M20 31h-6" class="wire"/></svg>
-        <h3 style="margin-top:16px">No anticipa</h3>
-        <p>Percibe lo que la punta toca. No avisa de obstáculos que se acercan ni de un escalón que baja hasta que la persona ya llegó a él.</p>
-      </div>
-      <div class="card r">
-        <svg width="44" height="44" viewBox="0 0 44 44" aria-hidden="true"><rect x="1" y="1" width="42" height="42" rx="10" class="box-s"/><path d="M12 30 L32 30" class="wire"/><path d="M16 26 L30 14" class="wire-a"/><circle cx="16" cy="26" r="2.5" class="ah-a"/></svg>
-        <h3 style="margin-top:16px">No avisa de una caída</h3>
-        <p>Quien camina solo puede quedarse en el suelo horas sin que nadie lo sepa. Esa demora agrava la lesión.</p>
-      </div>
-      <div class="card r">
-        <svg width="44" height="44" viewBox="0 0 44 44" aria-hidden="true"><rect x="1" y="1" width="42" height="42" rx="10" class="box-s"/><path d="M22 33 C14 24 14 20 14 18 a8 8 0 0 1 16 0 c0 2 0 6 -8 15z" class="wire-a"/><circle cx="22" cy="18" r="2.5" class="ah-a"/></svg>
-        <h3 style="margin-top:16px">No localiza</h3>
-        <p>Si la persona se desorienta o necesita ayuda, su familia o cuidador no sabe dónde está.</p>
-      </div>
-    </div>
-    <div class="callout r" style="margin-top:auto">
-      Las personas con discapacidad visual y los adultos mayores que se desplazan solos no tienen un dispositivo de bajo costo que <em>amplíe la detección de obstáculos y desniveles</em> y que, a la vez, <em>detecte una caída, registre dónde ocurrió y avise</em> a su entorno de apoyo.
-    </div>
+  <div class="tactile" style="width:220px"></div>
+  <div class="pad" style="right:340px">
+    <div class="tag reveal"><b>01</b> El problema</div>
+    <p class="reveal" style="margin-top:auto;font:800 92px/1.02 var(--f-display);text-transform:uppercase">No existe un dispositivo de bajo costo que <span class="acc">amplíe la detección</span> y, a la vez, <span class="acc">avise de una caída y de dónde ocurrió</span>.</p>
   </div>
+  <aside class="notes">En el Perú ese grupo supera el millón y medio de personas. Acortar el tiempo entre la caída y la llegada de ayuda es el objetivo que justifica el trabajo.</aside>
 </section>
 
-<!-- ============ 05 OBJETIVO GENERAL ============ -->
+<!-- =========================================================
+     10 · SECCIÓN 02
+     ========================================================= -->
+<section class="slide section" data-title="02 Objetivos">
+  <div class="tactile"></div><div class="cane"></div>
+  <div class="num reveal">02</div>
+  <h2 class="h2 reveal">Objetivos</h2>
+  <div class="tag reveal">SafeCane · Fundamentación teórica</div>
+</section>
+
+<!-- 11 · Objetivo general -->
 <section class="slide" data-title="Objetivo general">
-  <div class="kicker r"><b>02</b> Objetivos</div>
-  <h2 class="r">Objetivo general</h2>
-  <div class="body" style="justify-content:center">
-    <p class="r" style="font-size:34px;line-height:1.35;color:var(--ink);letter-spacing:-0.02em;max-width:1060px">
-      Desarrollar un bastón inteligente IoT basado en el ESP32 que detecte <span class="accent">obstáculos</span>, <span class="accent">desniveles</span> y <span class="accent">caídas</span> en personas con discapacidad visual y adultos mayores, registre su <span class="accent">ubicación</span> y notifique las alertas en tiempo real a un celular cercano y a un tablero web de monitoreo.
-    </p>
-    <div class="r" style="display:flex;gap:8px;margin-top:36px;flex-wrap:wrap">
-      <span class="pill a">Percepción local</span>
-      <span class="pill b">BLE · celular</span>
-      <span class="pill b">Wi-Fi · MQTT · tablero</span>
-      <span class="pill g">Alerta local sin red</span>
-      <span class="pill">Batería 18650</span>
+  <div class="pad">
+    <div class="tag reveal"><b>02</b> Objetivo general</div>
+    <p class="reveal" style="margin-top:auto;font:500 60px/1.32 var(--f-body);max-width:1600px">Desarrollar un bastón inteligente IoT basado en el ESP32 que detecte <span class="acc">obstáculos</span>, <span class="acc">desniveles</span> y <span class="acc">caídas</span>, registre la <span class="acc">ubicación</span> y notifique cada alerta en tiempo real a un celular y a un tablero web.</p>
+  </div>
+  <aside class="notes">Usuarios: personas con discapacidad visual y adultos mayores. La alerta local (vibración y sonido) funciona siempre; la red solo añade la notificación remota.</aside>
+</section>
+
+<!-- 12 · Objetivos específicos: detección -->
+<section class="slide" data-title="Objetivos de detección">
+  <div class="pad">
+    <div class="tag reveal"><b>02</b> Objetivos específicos · detección</div>
+    <div class="cols c3 grow" style="margin-top:56px">
+      <div class="panel reveal" style="display:flex;flex-direction:column"><div class="idx">01 · HC-SR04</div><div class="h3" style="margin:20px 0">Obstáculos</div><p class="txt">Vibración progresiva según la distancia.</p><div class="bottom"><div class="stat-n" style="font-size:150px">2 m</div><p class="src">alcance · error &lt; 3 cm</p></div></div>
+      <div class="panel reveal" style="display:flex;flex-direction:column"><div class="idx">02 · FC-51</div><div class="h3" style="margin:20px 0">Desniveles</div><p class="txt">Escalones que bajan, bordillos y huecos, solo en ángulo de uso.</p><div class="bottom"><div class="stat-n" style="font-size:150px">≥90%</div><p class="src">escalones y bordillos detectados</p></div></div>
+      <div class="panel reveal" style="display:flex;flex-direction:column"><div class="idx">03 · MPU6050</div><div class="h3" style="margin:20px 0">Caídas</div><p class="txt">Umbrales de aceleración e inclinación, con cancelación manual.</p><div class="bottom"><div class="stat-n" style="font-size:150px">≥90%</div><p class="src">sensibilidad</p></div></div>
     </div>
   </div>
+  <aside class="notes">Tres objetivos de detección, cada uno con su sensor y su meta medible. El aviso de desnivel es distinto al de obstáculos, para que el usuario los distinga al tacto.</aside>
 </section>
 
-<!-- ============ 06 OBJETIVOS ESPECÍFICOS ============ -->
-<section class="slide" data-title="Objetivos específicos">
-  <div class="kicker r"><b>02</b> Objetivos</div>
-  <h2 class="r">Objetivos específicos, cada uno con una meta medible</h2>
-  <div class="body">
-    <table class="t-lg">
-      <thead class="r"><tr><th style="width:44px">#</th><th>Objetivo</th><th style="width:260px">Meta</th></tr></thead>
-      <tbody>
-        <tr class="r"><td class="mono accent">01</td><td>Detectar obstáculos frontales con el sensor ultrasónico HC-SR04 y avisar con una vibración progresiva según la distancia.</td><td><b>Hasta 2 m</b>, error &lt; 3 cm</td></tr>
-        <tr class="r"><td class="mono accent">02</td><td>Detectar escalones que bajan, bordillos y huecos con el sensor infrarrojo FC-51 en la punta, con un aviso propio que solo se active con el bastón en ángulo de uso.</td><td><b>≥ 90 %</b> de escalones y bordillos</td></tr>
-        <tr class="r"><td class="mono accent">03</td><td>Diseñar y calibrar un algoritmo de detección de caídas por umbrales de aceleración e inclinación con el MPU6050, con confirmación y cancelación manual.</td><td>Sensibilidad <b>≥ 90 %</b></td></tr>
-        <tr class="r"><td class="mono accent">04</td><td>Georreferenciar cada alerta con el GPS NEO-6M y transmitirla por BLE a un celular y por MQTT a un tablero web.</td><td>Latencia <b>&lt; 5 s</b></td></tr>
-        <tr class="r"><td class="mono accent">05</td><td>Validar el prototipo en un entorno controlado, con batería recargable, midiendo exactitud, falsas alarmas, precisión de ubicación y autonomía.</td><td>Autonomía <b>≈ 1 jornada</b></td></tr>
-      </tbody>
-    </table>
-  </div>
-</section>
-
-<!-- ============ 07 JUSTIFICACIÓN ============ -->
-<section class="slide" data-title="Justificación">
-  <div class="kicker r"><b>03</b> Justificación</div>
-  <h2 class="r">Por qué esta solución y no otra</h2>
-  <div class="body">
-    <div class="grid g3" style="grid-template-rows:1fr 1fr;flex:1">
-      <div class="card r">
-        <span class="tag">Social</span>
-        <h3>Un grupo grande y desatendido</h3>
-        <p>Más de 1,5 millones de peruanos con dificultad visual. Acortar el tiempo entre la caída y la llegada de ayuda es lo que justifica el trabajo.</p>
-      </div>
-      <div class="card r">
-        <span class="tag">Integración</span>
-        <h3>Cuatro funciones en un dispositivo</h3>
-        <p>Ningún trabajo revisado reúne obstáculos, desniveles, caídas y ubicación en un solo bastón de bajo costo.</p>
-      </div>
-      <div class="card r">
-        <span class="tag">Costo</span>
-        <h3>Un solo chip con Wi-Fi y BLE</h3>
-        <p>El ESP32 reemplaza la pareja Arduino + NodeMCU: menos costo, menos consumo y menos puntos de falla.</p>
-      </div>
-      <div class="card r">
-        <span class="tag">Canal de aviso</span>
-        <h3>Vibración antes que sonido</h3>
-        <p>El audio enmascara los sonidos del entorno, de los que una persona ciega depende para orientarse. El buzzer queda para desniveles y caídas.</p>
-      </div>
-      <div class="card r">
-        <span class="tag">Robustez</span>
-        <h3>La alerta local no depende de la red</h3>
-        <p>Sensores y comunicación corren en núcleos distintos. Sin Wi-Fi, el bastón sigue vibrando y sonando.</p>
-      </div>
-      <div class="card r">
-        <span class="tag">Falsas alarmas</span>
-        <h3>10 s para cancelar</h3>
-        <p>Umbrales simples y explicables, con una ventana de confirmación interactiva antes de enviar la alerta.</p>
-      </div>
+<!-- 13 · Objetivos específicos: comunicación y validación -->
+<section class="slide" data-title="Objetivos de red y validación">
+  <div class="pad">
+    <div class="tag reveal"><b>02</b> Objetivos específicos · red y validación</div>
+    <div class="cols c2 grow" style="margin-top:56px">
+      <div class="panel reveal" style="display:flex;flex-direction:column"><div class="idx">04 · NEO-6M · BLE · MQTT</div><div class="h3" style="margin:20px 0">Ubicar y notificar</div><p class="txt">Cada alerta lleva su posición GPS y llega por BLE a un celular y por MQTT a un tablero web.</p><div class="bottom"><div class="stat-n" style="font-size:170px">&lt;5 s</div><p class="src">latencia de la alerta</p></div></div>
+      <div class="panel reveal" style="display:flex;flex-direction:column"><div class="idx">05 · Entorno controlado</div><div class="h3" style="margin:20px 0">Validar</div><p class="txt">Medir exactitud, falsas alarmas, precisión de ubicación y autonomía con batería recargable.</p><div class="bottom"><div class="stat-n" style="font-size:170px">1 día</div><p class="src">jornada de uso</p></div></div>
     </div>
   </div>
+  <aside class="notes">La referencia de latencia es 4,71 s de Fitriandini et al. La autonomía estimada es de unas 15 h con una celda 18650.</aside>
 </section>
 
-<!-- ============ 08 JUSTIFICACIÓN: DESNIVEL ============ -->
-<section class="slide" data-title="Justificación del sensor IR">
-  <div class="kicker r"><b>03</b> Justificación</div>
-  <h2 class="r">Dos sensores que se complementan: uno mira al frente y el otro al piso</h2>
-  <div class="body">
-    <div class="grid g2" style="gap:40px;align-items:center;flex:1">
-      <svg class="r" viewBox="0 0 560 360" width="100%" role="img" aria-label="Bastón con el HC-SR04 mirando al frente y el FC-51 mirando al piso en el borde de un escalón">
+<!-- =========================================================
+     14 · SECCIÓN 03
+     ========================================================= -->
+<section class="slide section" data-title="03 Justificación">
+  <div class="tactile"></div><div class="cane"></div>
+  <div class="num reveal">03</div>
+  <h2 class="h2 reveal">Justificación</h2>
+  <div class="tag reveal">SafeCane · Fundamentación teórica</div>
+</section>
+
+<!-- 15 · Cuatro funciones -->
+<section class="slide" data-title="Cuatro funciones">
+  <div class="pad">
+    <div class="tag reveal"><b>03</b> Justificación</div>
+    <h2 class="h2 reveal">Cuatro funciones, un solo bastón</h2>
+    <div class="cols c4 bottom">
+      <div class="reveal" style="border-top:4px solid var(--acc);padding-top:28px"><div class="h3">Obstáculos</div><p class="txt" style="margin-top:14px">al frente, hasta 2 m</p></div>
+      <div class="reveal" style="border-top:4px solid var(--mint);padding-top:28px"><div class="h3">Desniveles</div><p class="txt" style="margin-top:14px">bajo la punta</p></div>
+      <div class="reveal" style="border-top:4px solid var(--ring);padding-top:28px"><div class="h3">Caídas</div><p class="txt" style="margin-top:14px">con confirmación</p></div>
+      <div class="reveal" style="border-top:4px solid var(--paper);padding-top:28px"><div class="h3">Ubicación</div><p class="txt" style="margin-top:14px">en cada alerta</p></div>
+    </div>
+  </div>
+  <aside class="notes">Ningún trabajo revisado reúne las cuatro funciones en un solo dispositivo de bajo costo. Esa combinación es el aporte del proyecto.</aside>
+</section>
+
+<!-- 16 · Dos sensores complementarios -->
+<section class="slide" data-title="Dos sensores">
+  <div class="pad">
+    <div class="tag reveal"><b>03</b> Justificación</div>
+    <h2 class="h2 reveal">Uno mira al frente. El otro, al piso.</h2>
+    <div class="grow reveal" style="margin-top:40px;display:flex;align-items:flex-end">
+      <svg viewBox="0 0 1660 560" width="1660" role="img" aria-label="Bastón con el HC-SR04 mirando al frente y el FC-51 mirando al piso al borde de un escalón">
         <defs>
-          <marker id="ma" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" class="ah-a"/></marker>
-          <marker id="mb" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" style="fill:var(--blue)"/></marker>
+          <marker id="m-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10z" class="aha"/></marker>
+          <marker id="m-m" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10z" class="ahm"/></marker>
         </defs>
-        <!-- piso y escalón -->
-        <path d="M0 250 H330 V330 H560" class="wire" style="stroke:var(--ink-2);stroke-width:2"/>
-        <path d="M0 250 H330 V330 H560 V360 H0z" style="fill:var(--sunken)"/>
-        <!-- obstáculo -->
-        <rect x="520" y="170" width="36" height="160" rx="4" class="box"/>
-        <text x="556" y="160" text-anchor="end" class="t3 mono" font-size="11">obstáculo</text>
-        <!-- bastón -->
-        <path d="M150 40 L318 244" style="stroke:var(--ink);stroke-width:5;stroke-linecap:round"/>
-        <rect x="132" y="24" width="40" height="28" rx="6" transform="rotate(50 152 38)" class="box"/>
-        <!-- HC-SR04 -->
-        <rect x="184" y="78" width="30" height="16" rx="3" class="box-a" transform="rotate(50 199 86)"/>
-        <path d="M212 92 L512 222" class="wire-a dash" marker-end="url(#ma)"/>
-        <path d="M212 92 L512 172" class="wire-a dash" style="opacity:.35"/>
-        <path d="M212 92 L512 272" class="wire-a dash" style="opacity:.35"/>
-        <text x="300" y="118" class="ta mono" font-size="12">HC-SR04 · ultrasonido · 2 cm–2 m</text>
-        <!-- FC-51 -->
-        <rect x="290" y="205" width="22" height="14" rx="3" class="box-b" transform="rotate(50 301 212)"/>
-        <path d="M308 222 L340 278" style="stroke:var(--blue);stroke-width:1.5" class="dash" marker-end="url(#mb)"/>
-        <text x="350" y="282" class="tb mono" font-size="12">FC-51 · infrarrojo</text>
-        <text x="350" y="300" class="t2" font-size="12.5">sin piso → aviso de desnivel</text>
-        <!-- ángulo -->
-        <path d="M318 244 V150" style="stroke:var(--ink-3)" class="dash"/>
-        <text x="150" y="196" class="t3 mono" font-size="11">ángulo de uso</text>
-        <text x="150" y="212" class="t3 mono" font-size="11">20°–75°</text>
-      </svg>
-      <div>
-        <div class="r" style="margin-bottom:22px">
-          <span class="pill a">HC-SR04</span>
-          <h3 style="margin-top:10px">Lo que está delante</h3>
-          <p>Un cono de unos 15° que mide la distancia a paredes, postes o personas hasta 2 m, antes de que la punta los toque.</p>
-        </div>
-        <div class="r" style="margin-bottom:22px">
-          <span class="pill b">FC-51</span>
-          <h3 style="margin-top:10px">Lo que falta debajo</h3>
-          <p>El ultrasonido apunta al frente y no ve un escalón que baja, un bordillo o un hueco. El FC-51, cerca de la punta y mirando al piso, detecta cuando el piso «desaparece».</p>
-        </div>
-        <div class="r">
-          <span class="pill">Costo</span>
-          <h3 style="margin-top:10px">Módulo simple y barato</h3>
-          <p>Salida digital de 3 pines, sin librerías, legible cada 10 ms. Se calibra con un potenciómetro.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ 09 ESTADO DEL ARTE ============ -->
-<section class="slide" data-title="Estado del arte">
-  <div class="kicker r"><b>04</b> Estado del arte y antecedentes</div>
-  <h2 class="r">Seis trabajos en tres líneas: bastones conectados, caídas con IMU y GPS, y monitoreo de adultos mayores</h2>
-  <div class="body">
-    <div class="grid g3" style="flex:1">
-      <div class="card r">
-        <span class="tag">Paredes Orozco y Domínguez-Morales · 2024</span>
-        <h3>Bastón con app, caídas y GPS</h3>
-        <p>Detecta obstáculos en suelo y torso. Exactitud ≈ 98 % y autonomía ≈ 50 h. Confirma que obstáculos, caídas y GPS caben en un bastón.</p>
-      </div>
-      <div class="card r">
-        <span class="tag">Tsantikidou et al. · 2025</span>
-        <h3>Bastón AAL con seguridad</h3>
-        <p>Ultrasonidos a suelo y cabeza, escaleras por visión, LoRa cifrado. +7,4 % de exactitud en obstáculos y −35,6 % de área en seguridad.</p>
-      </div>
-      <div class="card r">
-        <span class="tag">Fitriandini et al. · 2025</span>
-        <h3>Caídas con MPU6050 + NEO-6M</h3>
-        <p>El antecedente más cercano. Error de ubicación de 4,63 m y latencia de notificación de 4,71 s: nuestras cifras de referencia.</p>
-      </div>
-      <div class="card r">
-        <span class="tag">Abuelmakarem et al. · 2024</span>
-        <h3>Cinco ultrasonidos a 180°</h3>
-        <p>Escaleras, agua, llama y LED con LDR. Arduino Uno + NodeMCU y Blynk. El ultrasonido varía según el material del obstáculo.</p>
-      </div>
-      <div class="card r">
-        <span class="tag">Putera et al. · 2025</span>
-        <h3>ESP32 con sensores de salud</h3>
-        <p>Pulso, SpO₂, temperatura y GPS de 3–5 m sobre Blynk. Muestra que el ESP32 basta y que los biosensores exigen validación médica.</p>
-      </div>
-      <div class="card r">
-        <span class="tag">Shri Harini et al. · 2026</span>
-        <h3>Caídas con red neuronal MLP</h3>
-        <p>MPU6050 y un perceptrón multicapa para clasificar movimientos y caídas. Es el siguiente paso cuando el sistema por umbrales funcione.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ 10 COMPARATIVA ============ -->
-<section class="slide" data-title="Síntesis comparativa">
-  <div class="kicker r"><b>04</b> Estado del arte y antecedentes</div>
-  <h2 class="r">Ninguno reúne las cuatro funciones en un solo dispositivo</h2>
-  <div class="body">
-    <table>
-      <thead class="r"><tr><th>Estudio</th><th>Sensores principales</th><th>Controlador</th><th>Comunicación</th><th>Obstác.</th><th>Desnivel</th><th>Caídas</th><th>GPS</th></tr></thead>
-      <tbody>
-        <tr class="r"><td><b>Paredes Orozco y D.-M.</b></td><td>Obstáculos, IMU, GPS</td><td>No especificado</td><td>App (BLE)</td><td class="yes">Sí</td><td class="no">No</td><td class="yes">Sí</td><td class="yes">Sí</td></tr>
-        <tr class="r"><td><b>Tsantikidou et al.</b></td><td>Ultrasonidos, cámara, SOS</td><td>Arduino Nano + RPi Zero</td><td>LoRa cifrado</td><td class="yes">Sí</td><td class="yes">Sí</td><td class="no">No</td><td class="no">No</td></tr>
-        <tr class="r"><td><b>Fitriandini et al.</b></td><td>MPU6050, NEO-6M, buzzer</td><td>Tipo Arduino</td><td>Wi-Fi, app Android</td><td class="no">No</td><td class="no">No</td><td class="yes">Sí</td><td class="yes">Sí</td></tr>
-        <tr class="r"><td><b>Abuelmakarem et al.</b></td><td>5 ultrasonidos, agua, llama, LDR</td><td>Arduino Uno + NodeMCU</td><td>Wi-Fi, Blynk</td><td class="yes">Sí</td><td class="yes">Sí</td><td class="no">No</td><td class="yes">Sí</td></tr>
-        <tr class="r"><td><b>Putera et al.</b></td><td>MAX30102, MLX90614, GPS, cámara</td><td>ESP32</td><td>Wi-Fi, Blynk</td><td class="no">—</td><td class="no">No</td><td class="no">No</td><td class="yes">Sí</td></tr>
-        <tr class="r"><td><b>Shri Harini et al.</b></td><td>MPU6050, obstáculos</td><td>Embebido de bajo consumo</td><td>Nube, SMTP</td><td class="yes">Sí</td><td class="no">No</td><td class="yes">Sí (MLP)</td><td class="no">—</td></tr>
-        <tr class="r us"><td><b>SafeCane</b></td><td>HC-SR04, MPU6050, FC-51, NEO-6M, LDR</td><td>ESP32</td><td>BLE + Wi-Fi/MQTT</td><td class="yes">Sí</td><td class="yes">Sí</td><td class="yes">Sí</td><td class="yes">Sí</td></tr>
-      </tbody>
-    </table>
-    <p class="r small muted" style="margin-top:auto">El riesgo técnico es moderado: la pareja MPU6050 + NEO-6M ya tiene validación experimental (Fitriandini et al.) y el ESP32 se usa con éxito en un bastón comparable (Putera et al.).</p>
-  </div>
-</section>
-
-<!-- ============ 11 QUÉ TOMAMOS ============ -->
-<section class="slide" data-title="Lo que tomamos">
-  <div class="kicker r"><b>04</b> Estado del arte y antecedentes</div>
-  <h2 class="r">Lo que cada antecedente aporta al diseño</h2>
-  <div class="body">
-    <table>
-      <thead class="r"><tr><th style="width:280px">Fuente</th><th>Decisión de diseño</th></tr></thead>
-      <tbody>
-        <tr class="r"><td><b>Dakopoulos y Bourbakis</b></td><td>La vibración es el canal principal: el audio satura el oído y tapa el entorno.</td></tr>
-        <tr class="r"><td><b>Tsantikidou et al.</b></td><td>Los datos de ubicación y salud requieren protección: tópico único y opción de broker con autenticación.</td></tr>
-        <tr class="r"><td><b>Fitriandini et al.</b></td><td>MPU6050 + NEO-6M + buzzer como base, y sus cifras (4,63 m y 4,71 s) como referencia de las pruebas.</td></tr>
-        <tr class="r"><td><b>Abuelmakarem et al.</b></td><td>LED con LDR para ser visible de noche; un solo ESP32 en vez de dos microcontroladores.</td></tr>
-        <tr class="r"><td><b>Bourke et al.</b></td><td>Combinar un umbral inferior (caída libre) con uno superior (impacto) mejora la especificidad.</td></tr>
-        <tr class="r"><td><b>Geng · Appiah et al.</b></td><td>Confirmación interactiva antes de la alerta para reducir falsas alarmas en un bastón, que golpea el piso decenas de veces por minuto.</td></tr>
-        <tr class="r"><td><b>Shri Harini et al.</b></td><td>Umbrales primero; los datos registrados en las pruebas quedan listos para entrenar un clasificador después.</td></tr>
-      </tbody>
-    </table>
-  </div>
-</section>
-
-<!-- ============ 12 IoT + AAL ============ -->
-<section class="slide" data-title="IoT y AAL">
-  <div class="kicker r"><b>05</b> Fundamentos teóricos</div>
-  <h2 class="r">Internet de las Cosas y Ambient Assisted Living</h2>
-  <p class="lead r">Atzori et al. describen el IoT como objetos con sensores, conectados por protocolos estándar, cuyos datos se interpretan como servicios. El AAL aplica esa idea al cuidado: no reemplaza al cuidador, acorta el tiempo entre un evento y la respuesta humana.</p>
-  <div class="body">
-    <div class="grid g3" style="flex:1">
-      <div class="card r">
-        <span class="pill a">Capa 1</span>
-        <h3 style="margin-top:14px">Percepción</h3>
-        <p>El bastón: sensores de distancia, movimiento, piso, ubicación y luz, y actuadores de vibración, sonido y luz.</p>
-        <p class="mono small muted" style="margin-top:14px">HC-SR04 · MPU6050 · FC-51 · NEO-6M · LDR</p>
-      </div>
-      <div class="card r">
-        <span class="pill b">Capa 2</span>
-        <h3 style="margin-top:14px">Red</h3>
-        <p>Bluetooth de baja energía al celular cercano; Wi-Fi hacia un broker MQTT.</p>
-        <p class="mono small muted" style="margin-top:14px">BLE · Wi-Fi 2,4 GHz · MQTT</p>
-      </div>
-      <div class="card r">
-        <span class="pill g">Capa 3</span>
-        <h3 style="margin-top:14px">Aplicación</h3>
-        <p>Tablero web con estado, alertas, mapa y mensajes; notificación en el celular.</p>
-        <p class="mono small muted" style="margin-top:14px">Tablero web · celular</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ 13 ULTRASONIDO ============ -->
-<section class="slide" data-title="Ultrasonido">
-  <div class="kicker r"><b>05</b> Fundamentos teóricos</div>
-  <h2 class="r">Medición de distancia por tiempo de vuelo</h2>
-  <div class="body">
-    <div class="grid g2" style="gap:48px">
-      <div>
-        <p class="r">El HC-SR04 emite un tren de pulsos a <em>40 kHz</em> y mide el tiempo <em>t</em> hasta recibir el eco. Con la velocidad del sonido en el aire (≈ 343 m/s a 20 °C):</p>
-        <div class="formula r" style="margin:20px 0">d = v · t / 2</div>
-        <p class="r">El factor 2 compensa la ida y la vuelta. Sin eco en 25 ms (≈ 4 m) el firmware devuelve −1 y no vibra.</p>
-      </div>
-      <div>
-        <ol class="steps">
-          <li class="r">Cono de unos 15°: define la zona frontal cubierta.</li>
-          <li class="r">Superficies duras y planas reflejan bien; tela, vidrio o superficies inclinadas absorben o desvían la onda.</li>
-          <li class="r">El Echo sale a 5 V: un divisor 1 kΩ / 2 kΩ lo baja a 3,3 V para el ESP32.</li>
-          <li class="r">Se mide cada 100 ms, porque la lectura bloquea hasta 25 ms.</li>
-        </ol>
-      </div>
-    </div>
-    <div style="margin-top:auto">
-      <p class="r mono small muted" style="margin-bottom:10px">Vibración según la distancia</p>
-      <div class="zones r">
-        <div class="zone z1"><div class="bar"></div><b>Continua</b><span>&lt; 50 cm</span></div>
-        <div class="zone z2"><div class="bar"></div><b>Pulsos rápidos</b><span>50–100 cm</span></div>
-        <div class="zone z3"><div class="bar"></div><b>Pulsos lentos</b><span>100–200 cm</span></div>
-        <div class="zone z4"><div class="bar"></div><b>Sin aviso</b><span>&gt; 2 m</span></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ 14 IMU / CAÍDAS ============ -->
-<section class="slide" data-title="Detección de caídas">
-  <div class="kicker r"><b>05</b> Fundamentos teóricos</div>
-  <h2 class="r">Detección de caídas con una unidad de medición inercial</h2>
-  <div class="body">
-    <div class="grid" style="grid-template-columns:380px 1fr;gap:40px;flex:1">
-      <div>
-        <p class="r">El MPU6050 mide la aceleración en tres ejes. Su magnitud es la <em>Signal Vector Magnitude</em>:</p>
-        <div class="formula r" style="margin:16px 0 20px">SVM = √(a<sub>x</sub>² + a<sub>y</sub>² + a<sub>z</sub>²)</div>
-        <p class="r">En reposo vale ≈ 1 g. Una caída sigue tres fases, y el firmware exige las tres en orden:</p>
-        <ol class="steps" style="margin-top:14px">
-          <li class="r"><span><em>Caída libre:</em> SVM &lt; 0,5 g</span></li>
-          <li class="r"><span><em>Impacto:</em> SVM &gt; 2,5 g en el segundo siguiente</span></li>
-          <li class="r"><span><em>Inclinación:</em> &gt; 60° durante 2 s, medida 0,5 s después del impacto</span></li>
-        </ol>
-        <p class="r small muted" style="margin-top:16px">Escala de ±8 g a 50 Hz: en ±2 g el impacto se satura.</p>
-      </div>
-      <svg class="r" viewBox="0 0 640 330" width="100%" role="img" aria-label="Señal SVM durante una caída: caída libre bajo 0,5 g, impacto sobre 2,5 g y luego inclinación sostenida">
-        <!-- bandas -->
-        <rect x="171" y="30" width="50" height="250" style="fill:var(--blue-soft)"/>
-        <rect x="306" y="30" width="285" height="250" style="fill:var(--amber-soft)"/>
-        <!-- rejilla -->
-        <line x1="50" y1="280" x2="620" y2="280" class="grid-l"/>
-        <line x1="50" y1="217.5" x2="620" y2="217.5" class="grid-l"/>
-        <line x1="50" y1="155" x2="620" y2="155" class="grid-l"/>
-        <line x1="50" y1="92.5" x2="620" y2="92.5" class="grid-l"/>
-        <line x1="50" y1="30" x2="620" y2="30" class="grid-l"/>
-        <text x="40" y="284" text-anchor="end" class="t3 mono" font-size="11">0</text>
-        <text x="40" y="221" text-anchor="end" class="t3 mono" font-size="11">1 g</text>
-        <text x="40" y="159" text-anchor="end" class="t3 mono" font-size="11">2 g</text>
-        <text x="40" y="96" text-anchor="end" class="t3 mono" font-size="11">3 g</text>
-        <text x="40" y="34" text-anchor="end" class="t3 mono" font-size="11">4 g</text>
-        <!-- umbrales -->
-        <line x1="50" y1="248.75" x2="620" y2="248.75" style="stroke:var(--blue)" class="dash"/>
-        <line x1="50" y1="123.75" x2="620" y2="123.75" style="stroke:var(--accent)" class="dash"/>
-        <text x="616" y="243" text-anchor="end" class="tb mono" font-size="11">0,5 g</text>
-        <text x="616" y="118" text-anchor="end" class="ta mono" font-size="11">2,5 g</text>
-        <!-- señal -->
-        <path class="trace" pathLength="1" d="M50 217.5 L92.75 214.4 L121.25 218.75 L149.75 216.25 L171.1 236.25 L185.4 258.1 L206.75 261.25 L221 248.75 L235.25 67.5 L246.65 180 L256.6 148.75 L270.9 230 L285.1 198.75 L306.5 220.6 L335 215.6 L392 218.1 L477.5 216.9 L620 217.5"/>
-        <!-- etiquetas de fase -->
-        <text x="196" y="300" text-anchor="middle" class="tb" font-size="12" font-weight="600">1 · caída libre</text>
-        <text x="235" y="58" text-anchor="middle" class="ta" font-size="12" font-weight="600">2 · impacto</text>
-        <text x="448" y="300" text-anchor="middle" style="fill:var(--amber)" font-size="12" font-weight="600">3 · inclinación &gt; 60° durante 2 s</text>
-        <text x="620" y="322" text-anchor="end" class="t3 mono" font-size="11">tiempo →</text>
+        <path d="M0 420 H760 V540 H1660 V560 H0z" fill="#12302D"/>
+        <path d="M0 420 H760 V540 H1660" stroke="var(--sub)" stroke-width="3" fill="none"/>
+        <rect x="1380" y="250" width="70" height="290" rx="4" class="box"/>
+        <text x="1415" y="230" text-anchor="middle" class="t3 mono" font-size="20">obstáculo</text>
+        <path d="M420 40 L740 410" stroke="var(--paper)" stroke-width="10" stroke-linecap="round"/>
+        <path d="M722 390 L740 410" stroke="#e5484d" stroke-width="10" stroke-linecap="round"/>
+        <rect x="486" y="112" width="52" height="28" rx="4" class="box-a" transform="rotate(49 512 126)"/>
+        <path d="M530 140 L1366 330" class="wa dash" marker-end="url(#m-a)"/>
+        <path d="M530 140 L1366 260" class="wa dash" opacity=".35"/>
+        <path d="M530 140 L1366 410" class="wa dash" opacity=".35"/>
+        <text x="760" y="170" class="ta mono" font-size="24">HC-SR04 · ultrasonido · 2 cm–2 m</text>
+        <rect x="694" y="350" width="40" height="24" rx="4" class="box-m" transform="rotate(49 714 362)"/>
+        <path d="M728 378 L790 500" class="wm dash" marker-end="url(#m-m)"/>
+        <text x="810" y="480" class="tm mono" font-size="24">FC-51 · infrarrojo</text>
+        <text x="810" y="514" class="t2" font-size="24">sin piso → aviso de desnivel</text>
+        <path d="M740 410 V200" stroke="var(--dim)" stroke-width="1.5" class="dash"/>
+        <text x="560" y="300" class="t3 mono" font-size="20" text-anchor="end">ángulo de uso</text>
+        <text x="560" y="328" class="t3 mono" font-size="20" text-anchor="end">20°–75°</text>
       </svg>
     </div>
   </div>
+  <aside class="notes">El ultrasonido apunta al frente con un cono de unos 15°: no ve un escalón que baja, un bordillo ni un hueco. El FC-51 va cerca de la punta, mirando al piso, y detecta cuando el piso «desaparece». Es un módulo simple y barato: salida digital de 3 pines, calibrable con un potenciómetro.</aside>
 </section>
 
-<!-- ============ 15 INFRARROJO ============ -->
-<section class="slide" data-title="Reflexión infrarroja">
-  <div class="kicker r"><b>05</b> Fundamentos teóricos</div>
-  <h2 class="r">Detección de desniveles por reflexión infrarroja</h2>
-  <div class="body">
-    <div class="grid g2" style="gap:48px;flex:1">
-      <div>
-        <p class="r">El FC-51 emite luz infrarroja con un LED y mide <em>cuánta luz vuelve</em> al receptor. Un comparador LM393, ajustado con un potenciómetro, convierte esa intensidad en una salida digital:</p>
-        <div class="grid g2 r" style="margin:20px 0;gap:12px">
-          <div class="card" style="padding:16px 18px"><span class="pill g">OUT = LOW</span><p>Hay superficie: ve el piso.</p></div>
-          <div class="card" style="padding:16px 18px"><span class="pill a">OUT = HIGH</span><p>No vuelve luz: el piso «desapareció».</p></div>
-        </div>
-        <p class="r">Mide reflexión, no distancia. A 3,3 V ve el piso a <em>2–8 cm</em> según el color: los pisos claros reflejan mejor que los oscuros, y el sol directo puede cegar al receptor.</p>
-      </div>
-      <div>
-        <p class="r mono small muted" style="margin-bottom:12px">Condiciones del aviso de desnivel</p>
-        <ol class="steps">
-          <li class="r"><span>No ve el piso durante <em>200 ms</em> seguidos.</span></li>
-          <li class="r"><span>El bastón está en <em>ángulo de uso</em>: entre 20° y 75° respecto de la vertical, según el MPU6050.</span></li>
-          <li class="r"><span>El estado es NORMAL.</span></li>
-          <li class="r"><span>El aviso dura como máximo <em>1,5 s</em>: no suena al levantar el bastón para subir a un bus o sentarse.</span></li>
-        </ol>
-        <div class="card r" style="margin-top:22px;padding:16px 18px">
-          <h3 style="font-size:16px">Montaje</h3>
-          <p class="small">A 4–6 cm de la punta, con las lentes a 2–4 cm del piso e inclinadas 20–30° hacia adelante. Alimentado a 3,3 V para que su salida nunca supere el nivel del GPIO.</p>
-        </div>
-      </div>
+<!-- 17 · Decisiones de diseño -->
+<section class="slide" data-title="Decisiones de diseño">
+  <div class="pad">
+    <div class="tag reveal"><b>03</b> Justificación</div>
+    <h2 class="h2 reveal">Tres decisiones que bajan costo y riesgo</h2>
+    <div class="cols c3 bottom">
+      <div class="reveal"><div class="idx">Un chip</div><div class="h3" style="margin:18px 0 16px">ESP32</div><p class="txt">Wi-Fi y BLE integrados: reemplaza a la pareja Arduino + NodeMCU.</p></div>
+      <div class="reveal"><div class="idx">Un canal</div><div class="h3" style="margin:18px 0 16px">Vibración</div><p class="txt">No tapa los sonidos del entorno, de los que el usuario depende para orientarse.</p></div>
+      <div class="reveal"><div class="idx">Sin red</div><div class="h3" style="margin:18px 0 16px">Alerta local</div><p class="txt">Sensores y red en núcleos distintos: sin Wi-Fi, el bastón sigue avisando.</p></div>
     </div>
   </div>
+  <aside class="notes">Menos chips significa menos costo, consumo y puntos de falla. Dakopoulos y Bourbakis advierten que el audio satura el oído; por eso el sonido queda solo para desniveles y caídas.</aside>
 </section>
 
-<!-- ============ 16 GPS + COMUNICACIÓN ============ -->
-<section class="slide" data-title="Ubicación y comunicación">
-  <div class="kicker r"><b>05</b> Fundamentos teóricos</div>
-  <h2 class="r">Posicionamiento satelital y comunicación inalámbrica</h2>
-  <div class="body">
-    <div class="grid g3" style="flex:1">
-      <div class="card r">
-        <span class="tag">GPS · NEO-6M</span>
-        <h3>Latitud y longitud</h3>
-        <p>Calcula su posición con al menos 4 satélites y la entrega por puerto serie en sentencias NMEA (<span class="mono">$GPGGA</span>, <span class="mono">$GPRMC</span>).</p>
-        <p class="mono small muted" style="margin-top:14px">2,5 m CEP · arranque en frío ≈ 27 s · 9600 bps</p>
-      </div>
-      <div class="card r">
-        <span class="tag">MQTT · publicación/suscripción</span>
-        <h3>Un broker en medio</h3>
-        <p>El bastón publica mensajes en <em>tópicos</em>; el tablero se suscribe a ellos. Es ligero en ancho de banda y energía, adecuado para dispositivos con batería.</p>
-        <p class="mono small muted" style="margin-top:14px">ESP32 → broker (1883) → tablero (WebSocket)</p>
-      </div>
-      <div class="card r">
-        <span class="tag">BLE · Bluetooth de baja energía</span>
-        <h3>El celular cercano</h3>
-        <p>Conecta el bastón con el teléfono del usuario o del cuidador a corta distancia (≈ 10 m) y con bajo consumo. Notifica el estado y las alertas.</p>
-        <p class="mono small muted" style="margin-top:14px">Servicio UART · notificaciones JSON</p>
-      </div>
+<!-- 18 · 10 segundos -->
+<section class="slide" data-title="Confirmación">
+  <div class="pad">
+    <div class="tag reveal"><b>03</b> Justificación · falsas alarmas</div>
+    <div class="stat-wrap">
+      <div class="stat-n reveal">10 s</div>
+      <div class="reveal"><p class="lead">para cancelar antes de que salga la alerta. Un bastón golpea el piso decenas de veces por minuto.</p><p class="src" style="margin-top:20px">Confirmación interactiva · Geng, 2026</p></div>
     </div>
   </div>
+  <aside class="notes">A diferencia de un sensor fijo al cuerpo, el bastón puede caerse solo y golpea el suelo constantemente. La ventana de cancelación mantiene bajas las falsas alarmas. Usamos umbrales simples y explicables; los datos registrados servirán para entrenar un clasificador más adelante.</aside>
 </section>
 
-<!-- ============ 17 COMPONENTES ============ -->
-<section class="slide" data-title="Tecnologías">
-  <div class="kicker r"><b>05</b> Tecnologías utilizadas</div>
-  <h2 class="r">Componentes del prototipo</h2>
-  <div class="body">
-    <table>
-      <thead class="r"><tr><th style="width:220px">Componente</th><th>Especificación</th><th style="width:300px">Función</th></tr></thead>
-      <tbody>
-        <tr class="r"><td><b>ESP32-WROOM-32</b></td><td>Xtensa LX6 doble núcleo a 240 MHz, 520 KB SRAM, Wi-Fi + BLE, ADC 12 bits</td><td>Procesamiento, alertas y red</td></tr>
-        <tr class="r"><td><b>HC-SR04</b></td><td>5 V, 40 kHz, 2–400 cm, precisión ≈ 3 mm, cono ≈ 15°</td><td>Obstáculos frontales</td></tr>
-        <tr class="r"><td><b>MPU6050</b></td><td>Acelerómetro ±2/4/8/16 g y giroscopio, I2C, 16 bits</td><td>Caídas, inclinación y movimiento</td></tr>
-        <tr class="r"><td><b>FC-51</b></td><td>Emisor y receptor IR, comparador LM393, salida digital</td><td>Escalones, bordillos y huecos</td></tr>
-        <tr class="r"><td><b>GPS NEO-6M</b></td><td>2,5 m CEP, UART 9600 bps, antena cerámica</td><td>Ubicación de la alerta</td></tr>
-        <tr class="r"><td><b>Motor vibrador · buzzer · LED</b></td><td>Módulo 5 V por PWM · buzzer activo 85 dB · LED blanco con LDR GL5528</td><td>Avisos háptico, sonoro y visibilidad</td></tr>
-        <tr class="r"><td><b>18650 · TP4056 · MT3608</b></td><td>3000 mAh · cargador con protección · elevador a 5,0 V</td><td>Energía autónoma y recargable</td></tr>
-      </tbody>
-    </table>
-    <p class="r small muted" style="margin-top:auto">Firmware en Arduino IDE (core ESP32 3.x) con TinyGPSPlus, PubSubClient, ArduinoJson y NimBLE. Tablero web en HTML y JavaScript con MQTT sobre WebSocket y un mapa.</p>
-  </div>
+<!-- =========================================================
+     19 · SECCIÓN 04
+     ========================================================= -->
+<section class="slide section" data-title="04 Estado del arte">
+  <div class="tactile"></div><div class="cane"></div>
+  <div class="num reveal">04</div>
+  <h2 class="h2 reveal">Estado del arte<br>y antecedentes</h2>
+  <div class="tag reveal">SafeCane · Fundamentación teórica</div>
 </section>
 
-<!-- ============ 18 ARQUITECTURA ============ -->
-<section class="slide" data-title="Arquitectura">
-  <div class="kicker r"><b>06</b> Desarrollo conceptual</div>
-  <h2 class="r">Arquitectura: cinco bloques alrededor del ESP32</h2>
-  <div class="body" style="margin-top:18px">
-    <svg class="r" viewBox="0 0 1120 520" width="100%" style="flex:1" role="img" aria-label="Diagrama de bloques: siete entradas al ESP32, tres actuadores, comunicación BLE y MQTT, y alimentación por batería">
-      <defs>
-        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10z" class="ah"/></marker>
-        <marker id="ara" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10z" class="ah-a"/></marker>
-      </defs>
-      <text x="0" y="12" class="t3 mono" font-size="11" letter-spacing=".05em">ENTRADAS</text>
-      <text x="830" y="12" class="t3 mono" font-size="11" letter-spacing=".05em">SALIDAS</text>
-      <text x="830" y="232" class="t3 mono" font-size="11" letter-spacing=".05em">COMUNICACIÓN</text>
-
-      <!-- Entradas -->
-      <g font-size="14">
-        <rect x="0" y="24" width="250" height="50" rx="9" class="box"/><text x="16" y="45" font-weight="600">HC-SR04</text><text x="16" y="63" class="t3 mono" font-size="11">obstáculos · GPIO 5/18</text>
-        <rect x="0" y="86" width="250" height="50" rx="9" class="box"/><text x="16" y="107" font-weight="600">MPU6050</text><text x="16" y="125" class="t3 mono" font-size="11">caídas e inclinación · I2C</text>
-        <rect x="0" y="148" width="250" height="50" rx="9" class="box-b"/><text x="16" y="169" font-weight="600">FC-51</text><text x="16" y="187" class="t3 mono" font-size="11">desnivel · GPIO 34</text>
-        <rect x="0" y="210" width="250" height="50" rx="9" class="box"/><text x="16" y="231" font-weight="600">GPS NEO-6M</text><text x="16" y="249" class="t3 mono" font-size="11">ubicación · UART2</text>
-        <rect x="0" y="272" width="250" height="50" rx="9" class="box"/><text x="16" y="293" font-weight="600">LDR</text><text x="16" y="311" class="t3 mono" font-size="11">luz ambiente · ADC1</text>
-        <rect x="0" y="334" width="250" height="50" rx="9" class="box"/><text x="16" y="355" font-weight="600">Pulsador</text><text x="16" y="373" class="t3 mono" font-size="11">cancelar alerta · GPIO 27</text>
-        <rect x="0" y="396" width="250" height="50" rx="9" class="box"/><text x="16" y="417" font-weight="600">Batería</text><text x="16" y="435" class="t3 mono" font-size="11">divisor 100k/100k · GPIO 36</text>
-      </g>
-      <g class="wire" marker-end="url(#ar)">
-        <path d="M250 49 H356" marker-end="url(#ar)"/>
-        <path d="M250 111 H356" marker-end="url(#ar)"/>
-        <path d="M250 173 H356" marker-end="url(#ar)"/>
-        <path d="M250 235 H356" marker-end="url(#ar)"/>
-        <path d="M250 297 H356" marker-end="url(#ar)"/>
-        <path d="M250 359 H356" marker-end="url(#ar)"/>
-        <path d="M250 421 H356" marker-end="url(#ar)"/>
-      </g>
-
-      <!-- ESP32 -->
-      <rect x="360" y="24" width="360" height="422" rx="14" class="box-a"/>
-      <text x="540" y="62" text-anchor="middle" font-size="20" font-weight="600">ESP32-WROOM-32</text>
-      <text x="540" y="84" text-anchor="middle" class="ta mono" font-size="11.5">doble núcleo · Wi-Fi + BLE</text>
-      <rect x="384" y="108" width="312" height="176" rx="10" class="box"/>
-      <text x="402" y="134" font-size="14" font-weight="600">Núcleo 1 · sensores y decisiones</text>
-      <g class="t2" font-size="13">
-        <text x="402" y="162">Piso cada 10 ms · IMU a 50 Hz</text>
-        <text x="402" y="186">Distancia cada 100 ms</text>
-        <text x="402" y="210">Algoritmo de caída (SVM + ángulo)</text>
-        <text x="402" y="234">Máquina de estados</text>
-        <text x="402" y="258">Patrones de vibración, buzzer y LED</text>
-      </g>
-      <rect x="384" y="300" width="312" height="122" rx="10" class="box"/>
-      <text x="402" y="326" font-size="14" font-weight="600">Núcleo 0 · comunicación</text>
-      <g class="t2" font-size="13">
-        <text x="402" y="354">Wi-Fi y reconexión MQTT</text>
-        <text x="402" y="378">Publicación de estado, alerta y GPS</text>
-        <text x="402" y="402">Notificaciones BLE</text>
-      </g>
-
-      <!-- Salidas -->
-      <g class="wire-a">
-        <path d="M720 49 H826" marker-end="url(#ara)"/>
-        <path d="M720 111 H826" marker-end="url(#ara)"/>
-        <path d="M720 173 H826" marker-end="url(#ara)"/>
-      </g>
-      <g font-size="14">
-        <rect x="830" y="24" width="290" height="50" rx="9" class="box"/><text x="846" y="45" font-weight="600">Motor vibrador</text><text x="846" y="63" class="t3 mono" font-size="11">aviso háptico · PWM 25</text>
-        <rect x="830" y="86" width="290" height="50" rx="9" class="box"/><text x="846" y="107" font-weight="600">Buzzer activo</text><text x="846" y="125" class="t3 mono" font-size="11">desnivel y alarma · GPIO 26</text>
-        <rect x="830" y="148" width="290" height="50" rx="9" class="box"/><text x="846" y="169" font-weight="600">LED blanco</text><text x="846" y="187" class="t3 mono" font-size="11">visibilidad nocturna · GPIO 33</text>
-      </g>
-
-      <!-- Comunicación -->
-      <g class="wire">
-        <path d="M720 269 H826" marker-end="url(#ar)"/>
-        <path d="M720 331 H826" marker-end="url(#ar)"/>
-        <path d="M975 356 V390" marker-end="url(#ar)"/>
-      </g>
-      <text x="773" y="262" text-anchor="middle" class="t3 mono" font-size="11">BLE</text>
-      <text x="773" y="324" text-anchor="middle" class="t3 mono" font-size="11">Wi-Fi</text>
-      <g font-size="14">
-        <rect x="830" y="244" width="290" height="50" rx="9" class="box-g"/><text x="846" y="265" font-weight="600">Celular cercano</text><text x="846" y="283" class="t3 mono" font-size="11">estado y alertas · ≈ 10 m</text>
-        <rect x="830" y="306" width="290" height="50" rx="9" class="box-g"/><text x="846" y="327" font-weight="600">Broker MQTT</text><text x="846" y="345" class="t3 mono" font-size="11">tópicos estado · alerta · gps</text>
-        <rect x="830" y="394" width="290" height="52" rx="9" class="box-g"/><text x="846" y="415" font-weight="600">Tablero web</text><text x="846" y="433" class="t3 mono" font-size="11">estado · alerta · mapa · mensajes</text>
-      </g>
-
-      <!-- Alimentación -->
-      <path d="M540 470 V450" class="wire" marker-end="url(#ar)"/>
-      <rect x="190" y="470" width="700" height="46" rx="9" class="box-s"/>
-      <text x="540" y="498" text-anchor="middle" font-size="14"><tspan font-weight="600">Alimentación</tspan><tspan class="t2"> · 18650 → TP4056 (protegido) → interruptor → MT3608 5,0 V · regulador 3,3 V</tspan></text>
-    </svg>
-  </div>
-</section>
-
-<!-- ============ 19 MÁQUINA DE ESTADOS ============ -->
-<section class="slide" data-title="Máquina de estados">
-  <div class="kicker r"><b>06</b> Desarrollo conceptual</div>
-  <h2 class="r">Lógica de funcionamiento: cuatro estados</h2>
-  <p class="lead r">El firmware nunca se detiene: cada tarea corre con su propio periodo, sin <span class="mono" style="font-size:18px">delay()</span>. El pulsador es la única salida de ALERTA.</p>
-  <div class="body" style="margin-top:20px">
-    <svg class="r" viewBox="0 0 1120 380" width="100%" role="img" aria-label="Máquina de estados NORMAL, PRE_ALERTA, ALERTA y REPOSO con sus transiciones">
-      <defs>
-        <marker id="sm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto"><path d="M0 0 L10 5 L0 10z" class="ah"/></marker>
-        <marker id="sma" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto"><path d="M0 0 L10 5 L0 10z" class="ah-a"/></marker>
-      </defs>
-      <!-- nodos -->
-      <rect x="40" y="96" width="260" height="96" rx="14" class="box-g"/>
-      <text x="170" y="132" text-anchor="middle" font-size="18" font-weight="600" class="mono">NORMAL</text>
-      <text x="170" y="156" text-anchor="middle" font-size="13" class="t2">vibra según la distancia</text>
-      <text x="170" y="174" text-anchor="middle" font-size="13" class="t2">avisa de desniveles</text>
-
-      <rect x="430" y="96" width="260" height="96" rx="14" class="box" style="fill:var(--amber-soft);stroke:var(--amber)"/>
-      <text x="560" y="132" text-anchor="middle" font-size="18" font-weight="600" class="mono">PRE_ALERTA</text>
-      <text x="560" y="156" text-anchor="middle" font-size="13" class="t2">vibración 600 ms / 1 s</text>
-      <text x="560" y="174" text-anchor="middle" font-size="13" class="t2">10 s para cancelar</text>
-
-      <rect x="820" y="96" width="260" height="96" rx="14" class="box-a"/>
-      <text x="950" y="132" text-anchor="middle" font-size="18" font-weight="600" class="mono">ALERTA</text>
-      <text x="950" y="156" text-anchor="middle" font-size="13" class="t2">buzzer y LED intermitentes</text>
-      <text x="950" y="174" text-anchor="middle" font-size="13" class="t2">MQTT + BLE con GPS</text>
-
-      <rect x="40" y="280" width="260" height="84" rx="14" class="box"/>
-      <text x="170" y="316" text-anchor="middle" font-size="18" font-weight="600" class="mono">REPOSO</text>
-      <text x="170" y="340" text-anchor="middle" font-size="13" class="t2">actuadores apagados</text>
-
-      <!-- transiciones -->
-      <path d="M300 124 H426" class="wire-a" marker-end="url(#sma)"/>
-      <text x="363" y="114" text-anchor="middle" font-size="12.5" class="ta">caída confirmada</text>
-      <path d="M430 168 H304" class="wire" marker-end="url(#sm)"/>
-      <text x="367" y="188" text-anchor="middle" font-size="12.5" class="t2">pulsador &lt; 10 s</text>
-      <path d="M690 144 H816" class="wire-a" marker-end="url(#sma)"/>
-      <text x="753" y="134" text-anchor="middle" font-size="12.5" class="ta">10 s sin cancelar</text>
-      <path d="M950 96 V44 H170 V92" class="wire" marker-end="url(#sm)"/>
-      <text x="560" y="36" text-anchor="middle" font-size="12.5" class="t2">pulsador · publica «cancelada»</text>
-      <path d="M130 192 V276" class="wire" marker-end="url(#sm)"/>
-      <text x="122" y="240" text-anchor="end" font-size="12.5" class="t2">5 min sin movimiento</text>
-      <path d="M210 280 V196" class="wire" marker-end="url(#sm)"/>
-      <text x="220" y="240" font-size="12.5" class="t2">movimiento</text>
-
-      <!-- notas -->
-      <g transform="translate(430 250)">
-        <rect width="650" height="120" rx="12" class="box-s"/>
-        <text x="20" y="30" font-size="13" class="t3 mono">USO ACTIVO Y AHORRO</text>
-        <text x="20" y="56" font-size="14" class="t2">El movimiento del MPU6050 (|SVM − 1| &gt; 0,15 g) indica que el bastón está en uso.</text>
-        <text x="20" y="79" font-size="14" class="t2">Sin movimiento durante 5 min pasa a REPOSO; al levantarlo vuelve a NORMAL.</text>
-        <text x="20" y="102" font-size="14" class="t2">La caída confirmada exige caída libre, impacto e inclinación sostenida.</text>
-      </g>
-    </svg>
-  </div>
-</section>
-
-<!-- ============ 20 PATRONES DE AVISO ============ -->
-<section class="slide" data-title="Patrones de aviso">
-  <div class="kicker r"><b>06</b> Desarrollo conceptual</div>
-  <h2 class="r">Cada situación tiene un aviso distinto, reconocible al tacto</h2>
-  <div class="body">
-    <div class="r card" style="padding:6px 24px">
-      <div class="pattern"><div><b>Obstáculo cercano</b><span class="who">motor · &lt; 50 cm</span></div><div class="wave w-cont"></div><div class="ms">continuo</div></div>
-      <div class="pattern"><div><b>Obstáculo medio</b><span class="who">motor · 50–100 cm</span></div><div class="wave w-fast"></div><div class="ms">pulsos de 100 ms</div></div>
-      <div class="pattern"><div><b>Obstáculo lejano</b><span class="who">motor · 1–2 m</span></div><div class="wave w-slow"></div><div class="ms">pulsos de 300 ms</div></div>
-      <div class="pattern"><div><b>Desnivel</b><span class="who">motor + buzzer · prioridad</span></div><div class="wave w-step"></div><div class="ms">100 / 100 ms · máx 1,5 s</div></div>
-      <div class="pattern"><div><b>Pre-alerta de caída</b><span class="who">motor</span></div><div class="wave w-pre"></div><div class="ms">600 / 400 ms</div></div>
-      <div class="pattern"><div><b>Alerta de caída</b><span class="who">buzzer + LED</span></div><div class="wave w-alert"></div><div class="ms">250 / 250 ms</div></div>
-    </div>
-    <p class="r small muted" style="margin-top:auto">El aviso de desnivel tiene prioridad sobre el de obstáculos. Con poca luz, la LDR enciende el LED blanco para que el usuario sea visible.</p>
-  </div>
-</section>
-
-<!-- ============ 21 FLUJO DE DATOS ============ -->
-<section class="slide" data-title="Flujo de la alerta">
-  <div class="kicker r"><b>06</b> Desarrollo conceptual</div>
-  <h2 class="r">Recorrido de una alerta, del sensor al tablero</h2>
-  <div class="body">
-    <div class="grid g4 r" style="gap:12px">
-      <div class="card"><span class="pill">1 · detección</span><p>El MPU6050 registra caída libre, impacto e inclinación.</p></div>
-      <div class="card"><span class="pill y">2 · confirmación</span><p>PRE_ALERTA: 10 s de vibración para cancelar con el pulsador.</p></div>
-      <div class="card"><span class="pill a">3 · alerta local</span><p>Buzzer y LED. Funciona aunque no haya red.</p></div>
-      <div class="card"><span class="pill b">4 · notificación</span><p>JSON con lat/lon por MQTT y BLE; reintenta cada 1 s.</p></div>
-    </div>
-    <table class="t-lg" style="margin-top:28px">
-      <thead class="r"><tr><th style="width:240px">Tópico MQTT</th><th>Contenido (JSON)</th><th style="width:260px">Frecuencia</th></tr></thead>
-      <tbody>
-        <tr class="r"><td class="mono"><b>safecane/…/estado</b></td><td>estado, distancia, desnivel, uso, batería</td><td>Cada 5 s</td></tr>
-        <tr class="r"><td class="mono"><b>safecane/…/alerta</b></td><td>tipo (<span class="mono">caida</span> o <span class="mono">cancelada</span>), lat, lon, satélites · retenido</td><td>Al entrar en ALERTA y al cancelar</td></tr>
-        <tr class="r"><td class="mono"><b>safecane/…/gps</b></td><td>lat, lon, satélites, hdop</td><td>Cada 30 s, solo con señal</td></tr>
-      </tbody>
-    </table>
-  </div>
-</section>
-
-<!-- ============ 22 ALIMENTACIÓN ============ -->
-<section class="slide" data-title="Alimentación">
-  <div class="kicker r"><b>06</b> Desarrollo conceptual</div>
-  <h2 class="r">Alimentación y autonomía estimada</h2>
-  <div class="body">
-    <div class="grid g2" style="gap:48px;flex:1">
-      <div>
-        <ol class="steps">
-          <li class="r"><span>Celda <em>18650</em> de 3000 mAh como fuente.</span></li>
-          <li class="r"><span><em>TP4056 con protección</em>: carga por micro-USB y corta si la celda baja de ≈ 2,5 V.</span></li>
-          <li class="r"><span><em>MT3608</em> eleva a 5,0 V para HC-SR04, GPS, motor, buzzer y LED.</span></li>
-          <li class="r"><span>El regulador del ESP32 da 3,3 V a MPU6050, FC-51 y LDR.</span></li>
-          <li class="r"><span>Un divisor 100 kΩ / 100 kΩ mide la batería; bajo 3,3 V durante 10 s, el bastón da 3 pitidos y se apaga de forma ordenada.</span></li>
-        </ol>
-      </div>
-      <div class="card r" style="display:flex;flex-direction:column">
-        <p class="mono small muted">Consumo promedio estimado</p>
-        <table style="margin-top:8px">
-          <tbody>
-            <tr><td>ESP32 con comunicación intermitente</td><td class="mono" style="text-align:right">80 mA</td></tr>
-            <tr><td>GPS</td><td class="mono" style="text-align:right">45 mA</td></tr>
-            <tr><td>Demás sensores y LED</td><td class="mono" style="text-align:right">20 mA</td></tr>
-            <tr><td>Motor y buzzer (intermitentes)</td><td class="mono" style="text-align:right">25 mA</td></tr>
-            <tr><td><b>Total</b></td><td class="mono" style="text-align:right"><b>≈ 170 mA</b></td></tr>
-          </tbody>
-        </table>
-        <div style="margin-top:auto;padding-top:18px">
-          <div class="formula" style="font-size:18px">3000 mAh × 0,85 / 170 mA ≈ <span class="accent">15 h</span></div>
-          <p class="small" style="margin-top:12px">Suficiente para una jornada de uso. El valor real se medirá en las pruebas.</p>
-        </div>
-      </div>
+<!-- 20 · Seis trabajos -->
+<section class="slide" data-title="Seis trabajos">
+  <div class="pad">
+    <div class="tag reveal"><b>04</b> Antecedentes · cada integrante revisó dos</div>
+    <div class="cols c3 grow" style="margin-top:48px;row-gap:28px;grid-template-rows:1fr 1fr">
+      <div class="panel reveal" style="display:flex;flex-direction:column"><p class="src">Paredes Orozco y Domínguez-Morales · 2024</p><div class="stat-n bottom" style="font-size:120px">≈98%</div><p class="txt" style="font-size:24px;margin-top:10px">exactitud · obstáculos, caídas y GPS</p></div>
+      <div class="panel reveal" style="display:flex;flex-direction:column"><p class="src">Tsantikidou et al. · 2025</p><div class="stat-n bottom" style="font-size:120px">+7,4%</div><p class="txt" style="font-size:24px;margin-top:10px">en obstáculos · LoRa cifrado</p></div>
+      <div class="panel reveal" style="display:flex;flex-direction:column"><p class="src">Fitriandini et al. · 2025</p><div class="stat-n bottom" style="font-size:120px">4,71 s</div><p class="txt" style="font-size:24px;margin-top:10px">latencia · MPU6050 + NEO-6M</p></div>
+      <div class="panel reveal" style="display:flex;flex-direction:column"><p class="src">Abuelmakarem et al. · 2024</p><div class="stat-n bottom" style="font-size:120px">180°</div><p class="txt" style="font-size:24px;margin-top:10px">cinco ultrasonidos · escaleras</p></div>
+      <div class="panel reveal" style="display:flex;flex-direction:column"><p class="src">Putera et al. · 2025</p><div class="stat-n bottom" style="font-size:120px">3–5 m</div><p class="txt" style="font-size:24px;margin-top:10px">GPS · ESP32 con sensores de salud</p></div>
+      <div class="panel reveal" style="display:flex;flex-direction:column"><p class="src">Shri Harini et al. · 2026</p><div class="stat-n bottom" style="font-size:120px">MLP</div><p class="txt" style="font-size:24px;margin-top:10px">red neuronal para clasificar caídas</p></div>
     </div>
   </div>
+  <aside class="notes">Tres líneas: bastones con detección de obstáculos y conectividad; detección de caídas con IMU y GPS; y bastones para monitorear adultos mayores. Fitriandini es el antecedente más cercano: error de ubicación de 4,63 m y latencia de 4,71 s. Putera muestra que el ESP32 basta, y que los biosensores exigen validación médica. Shri Harini marca el siguiente paso: pasar de umbrales a un clasificador.</aside>
 </section>
 
-<!-- ============ 23 VALIDACIÓN ============ -->
-<section class="slide" data-title="Validación prevista">
-  <div class="kicker r"><b>06</b> Desarrollo conceptual</div>
-  <h2 class="r">Cómo se validará: métricas y metas</h2>
-  <div class="body">
-    <div class="grid g2" style="gap:40px;flex:1">
+<!-- 21 · Comparativa -->
+<section class="slide" data-title="Comparativa">
+  <div class="pad">
+    <div class="tag reveal"><b>04</b> Síntesis comparativa</div>
+    <h2 class="h2 reveal" style="font-size:96px">Ninguno reúne las cuatro</h2>
+    <div class="bottom reveal">
       <table>
-        <thead class="r"><tr><th>Métrica</th><th>Meta</th><th>Referencia</th></tr></thead>
+        <thead><tr><th>Estudio</th><th>Controlador</th><th class="c">Obstáculos</th><th class="c">Desniveles</th><th class="c">Caídas</th><th class="c">GPS</th></tr></thead>
         <tbody>
-          <tr class="r"><td>Error de distancia</td><td><b>&lt; 3 cm</b></td><td class="muted">—</td></tr>
-          <tr class="r"><td>Sensibilidad de caídas</td><td><b>≥ 90 %</b></td><td class="muted">—</td></tr>
-          <tr class="r"><td>Detección de escalones y bordillos</td><td><b>≥ 90 %</b></td><td class="muted">aporte propio</td></tr>
-          <tr class="r"><td>Primera posición GPS</td><td><b>&lt; 2 min</b></td><td class="muted">—</td></tr>
-          <tr class="r"><td>Error de posición</td><td>medido</td><td class="muted">4,63 m</td></tr>
-          <tr class="r"><td>Latencia de alerta al tablero</td><td><b>&lt; 5 s</b></td><td class="muted">4,71 s</td></tr>
-          <tr class="r"><td>Autonomía</td><td><b>≈ 15 h</b></td><td class="muted">≈ 50 h</td></tr>
+          <tr><td><b>Paredes Orozco y D.-M.</b></td><td>No especificado</td><td class="c"><i class="dome"></i></td><td class="c"><i class="ring"></i></td><td class="c"><i class="dome"></i></td><td class="c"><i class="dome"></i></td></tr>
+          <tr><td><b>Tsantikidou et al.</b></td><td>Arduino Nano + RPi Zero</td><td class="c"><i class="dome"></i></td><td class="c"><i class="dome"></i></td><td class="c"><i class="ring"></i></td><td class="c"><i class="ring"></i></td></tr>
+          <tr><td><b>Fitriandini et al.</b></td><td>Tipo Arduino</td><td class="c"><i class="ring"></i></td><td class="c"><i class="ring"></i></td><td class="c"><i class="dome"></i></td><td class="c"><i class="dome"></i></td></tr>
+          <tr><td><b>Abuelmakarem et al.</b></td><td>Arduino Uno + NodeMCU</td><td class="c"><i class="dome"></i></td><td class="c"><i class="dome"></i></td><td class="c"><i class="ring"></i></td><td class="c"><i class="dome"></i></td></tr>
+          <tr><td><b>Putera et al.</b></td><td>ESP32</td><td class="c"><span class="na">—</span></td><td class="c"><i class="ring"></i></td><td class="c"><i class="ring"></i></td><td class="c"><i class="dome"></i></td></tr>
+          <tr><td><b>Shri Harini et al.</b></td><td>Embebido de bajo consumo</td><td class="c"><i class="dome"></i></td><td class="c"><i class="ring"></i></td><td class="c"><i class="dome"></i></td><td class="c"><span class="na">—</span></td></tr>
+          <tr class="us"><td><b class="acc">SafeCane</b></td><td>ESP32 · BLE + Wi-Fi/MQTT</td><td class="c"><i class="dome"></i></td><td class="c"><i class="dome"></i></td><td class="c"><i class="dome"></i></td><td class="c"><i class="dome"></i></td></tr>
         </tbody>
       </table>
-      <div>
-        <p class="r">Las caídas se simulan sobre colchoneta, solo con integrantes del equipo, y se registran a 50 Hz para calcular:</p>
-        <div class="formula r" style="margin:18px 0;font-size:18px;line-height:1.7">Sensibilidad = VP / (VP + FN)<br>Especificidad = VN / (VN + FP)</div>
-        <p class="r">Escenarios negativos: marcha normal, sentarse, golpear la punta, escaleras y soltar el bastón. Para desniveles: escalones, bordillos y caminata en plano.</p>
-      </div>
     </div>
   </div>
+  <aside class="notes">Relieve lleno = sí; anillo vacío = no; guion = no reportado. El riesgo técnico es moderado: la pareja MPU6050 + NEO-6M ya tiene validación experimental (Fitriandini) y el ESP32 se usa con éxito en un bastón comparable (Putera).</aside>
 </section>
 
-<!-- ============ 24 ALCANCE ============ -->
+<!-- 22 · Lo que tomamos -->
+<section class="slide" data-title="Lo que tomamos">
+  <div class="pad">
+    <div class="tag reveal"><b>04</b> Lo que tomamos de cada uno</div>
+    <h2 class="h2 reveal">Lo que aporta cada antecedente</h2>
+    <div class="cols c3 bottom">
+      <div class="reveal" style="border-left:3px solid var(--acc);padding-left:32px"><p class="src">Dakopoulos y Bourbakis</p><div class="h3" style="margin:22px 0 18px">Vibración primero</div><p class="txt">El audio enmascara el entorno.</p></div>
+      <div class="reveal" style="border-left:3px solid var(--acc);padding-left:32px"><p class="src">Bourke · Geng · Appiah</p><div class="h3" style="margin:22px 0 18px">Dos umbrales y confirmación</div><p class="txt">Caída libre + impacto, y una ventana para cancelar.</p></div>
+      <div class="reveal" style="border-left:3px solid var(--acc);padding-left:32px"><p class="src">Fitriandini · Abuelmakarem</p><div class="h3" style="margin:22px 0 18px">MPU6050 + NEO-6M + LDR</div><p class="txt">Base validada y LED automático de noche.</p></div>
+    </div>
+  </div>
+  <aside class="notes">De Tsantikidou: los datos de ubicación requieren protección; por eso usamos un tópico único y la opción de broker con autenticación. De Fitriandini tomamos además las cifras de referencia para las pruebas: 4,63 m y 4,71 s.</aside>
+</section>
+
+<!-- =========================================================
+     23 · SECCIÓN 05
+     ========================================================= -->
+<section class="slide section" data-title="05 Fundamentos">
+  <div class="tactile"></div><div class="cane"></div>
+  <div class="num reveal">05</div>
+  <h2 class="h2 reveal">Fundamentos teóricos<br>y tecnologías</h2>
+  <div class="tag reveal">SafeCane · Fundamentación teórica</div>
+</section>
+
+<!-- 24 · IoT y AAL -->
+<section class="slide" data-title="IoT y AAL">
+  <div class="pad">
+    <div class="tag reveal"><b>05</b> Internet de las Cosas · Ambient Assisted Living</div>
+    <h2 class="h2 reveal">Tres capas</h2>
+    <div class="bottom" style="display:grid;gap:18px">
+      <div class="reveal" style="display:grid;grid-template-columns:120px 420px 1fr;align-items:center;background:var(--bg-2);border-left:6px solid var(--acc);padding:34px 40px"><span class="idx">01</span><div class="h3">Percepción</div><p class="txt">El bastón: sensores y actuadores</p></div>
+      <div class="reveal" style="display:grid;grid-template-columns:120px 420px 1fr;align-items:center;background:var(--bg-2);border-left:6px solid var(--mint);padding:34px 40px"><span class="idx">02</span><div class="h3">Red</div><p class="txt">BLE al celular · Wi-Fi y MQTT al broker</p></div>
+      <div class="reveal" style="display:grid;grid-template-columns:120px 420px 1fr;align-items:center;background:var(--bg-2);border-left:6px solid var(--ring);padding:34px 40px"><span class="idx">03</span><div class="h3">Aplicación</div><p class="txt">Tablero web con estado, alertas y mapa</p></div>
+    </div>
+  </div>
+  <aside class="notes">Atzori et al. describen el IoT como objetos con sensores, conectados por protocolos estándar, cuyos datos se interpretan como servicios. El AAL aplica esa idea al cuidado: no reemplaza al cuidador, acorta el tiempo entre un evento adverso y la respuesta humana.</aside>
+</section>
+
+<!-- 25 · Ultrasonido -->
+<section class="slide" data-title="Ultrasonido">
+  <div class="pad">
+    <div class="tag reveal"><b>05</b> Medición por tiempo de vuelo · HC-SR04</div>
+    <div class="reveal" style="margin-top:64px;font:900 230px/.9 var(--f-display);letter-spacing:.01em">d = <span class="acc">v</span> · <span class="acc">t</span> / 2</div>
+    <p class="lead reveal" style="margin-top:28px">Pulso de 40 kHz, eco de vuelta, sonido a 343 m/s.</p>
+    <div class="bottom reveal" style="display:grid;grid-template-columns:1fr 1fr 2fr 1fr;gap:6px">
+      <div><div class="wave w-cont"></div><p class="h3" style="font-size:40px;margin-top:18px">Continua</p><p class="src">&lt; 50 cm</p></div>
+      <div><div class="wave w-fast"></div><p class="h3" style="font-size:40px;margin-top:18px">Rápida</p><p class="src">50–100 cm</p></div>
+      <div><div class="wave w-slow"></div><p class="h3" style="font-size:40px;margin-top:18px">Lenta</p><p class="src">1–2 m</p></div>
+      <div><div class="wave" style="background:var(--line)"></div><p class="h3" style="font-size:40px;margin-top:18px;color:var(--dim)">Nada</p><p class="src">&gt; 2 m</p></div>
+    </div>
+  </div>
+  <aside class="notes">El factor 2 compensa la ida y la vuelta. Cono de unos 15°. Superficies duras reflejan bien; tela y vidrio absorben o desvían la onda. El Echo sale a 5 V y un divisor 1 kΩ / 2 kΩ lo baja a 3,3 V. Se mide cada 100 ms porque la lectura bloquea hasta 25 ms; sin eco devuelve −1 y no vibra.</aside>
+</section>
+
+<!-- 26 · SVM -->
+<section class="slide" data-title="Detección de caídas">
+  <div class="pad">
+    <div class="tag reveal"><b>05</b> Caídas con una IMU · MPU6050</div>
+    <div class="reveal" style="margin-top:44px;font:900 130px/.9 var(--f-display)">SVM = √(a<sub style="font-size:.4em">x</sub>² + a<sub style="font-size:.4em">y</sub>² + a<sub style="font-size:.4em">z</sub>²)</div>
+    <div class="grow reveal" style="margin-top:30px">
+      <svg viewBox="0 0 1660 520" width="1660" role="img" aria-label="Señal SVM: caída libre bajo 0,5 g, impacto sobre 2,5 g y luego inclinación sostenida">
+        <rect x="430" y="20" width="140" height="420" fill="#1b4a44"/>
+        <rect x="800" y="20" width="800" height="420" fill="#2b3a2c"/>
+        <line x1="90" y1="440" x2="1600" y2="440" class="gl"/>
+        <line x1="90" y1="335" x2="1600" y2="335" class="gl"/>
+        <line x1="90" y1="230" x2="1600" y2="230" class="gl"/>
+        <line x1="90" y1="125" x2="1600" y2="125" class="gl"/>
+        <line x1="90" y1="20" x2="1600" y2="20" class="gl"/>
+        <text x="70" y="447" text-anchor="end" class="t3 mono" font-size="20">0</text>
+        <text x="70" y="342" text-anchor="end" class="t3 mono" font-size="20">1 g</text>
+        <text x="70" y="237" text-anchor="end" class="t3 mono" font-size="20">2 g</text>
+        <text x="70" y="132" text-anchor="end" class="t3 mono" font-size="20">3 g</text>
+        <text x="70" y="27" text-anchor="end" class="t3 mono" font-size="20">4 g</text>
+        <line x1="90" y1="387.5" x2="1600" y2="387.5" stroke="var(--mint)" stroke-width="2" class="dash"/>
+        <line x1="90" y1="177.5" x2="1600" y2="177.5" stroke="var(--acc)" stroke-width="2" class="dash"/>
+        <text x="1592" y="377" text-anchor="end" class="tm mono" font-size="20">0,5 g</text>
+        <text x="1592" y="167" text-anchor="end" class="ta mono" font-size="20">2,5 g</text>
+        <path class="trace" pathLength="1" d="M90 335 L200 330 L280 337 L360 333 L430 365 L470 403 L530 409 L570 387 L610 83 L640 272 L665 219 L705 356 L740 304 L800 340 L880 333 L1040 337 L1300 334 L1600 335"/>
+        <text x="500" y="490" text-anchor="middle" class="tm" font-size="28" font-weight="600">1 · caída libre</text>
+        <text x="612" y="62" text-anchor="middle" class="ta" font-size="28" font-weight="600">2 · impacto</text>
+        <text x="1200" y="490" text-anchor="middle" fill="var(--ring)" font-size="28" font-weight="600">3 · inclinación &gt; 60° durante 2 s</text>
+      </svg>
+    </div>
+  </div>
+  <aside class="notes">En reposo la SVM vale cerca de 1 g. El firmware exige las tres fases en orden: caída libre bajo 0,5 g; impacto sobre 2,5 g dentro del segundo siguiente; y más de 60° de inclinación durante 2 s, medida 0,5 s después del impacto, cuando el bastón ya se asentó. El acelerómetro trabaja en ±8 g a 50 Hz, porque en ±2 g el impacto se satura. Los valores son de diseño y se calibran con datos reales (Bourke et al.).</aside>
+</section>
+
+<!-- 27 · Reflexión infrarroja -->
+<section class="slide" data-title="Reflexión infrarroja">
+  <div class="pad">
+    <div class="tag reveal"><b>05</b> Desniveles por reflexión infrarroja · FC-51</div>
+    <h2 class="h2 reveal">Mide la luz que vuelve, no la distancia</h2>
+    <div class="cols c2 reveal" style="margin-top:56px;gap:20px">
+      <div class="panel" style="border-top:5px solid var(--mint)"><div class="h3 mint">OUT = LOW</div><p class="txt" style="margin-top:14px">Vuelve luz: ve el piso. Todo normal.</p></div>
+      <div class="panel" style="border-top:5px solid var(--acc)"><div class="h3 acc">OUT = HIGH</div><p class="txt" style="margin-top:14px">No vuelve luz: el piso «desapareció».</p></div>
+    </div>
+    <div class="cols c3 bottom">
+      <div class="reveal"><div class="stat-n" style="font-size:150px;color:var(--paper)">200 ms</div><p class="src">sin ver el piso</p></div>
+      <div class="reveal"><div class="stat-n" style="font-size:150px;color:var(--paper)">20–75°</div><p class="src">ángulo de uso del bastón</p></div>
+      <div class="reveal"><div class="stat-n" style="font-size:150px;color:var(--paper)">1,5 s</div><p class="src">duración máxima del aviso</p></div>
+    </div>
+  </div>
+  <aside class="notes">Un LED emite infrarrojo y un comparador LM393, ajustado con un potenciómetro, decide si la luz que vuelve basta. A 3,3 V ve el piso a 2–8 cm según el color: los pisos claros se ven mejor que los oscuros y el sol directo puede cegarlo. Va a 4–6 cm de la punta, con las lentes a 2–4 cm del piso. El aviso solo se activa con el bastón en ángulo de uso, para que no suene al levantarlo para subir a un bus o sentarse.</aside>
+</section>
+
+<!-- 28 · GPS, MQTT, BLE -->
+<section class="slide" data-title="Ubicación y comunicación">
+  <div class="pad">
+    <div class="tag reveal"><b>05</b> Ubicación y comunicación</div>
+    <div class="cols c3 grow" style="margin-top:56px">
+      <div class="panel reveal" style="display:flex;flex-direction:column"><p class="src">GPS · NEO-6M</p><div class="h3" style="margin:22px 0 18px;font-size:72px">Dónde</div><p class="txt">Latitud y longitud desde 4 o más satélites, en sentencias NMEA.</p><div class="stat-n bottom" style="font-size:120px">2,5 m</div><p class="src">CEP</p></div>
+      <div class="panel reveal" style="display:flex;flex-direction:column"><p class="src">MQTT · publicación / suscripción</p><div class="h3" style="margin:22px 0 18px;font-size:72px">A quién</div><p class="txt">El bastón publica en tópicos; el tablero se suscribe a través de un broker.</p><div class="stat-n bottom" style="font-size:120px">3</div><p class="src">tópicos: estado · alerta · gps</p></div>
+      <div class="panel reveal" style="display:flex;flex-direction:column"><p class="src">BLE · Bluetooth de baja energía</p><div class="h3" style="margin:22px 0 18px;font-size:72px">Cerca</div><p class="txt">El celular del usuario o cuidador recibe estado y alertas.</p><div class="stat-n bottom" style="font-size:120px">≈10 m</div><p class="src">alcance</p></div>
+    </div>
+  </div>
+  <aside class="notes">El NEO-6M arranca en frío en unos 27 s y entrega datos a 9600 bps. MQTT es ligero en ancho de banda y energía, adecuado para dispositivos con batería; el tablero web lo recibe por WebSocket. BLE usa un servicio tipo UART con notificaciones JSON.</aside>
+</section>
+
+<!-- 29 · Componentes -->
+<section class="slide" data-title="Componentes">
+  <div class="pad">
+    <div class="tag reveal"><b>05</b> Tecnologías utilizadas</div>
+    <h2 class="h2 reveal">Componentes</h2>
+    <div class="cols c4 bottom" style="row-gap:24px">
+      <div class="panel reveal" style="padding:34px"><div class="h3" style="font-size:44px">ESP32</div><p class="txt" style="font-size:24px;margin-top:10px">Doble núcleo 240 MHz, Wi-Fi + BLE</p></div>
+      <div class="panel reveal" style="padding:34px"><div class="h3" style="font-size:44px">HC-SR04</div><p class="txt" style="font-size:24px;margin-top:10px">Ultrasonido 2–400 cm</p></div>
+      <div class="panel reveal" style="padding:34px"><div class="h3" style="font-size:44px">MPU6050</div><p class="txt" style="font-size:24px;margin-top:10px">Acelerómetro y giroscopio, I2C</p></div>
+      <div class="panel reveal" style="padding:34px;border-color:var(--mint)"><div class="h3" style="font-size:44px">FC-51</div><p class="txt" style="font-size:24px;margin-top:10px">Infrarrojo con LM393</p></div>
+      <div class="panel reveal" style="padding:34px"><div class="h3" style="font-size:44px">NEO-6M</div><p class="txt" style="font-size:24px;margin-top:10px">GPS, UART 9600 bps</p></div>
+      <div class="panel reveal" style="padding:34px"><div class="h3" style="font-size:44px">Actuadores</div><p class="txt" style="font-size:24px;margin-top:10px">Motor vibrador, buzzer, LED</p></div>
+      <div class="panel reveal" style="padding:34px"><div class="h3" style="font-size:44px">LDR + pulsador</div><p class="txt" style="font-size:24px;margin-top:10px">Luz ambiente y cancelación</p></div>
+      <div class="panel reveal" style="padding:34px"><div class="h3" style="font-size:44px">Energía</div><p class="txt" style="font-size:24px;margin-top:10px">18650, TP4056, MT3608</p></div>
+    </div>
+  </div>
+  <aside class="notes">Firmware en Arduino IDE (core ESP32 3.x) con TinyGPSPlus, PubSubClient, ArduinoJson y NimBLE. El tablero web es HTML y JavaScript con MQTT sobre WebSocket y un mapa.</aside>
+</section>
+
+<!-- =========================================================
+     30 · SECCIÓN 06
+     ========================================================= -->
+<section class="slide section" data-title="06 Desarrollo conceptual">
+  <div class="tactile"></div><div class="cane"></div>
+  <div class="num reveal">06</div>
+  <h2 class="h2 reveal">Desarrollo<br>conceptual</h2>
+  <div class="tag reveal">SafeCane · Fundamentación teórica</div>
+</section>
+
+<!-- 31 · Arquitectura -->
+<section class="slide" data-title="Arquitectura">
+  <div class="pad" style="top:80px;bottom:72px">
+    <div class="tag reveal"><b>06</b> Arquitectura</div>
+    <div class="grow reveal" style="margin-top:40px">
+      <svg viewBox="0 0 1120 560" width="1664" role="img" aria-label="Diagrama de bloques: entradas al ESP32, salidas, comunicación y alimentación">
+        <defs>
+          <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10z" class="ah"/></marker>
+          <marker id="ara" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10z" class="aha"/></marker>
+          <marker id="arm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10z" class="ahm"/></marker>
+        </defs>
+        <text x="0" y="12" class="t3 mono" font-size="11" letter-spacing="1.5">ENTRADAS</text>
+        <text x="830" y="12" class="t3 mono" font-size="11" letter-spacing="1.5">SALIDAS</text>
+        <text x="830" y="234" class="t3 mono" font-size="11" letter-spacing="1.5">COMUNICACIÓN</text>
+        <g font-size="15">
+          <rect x="0" y="24" width="250" height="50" rx="5" class="box"/><text x="16" y="46" font-weight="600">HC-SR04</text><text x="16" y="64" class="t3 mono" font-size="10.5">obstáculos</text>
+          <rect x="0" y="86" width="250" height="50" rx="5" class="box"/><text x="16" y="108" font-weight="600">MPU6050</text><text x="16" y="126" class="t3 mono" font-size="10.5">caídas e inclinación</text>
+          <rect x="0" y="148" width="250" height="50" rx="5" class="box-m"/><text x="16" y="170" font-weight="600">FC-51</text><text x="16" y="188" class="t3 mono" font-size="10.5">desnivel</text>
+          <rect x="0" y="210" width="250" height="50" rx="5" class="box"/><text x="16" y="232" font-weight="600">GPS NEO-6M</text><text x="16" y="250" class="t3 mono" font-size="10.5">ubicación</text>
+          <rect x="0" y="272" width="250" height="50" rx="5" class="box"/><text x="16" y="294" font-weight="600">LDR</text><text x="16" y="312" class="t3 mono" font-size="10.5">luz ambiente</text>
+          <rect x="0" y="334" width="250" height="50" rx="5" class="box"/><text x="16" y="356" font-weight="600">Pulsador</text><text x="16" y="374" class="t3 mono" font-size="10.5">cancelar alerta</text>
+          <rect x="0" y="396" width="250" height="50" rx="5" class="box"/><text x="16" y="418" font-weight="600">Batería</text><text x="16" y="436" class="t3 mono" font-size="10.5">nivel de carga</text>
+        </g>
+        <g class="w">
+          <path d="M250 49 H356" marker-end="url(#ar)"/><path d="M250 111 H356" marker-end="url(#ar)"/><path d="M250 173 H356" marker-end="url(#ar)"/><path d="M250 235 H356" marker-end="url(#ar)"/><path d="M250 297 H356" marker-end="url(#ar)"/><path d="M250 359 H356" marker-end="url(#ar)"/><path d="M250 421 H356" marker-end="url(#ar)"/>
+        </g>
+        <rect x="360" y="24" width="360" height="422" rx="8" class="box-a"/>
+        <text x="540" y="64" text-anchor="middle" font-size="26" font-weight="600" style="font-family:var(--f-display);letter-spacing:1px">ESP32-WROOM-32</text>
+        <text x="540" y="86" text-anchor="middle" class="ta mono" font-size="11">doble núcleo · Wi-Fi + BLE</text>
+        <rect x="384" y="106" width="312" height="180" rx="6" class="box"/>
+        <text x="402" y="132" font-size="15" font-weight="600">Núcleo 1 · sensores y decisiones</text>
+        <g class="t2" font-size="13.5"><text x="402" y="160">Piso cada 10 ms · IMU a 50 Hz</text><text x="402" y="184">Distancia cada 100 ms</text><text x="402" y="208">Algoritmo de caída</text><text x="402" y="232">Máquina de estados</text><text x="402" y="256">Vibración, buzzer y LED</text></g>
+        <rect x="384" y="300" width="312" height="124" rx="6" class="box"/>
+        <text x="402" y="326" font-size="15" font-weight="600">Núcleo 0 · comunicación</text>
+        <g class="t2" font-size="13.5"><text x="402" y="354">Wi-Fi y reconexión MQTT</text><text x="402" y="378">Estado, alerta y GPS</text><text x="402" y="402">Notificaciones BLE</text></g>
+        <g class="wa"><path d="M720 49 H826" marker-end="url(#ara)"/><path d="M720 111 H826" marker-end="url(#ara)"/><path d="M720 173 H826" marker-end="url(#ara)"/></g>
+        <g font-size="15">
+          <rect x="830" y="24" width="290" height="50" rx="5" class="box"/><text x="846" y="46" font-weight="600">Motor vibrador</text><text x="846" y="64" class="t3 mono" font-size="10.5">aviso háptico · PWM</text>
+          <rect x="830" y="86" width="290" height="50" rx="5" class="box"/><text x="846" y="108" font-weight="600">Buzzer activo</text><text x="846" y="126" class="t3 mono" font-size="10.5">desnivel y alarma</text>
+          <rect x="830" y="148" width="290" height="50" rx="5" class="box"/><text x="846" y="170" font-weight="600">LED blanco</text><text x="846" y="188" class="t3 mono" font-size="10.5">visibilidad nocturna</text>
+        </g>
+        <g class="wm"><path d="M720 269 H826" marker-end="url(#arm)"/><path d="M720 331 H826" marker-end="url(#arm)"/><path d="M975 356 V390" marker-end="url(#arm)"/></g>
+        <text x="773" y="262" text-anchor="middle" class="tm mono" font-size="11">BLE</text>
+        <text x="773" y="324" text-anchor="middle" class="tm mono" font-size="11">Wi-Fi</text>
+        <g font-size="15">
+          <rect x="830" y="244" width="290" height="50" rx="5" class="box"/><text x="846" y="266" font-weight="600">Celular cercano</text><text x="846" y="284" class="t3 mono" font-size="10.5">estado y alertas</text>
+          <rect x="830" y="306" width="290" height="50" rx="5" class="box"/><text x="846" y="328" font-weight="600">Broker MQTT</text><text x="846" y="346" class="t3 mono" font-size="10.5">estado · alerta · gps</text>
+          <rect x="830" y="394" width="290" height="52" rx="5" class="box"/><text x="846" y="416" font-weight="600">Tablero web</text><text x="846" y="434" class="t3 mono" font-size="10.5">estado · alertas · mapa</text>
+        </g>
+        <path d="M540 486 V452" class="w" marker-end="url(#ar)"/>
+        <rect x="190" y="486" width="700" height="50" rx="5" class="box-s"/>
+        <text x="540" y="517" text-anchor="middle" font-size="15"><tspan font-weight="600">Alimentación</tspan><tspan class="t2"> · 18650 → TP4056 → interruptor → MT3608 5,0 V · regulador 3,3 V</tspan></text>
+      </svg>
+    </div>
+  </div>
+  <aside class="notes">Cinco bloques: entradas, procesamiento, salidas, comunicación y alimentación. El núcleo 1 lee sensores y decide; el núcleo 0 se encarga de la red. Por eso la alerta local nunca depende del Wi-Fi.</aside>
+</section>
+
+<!-- 32 · Máquina de estados -->
+<section class="slide" data-title="Máquina de estados">
+  <div class="pad">
+    <div class="tag reveal"><b>06</b> Lógica de funcionamiento</div>
+    <h2 class="h2 reveal">Cuatro estados</h2>
+    <div class="grow reveal" style="margin-top:40px;display:flex;align-items:flex-end">
+      <svg viewBox="0 0 1120 360" width="1664" role="img" aria-label="Máquina de estados NORMAL, PRE_ALERTA, ALERTA y REPOSO">
+        <defs>
+          <marker id="sm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto"><path d="M0 0 L10 5 L0 10z" class="ah"/></marker>
+          <marker id="sma" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto"><path d="M0 0 L10 5 L0 10z" class="aha"/></marker>
+        </defs>
+        <rect x="40" y="90" width="260" height="96" rx="8" class="box-m"/>
+        <text x="170" y="130" text-anchor="middle" font-size="26" font-weight="800" style="font-family:var(--f-display);letter-spacing:1px">NORMAL</text>
+        <text x="170" y="156" text-anchor="middle" font-size="13" class="t2">vibra según la distancia</text>
+        <text x="170" y="174" text-anchor="middle" font-size="13" class="t2">avisa de desniveles</text>
+        <rect x="430" y="90" width="260" height="96" rx="8" class="box" style="stroke:var(--ring)"/>
+        <text x="560" y="130" text-anchor="middle" font-size="26" font-weight="800" style="font-family:var(--f-display);letter-spacing:1px">PRE_ALERTA</text>
+        <text x="560" y="156" text-anchor="middle" font-size="13" class="t2">vibración 600 ms / 1 s</text>
+        <text x="560" y="174" text-anchor="middle" font-size="13" class="t2">10 s para cancelar</text>
+        <rect x="820" y="90" width="260" height="96" rx="8" class="box-a"/>
+        <text x="950" y="130" text-anchor="middle" font-size="26" font-weight="800" style="font-family:var(--f-display);letter-spacing:1px">ALERTA</text>
+        <text x="950" y="156" text-anchor="middle" font-size="13" class="t2">buzzer y LED intermitentes</text>
+        <text x="950" y="174" text-anchor="middle" font-size="13" class="t2">MQTT + BLE con GPS</text>
+        <rect x="40" y="270" width="260" height="84" rx="8" class="box"/>
+        <text x="170" y="308" text-anchor="middle" font-size="26" font-weight="800" style="font-family:var(--f-display);letter-spacing:1px">REPOSO</text>
+        <text x="170" y="332" text-anchor="middle" font-size="13" class="t2">actuadores apagados</text>
+        <path d="M300 118 H426" class="wa" marker-end="url(#sma)"/>
+        <text x="363" y="108" text-anchor="middle" font-size="13" class="ta">caída confirmada</text>
+        <path d="M430 162 H304" class="w" marker-end="url(#sm)"/>
+        <text x="367" y="182" text-anchor="middle" font-size="13" class="t2">pulsador &lt; 10 s</text>
+        <path d="M690 138 H816" class="wa" marker-end="url(#sma)"/>
+        <text x="753" y="128" text-anchor="middle" font-size="13" class="ta">10 s sin cancelar</text>
+        <path d="M950 90 V40 H170 V86" class="w" marker-end="url(#sm)"/>
+        <text x="560" y="32" text-anchor="middle" font-size="13" class="t2">pulsador · publica «cancelada»</text>
+        <path d="M130 186 V266" class="w" marker-end="url(#sm)"/>
+        <text x="122" y="232" text-anchor="end" font-size="13" class="t2">5 min quieto</text>
+        <path d="M210 270 V190" class="w" marker-end="url(#sm)"/>
+        <text x="220" y="232" font-size="13" class="t2">movimiento</text>
+        <text x="430" y="300" font-size="15" class="t2">El movimiento del MPU6050 indica que el bastón está en uso.</text>
+        <text x="430" y="328" font-size="15" class="t2">El pulsador es la única salida de ALERTA.</text>
+      </svg>
+    </div>
+  </div>
+  <aside class="notes">El firmware nunca se detiene: cada tarea corre con su propio periodo, sin delay(). Una caída confirmada pasa a PRE_ALERTA; si nadie cancela en 10 s, pasa a ALERTA y se envía la ubicación. Uso activo: |SVM − 1| mayor a 0,15 g. Tras 5 minutos sin movimiento entra en REPOSO y apaga los actuadores.</aside>
+</section>
+
+<!-- 33 · Patrones de aviso -->
+<section class="slide" data-title="Patrones de aviso">
+  <div class="pad">
+    <div class="tag reveal"><b>06</b> Patrones de aviso</div>
+    <h2 class="h2 reveal">Cada situación se siente distinta</h2>
+    <div class="bottom">
+      <div class="wrow reveal"><div><b>Obstáculo</b><span>motor · según distancia</span></div><div class="wave w-fast"></div><div class="ms">continuo → lento</div></div>
+      <div class="wrow reveal"><div><b class="mint">Desnivel</b><span>motor + buzzer · prioridad</span></div><div class="wave w-step"></div><div class="ms">100 / 100 ms</div></div>
+      <div class="wrow reveal"><div><b style="color:var(--ring)">Pre-alerta</b><span>motor</span></div><div class="wave w-pre"></div><div class="ms">600 / 400 ms</div></div>
+      <div class="wrow reveal"><div><b style="color:#ff8a7c">Alerta</b><span>buzzer + LED</span></div><div class="wave w-alert"></div><div class="ms">250 / 250 ms</div></div>
+    </div>
+  </div>
+  <aside class="notes">El aviso de desnivel tiene prioridad sobre el de obstáculos y dura como máximo 1,5 s. Con poca luz, la LDR enciende el LED blanco para que el usuario sea visible.</aside>
+</section>
+
+<!-- 34 · Recorrido de una alerta -->
+<section class="slide" data-title="Recorrido de una alerta">
+  <div class="pad">
+    <div class="tag reveal"><b>06</b> Recorrido de una alerta</div>
+    <h2 class="h2 reveal">De la caída al mapa</h2>
+    <div class="cols c4 bottom" style="gap:0">
+      <div class="reveal" style="border-top:4px solid var(--dim);padding:30px 32px 0 0"><div class="stat-n" style="font-size:110px;color:var(--paper)">01</div><div class="h3" style="margin:20px 0 14px;font-size:46px">Detecta</div><p class="txt" style="font-size:26px">Caída libre, impacto e inclinación.</p></div>
+      <div class="reveal" style="border-top:4px solid var(--ring);padding:30px 32px 0 0"><div class="stat-n" style="font-size:110px;color:var(--ring)">02</div><div class="h3" style="margin:20px 0 14px;font-size:46px">Confirma</div><p class="txt" style="font-size:26px">10 s para cancelar con el pulsador.</p></div>
+      <div class="reveal" style="border-top:4px solid var(--acc);padding:30px 32px 0 0"><div class="stat-n" style="font-size:110px">03</div><div class="h3" style="margin:20px 0 14px;font-size:46px">Alarma</div><p class="txt" style="font-size:26px">Buzzer y LED, con o sin red.</p></div>
+      <div class="reveal" style="border-top:4px solid var(--mint);padding:30px 0 0"><div class="stat-n" style="font-size:110px;color:var(--mint)">04</div><div class="h3" style="margin:20px 0 14px;font-size:46px">Notifica</div><p class="txt" style="font-size:26px">Posición GPS al tablero y al celular.</p></div>
+    </div>
+  </div>
+  <aside class="notes">Tópicos MQTT: estado (cada 5 s: estado, distancia, desnivel, uso, batería), alerta (al entrar en ALERTA y al cancelar; mensaje retenido con tipo, latitud, longitud y satélites) y gps (cada 30 s, solo con señal). La alerta se reintenta cada segundo hasta publicarse.</aside>
+</section>
+
+<!-- 35 · Alimentación -->
+<section class="slide" data-title="Alimentación">
+  <div class="pad">
+    <div class="tag reveal"><b>06</b> Alimentación y autonomía</div>
+    <div class="reveal" style="margin-top:72px;display:flex;align-items:center;gap:22px;font:800 52px/1 var(--f-display);text-transform:uppercase">
+      <span>18650</span><span class="acc">→</span><span>TP4056</span><span class="acc">→</span><span>MT3608 5 V</span><span class="acc">→</span><span>ESP32 3,3 V</span>
+    </div>
+    <div class="stat-wrap">
+      <div class="stat-n reveal">≈15 h</div>
+      <div class="reveal"><p class="lead">de uso con una celda de 3000 mAh y un consumo promedio de unos 170 mA.</p><p class="src" style="margin-top:20px">3000 mAh × 0,85 / 170 mA</p></div>
+    </div>
+  </div>
+  <aside class="notes">El TP4056 con protección carga por micro-USB y corta si la celda baja de unos 2,5 V. El MT3608 eleva a 5,0 V para HC-SR04, GPS, motor, buzzer y LED; el regulador del ESP32 alimenta MPU6050, FC-51 y LDR a 3,3 V. Consumo estimado: ESP32 80 mA, GPS 45 mA, sensores y LED 20 mA, motor y buzzer 25 mA. Bajo 3,3 V durante 10 s, el bastón da tres pitidos y se apaga de forma ordenada.</aside>
+</section>
+
+<!-- 36 · Metas de validación -->
+<section class="slide" data-title="Metas">
+  <div class="pad">
+    <div class="tag reveal"><b>06</b> Cómo sabremos que funciona</div>
+    <h2 class="h2 reveal">Metas de validación</h2>
+    <div class="cols c4 bottom">
+      <div class="reveal"><div class="stat-n" style="font-size:165px">≥90%</div><p class="txt" style="margin-top:16px">sensibilidad en caídas</p></div>
+      <div class="reveal"><div class="stat-n" style="font-size:165px;color:var(--mint)">≥90%</div><p class="txt" style="margin-top:16px">escalones y bordillos</p></div>
+      <div class="reveal"><div class="stat-n" style="font-size:165px;color:var(--ring)">&lt;5 s</div><p class="txt" style="margin-top:16px">de la alerta al tablero</p></div>
+      <div class="reveal"><div class="stat-n" style="font-size:165px;color:var(--paper)">&lt;3 cm</div><p class="txt" style="margin-top:16px">de error en distancia</p></div>
+    </div>
+  </div>
+  <aside class="notes">Sensibilidad = VP / (VP + FN); especificidad = VN / (VN + FP). Las caídas se simulan sobre colchoneta, solo con integrantes del equipo, y se registran a 50 Hz. Escenarios negativos: marcha normal, sentarse, golpear la punta, escaleras y soltar el bastón. También se miden el primer fix del GPS (menos de 2 min), su error de posición y la autonomía real.</aside>
+</section>
+
+<!-- 37 · Alcance -->
 <section class="slide" data-title="Alcance">
-  <div class="kicker r"><b>06</b> Desarrollo conceptual</div>
-  <h2 class="r">Alcance y límites del prototipo</h2>
-  <div class="body">
-    <div class="grid g2" style="gap:24px;flex:1">
-      <div class="card r">
-        <span class="pill g">Comprende</span>
-        <ul style="margin-top:14px;padding-left:20px;display:grid;gap:16px">
-          <li style="font-size:19px">Obstáculos frontales de 2 cm a 2 m con aviso vibratorio.</li>
-          <li style="font-size:19px">Aviso de escalones que bajan y bordillos al llegar la punta al borde.</li>
-          <li style="font-size:19px">Caídas por umbrales calibrados, con alarma y cancelación manual.</li>
-          <li style="font-size:19px">Ubicación GPS de cada alerta, en un tablero web y por BLE.</li>
-          <li style="font-size:19px">LED automático con poca luz y batería recargable.</li>
-        </ul>
-      </div>
-      <div class="card r">
-        <span class="pill">No comprende</span>
-        <ul style="margin-top:14px;padding-left:20px;display:grid;gap:16px">
-          <li style="font-size:19px">Clasificar el obstáculo, ni cubrir obstáculos laterales o a la altura de la cabeza.</li>
-          <li style="font-size:19px">Avisar del desnivel antes de que la punta llegue al borde.</li>
-          <li style="font-size:19px">Distinguir siempre la caída del bastón de la del usuario: eso lo resuelve la cancelación.</li>
-          <li style="font-size:19px">Guiar rutas, medir signos vitales o reemplazar a un cuidador.</li>
-          <li style="font-size:19px">Cifrado de extremo a extremo: es un prototipo académico.</li>
-        </ul>
-      </div>
+  <div class="pad">
+    <div class="tag reveal"><b>06</b> Alcance del prototipo</div>
+    <div class="cols c2 grow" style="margin-top:56px;gap:28px">
+      <div class="panel reveal" style="border-top:5px solid var(--acc)"><div class="h3" style="font-size:72px">Comprende</div>
+        <p class="txt" style="margin-top:40px;font-size:38px">Obstáculos al frente hasta 2 m</p>
+        <p class="txt" style="margin-top:26px;font-size:38px">Aviso al llegar a un escalón o bordillo</p>
+        <p class="txt" style="margin-top:26px;font-size:38px">Caídas con alarma y cancelación</p>
+        <p class="txt" style="margin-top:26px;font-size:38px">Ubicación en tablero web y celular</p></div>
+      <div class="panel reveal" style="border-top:5px solid var(--line)"><div class="h3" style="font-size:72px;color:var(--dim)">No comprende</div>
+        <p class="txt" style="margin-top:40px;font-size:38px">Obstáculos laterales o a la altura de la cabeza</p>
+        <p class="txt" style="margin-top:26px;font-size:38px">Avisar del desnivel antes de llegar al borde</p>
+        <p class="txt" style="margin-top:26px;font-size:38px">Guiar rutas o medir signos vitales</p>
+        <p class="txt" style="margin-top:26px;font-size:38px">Reemplazar a un cuidador</p></div>
+    </div>
+  </div>
+  <aside class="notes">Es un prototipo académico, no un equipo médico. El broker público no tiene cifrado: es aceptable para la demostración, no para un producto. Sin sensor de agarre, distinguir la caída del bastón de la del usuario depende de la cancelación. Las pruebas con un grupo reducido no son estadísticamente generalizables.</aside>
+</section>
+
+<!-- 38 · Referencias -->
+<section class="slide" data-title="Referencias">
+  <div class="pad">
+    <div class="tag reveal">Referencias</div>
+    <div class="refs reveal">
+      <p><b>Abuelmakarem, H. S. et al.</b> (2024). An integrated IoT smart cane for the blind and visually impaired individuals. <i>SVU-IJES</i>, 5(1), 71–78.</p>
+      <p><b>Appiah, O. et al.</b> (2023). A smart cane with fall detection system for people with visual impairments. <i>IEEE DASC/PiCom/CBDCom/CyberSciTech</i>, 182–187.</p>
+      <p><b>Atzori, L., Iera, A. y Morabito, G.</b> (2010). The Internet of Things: A survey. <i>Computer Networks</i>, 54(15), 2787–2805.</p>
+      <p><b>Bourke, A. K., O'Brien, J. V. y Lyons, G. M.</b> (2007). Evaluation of a threshold-based tri-axial accelerometer fall detection algorithm. <i>Gait &amp; Posture</i>, 26(2), 194–199.</p>
+      <p><b>Dakopoulos, D. y Bourbakis, N. G.</b> (2010). Wearable obstacle avoidance electronic travel aids for blind: A survey. <i>IEEE Trans. SMC, Part C</i>, 40(1), 25–35.</p>
+      <p><b>Espressif Systems.</b> <i>ESP32 Series Datasheet</i>, v5.3.</p>
+      <p><b>Fitriandini, L., Suhardi, S. y Sari, K.</b> (2025). Deteksi jatuh pada lansia berbasis IoT menggunakan sensor MPU-6050 dan sensor GPS Neo 6M. <i>JTECE</i>, 7(2), 155–160.</p>
+      <p><b>Geng, H.</b> (2026). Intelligent cane fall detection method combining multilevel threshold and interactive confirmation mechanism. <i>Proc. SPIE</i>, 14133.</p>
+      <p><b>INEI.</b> (2019). <i>Perfil sociodemográfico de la población con discapacidad, 2017</i>. Lima.</p>
+      <p><b>InvenSense.</b> (2013). <i>MPU-6000 and MPU-6050 Product Specification</i>, rev. 3.4.</p>
+      <p><b>Legood, R., Scuffham, P. y Cryer, C.</b> (2002). Are we blind to injuries in the visually impaired? <i>Injury Prevention</i>, 8(2), 155–160.</p>
+      <p><b>OASIS.</b> (2019). <i>MQTT Version 5.0</i>. OASIS Standard.</p>
+      <p><b>Paredes Orozco, D. L. y Domínguez-Morales, M.</b> (2024). Smart cane for the visually impaired. <i>Springer Proc. in Materials</i>, 50, 451–460.</p>
+      <p><b>Putera, D. A. et al.</b> (2025). Development of an IoT-based smart cane with non-invasive health monitoring for elderly care in Batam. <i>JAIC</i>, 9(5), 2879–2890.</p>
+      <p><b>Shri Harini, A. et al.</b> (2026). MLP powered IoT-enabled smart cane for the visually impaired. <i>ICT Analysis and Applications</i>, LNNS 1656, 464–473.</p>
+      <p><b>Tsantikidou, K. et al.</b> (2025). AAL-based smart cane system with security and privacy features for blind and visually impaired individuals. <i>Microprocessors and Microsystems</i>, 114–115.</p>
+      <p><b>u-blox.</b> (2011). <i>NEO-6 u-blox 6 GPS Modules Data Sheet</i>.</p>
+      <p><b>World Health Organization.</b> (2021). <i>Falls</i>. Hoja informativa.</p>
+      <p><b>World Health Organization.</b> (2026). <i>Blindness and vision impairment</i>. Hoja informativa.</p>
     </div>
   </div>
 </section>
 
-<!-- ============ 25 REFERENCIAS ============ -->
-<section class="slide" data-title="Referencias">
-  <div class="kicker r">Referencias</div>
-  <div class="body r refs" style="margin-top:4px">
-    <p><b>Abuelmakarem, H. S. et al.</b> (2024). An integrated IoT smart cane for the blind and visually impaired individuals. <i>SVU-IJES</i>, 5(1), 71–78.</p>
-    <p><b>Appiah, O. et al.</b> (2023). A smart cane with fall detection system for people with visual impairments. <i>IEEE DASC/PiCom/CBDCom/CyberSciTech</i>, 182–187.</p>
-    <p><b>Atzori, L., Iera, A. y Morabito, G.</b> (2010). The Internet of Things: A survey. <i>Computer Networks</i>, 54(15), 2787–2805.</p>
-    <p><b>Bourke, A. K., O'Brien, J. V. y Lyons, G. M.</b> (2007). Evaluation of a threshold-based tri-axial accelerometer fall detection algorithm. <i>Gait &amp; Posture</i>, 26(2), 194–199.</p>
-    <p><b>Dakopoulos, D. y Bourbakis, N. G.</b> (2010). Wearable obstacle avoidance electronic travel aids for blind: A survey. <i>IEEE Trans. SMC, Part C</i>, 40(1), 25–35.</p>
-    <p><b>Espressif Systems.</b> <i>ESP32 Series Datasheet</i>, v5.3.</p>
-    <p><b>Fitriandini, L., Suhardi, S. y Sari, K.</b> (2025). Deteksi jatuh pada lansia berbasis IoT menggunakan sensor MPU-6050 dan sensor GPS Neo 6M. <i>JTECE</i>, 7(2), 155–160.</p>
-    <p><b>Geng, H.</b> (2026). Intelligent cane fall detection method combining multilevel threshold and interactive confirmation mechanism. <i>Proc. SPIE</i>, 14133.</p>
-    <p><b>INEI.</b> (2019). <i>Perfil sociodemográfico de la población con discapacidad, 2017</i>. Lima.</p>
-    <p><b>InvenSense.</b> (2013). <i>MPU-6000 and MPU-6050 Product Specification</i>, rev. 3.4.</p>
-    <p><b>Legood, R., Scuffham, P. y Cryer, C.</b> (2002). Are we blind to injuries in the visually impaired? <i>Injury Prevention</i>, 8(2), 155–160.</p>
-    <p><b>OASIS.</b> (2019). <i>MQTT Version 5.0</i>. OASIS Standard.</p>
-    <p><b>Paredes Orozco, D. L. y Domínguez-Morales, M.</b> (2024). Smart cane for the visually impaired. <i>Springer Proc. in Materials</i>, 50, 451–460.</p>
-    <p><b>Putera, D. A. et al.</b> (2025). Development of an IoT-based smart cane with non-invasive health monitoring for elderly care in Batam. <i>JAIC</i>, 9(5), 2879–2890.</p>
-    <p><b>Shri Harini, A. et al.</b> (2026). MLP powered IoT-enabled smart cane for the visually impaired. <i>ICT Analysis and Applications</i>, LNNS 1656, 464–473.</p>
-    <p><b>Tsantikidou, K. et al.</b> (2025). AAL-based smart cane system with security and privacy features for blind and visually impaired individuals. <i>Microprocessors and Microsystems</i>, 114–115.</p>
-    <p><b>u-blox.</b> (2011). <i>NEO-6 u-blox 6 GPS Modules Data Sheet</i>.</p>
-    <p><b>World Health Organization.</b> (2021). <i>Falls</i>. Hoja informativa.</p>
-    <p><b>World Health Organization.</b> (2026). <i>Blindness and vision impairment</i>. Hoja informativa.</p>
-  </div>
-</section>
-
-<!-- ============ 26 CIERRE ============ -->
-<section class="slide cover" data-title="Cierre">
-  <div class="brand r"><span class="dot"></span>SafeCane</div>
-  <div>
-    <h1 class="r">Gracias</h1>
-    <p class="sub r">Un bastón que anticipa obstáculos, avisa de desniveles, detecta caídas y dice dónde ocurrieron.</p>
-  </div>
-  <div class="authors r">
-    <div>Nayeli Fernanda Guzman Huayta</div>
-    <div>Jazmin Nicole Soto Quiñones</div>
-    <div>Manyory Estefany Cueva Mendoza</div>
-    <div style="margin-left:auto;text-align:right">CS5055 · UTEC</div>
-  </div>
+<!-- =========================================================
+     39 · CIERRE
+     ========================================================= -->
+<section class="slide cover" data-title="Gracias">
+  <div class="tactile"></div><div class="cane"></div>
+  <div class="tag reveal">SafeCane · <b>UTEC 2026-2</b></div>
+  <h1 class="h1 reveal" style="top:300px;font-size:320px">Gracias</h1>
+  <p class="sub reveal" style="top:640px">Un bastón que anticipa obstáculos, avisa de desniveles, detecta caídas y dice dónde ocurrieron.</p>
+  <div class="people reveal"><span><i></i>Nayeli Fernanda Guzman Huayta</span><span><i></i>Jazmin Nicole Soto Quiñones</span><span><i></i>Manyory Estefany Cueva Mendoza</span></div>
 </section>
 
 </main>
-
-<div class="chrome">
-  <div class="counter" id="counter"><b>01</b> / 26</div>
-  <div class="btns">
-    <button class="btn" id="theme" title="Cambiar tema (T)" aria-label="Cambiar tema">◐</button>
-    <button class="btn" id="fs" title="Pantalla completa (F)" aria-label="Pantalla completa">⤢</button>
-    <button class="btn" id="prev" aria-label="Diapositiva anterior">←</button>
-    <button class="btn" id="next" aria-label="Diapositiva siguiente">→</button>
-  </div>
 </div>
 
+<div class="counter" id="counter"></div>
+<div class="notes-panel" id="notesPanel"><b>NOTAS</b><div id="notesText"></div></div>
+<div class="edit-hotzone" id="editHotzone"></div>
+<button class="edit-toggle" id="editToggle" title="Modo edición (E)">Editar</button>
+
 <script>
-(() => {
-  const deck = document.getElementById('deck');
-  const slides = Array.from(deck.querySelectorAll('.slide'));
-  const total = slides.length;
-  const counter = document.getElementById('counter');
-  const progress = document.getElementById('progress');
-  const prevBtn = document.getElementById('prev');
-  const nextBtn = document.getElementById('next');
-  const hint = document.getElementById('hint');
-  const pad = n => String(n).padStart(2, '0');
+/* ===========================================
+   CONTROLADOR DE LA PRESENTACIÓN
+   Escala el lienzo 1920×1080, navega con teclado, rueda y gestos,
+   muestra notas (N) y permite editar el texto (E).
+   =========================================== */
+class SlidePresentation {
+  constructor() {
+    this.stage = document.getElementById('deckStage');
+    this.slides = Array.from(document.querySelectorAll('.slide'));
+    this.counter = document.getElementById('counter');
+    this.progress = document.getElementById('progress');
+    this.notesPanel = document.getElementById('notesPanel');
+    this.notesText = document.getElementById('notesText');
+    this.current = -1;
+    this.wheelLock = false;
 
-  // Índice de escalonado por diapositiva
-  slides.forEach(s => s.querySelectorAll('.r').forEach((el, k) => el.style.setProperty('--i', Math.min(k, 12))));
+    // Orden de aparición escalonada dentro de cada diapositiva
+    this.slides.forEach(s => s.querySelectorAll('.reveal').forEach((el, k) => el.style.setProperty('--i', Math.min(k, 10))));
 
-  // Escalar el lienzo de 1280×720 a la ventana
-  function fit() {
-    const margin = window.innerWidth < 700 ? 8 : 48;
-    const s = Math.min((window.innerWidth - margin) / 1280, (window.innerHeight - margin - 40) / 720);
-    deck.style.transform = `translate(-50%, calc(-50% - 16px)) scale(${s})`;
+    this.setupStageScale();
+    this.setupKeyboardNav();
+    this.setupTouchNav();
+    this.setupWheelNav();
+    window.addEventListener('hashchange', () => this.show(this.fromHash(), false));
+    this.show(this.fromHash(), false);
+    setTimeout(() => document.getElementById('hint').classList.add('gone'), 3500);
   }
-  window.addEventListener('resize', fit);
-  fit();
 
-  let current = -1;
-  function go(n, push = true) {
-    n = Math.max(0, Math.min(total - 1, n));
-    if (n === current) return;
-    slides.forEach((s, k) => {
-      s.classList.toggle('active', k === n);
-      s.classList.toggle('past', k < n);
-      s.setAttribute('aria-hidden', k === n ? 'false' : 'true');
+  fromHash() { return (parseInt(location.hash.slice(1), 10) || 1) - 1; }
+
+  setupStageScale() {
+    const scale = () => {
+      const k = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+      const x = (window.innerWidth - 1920 * k) / 2;
+      const y = (window.innerHeight - 1080 * k) / 2;
+      this.stage.style.transform = `translate(${x}px, ${y}px) scale(${k})`;
+    };
+    scale();
+    window.addEventListener('resize', scale);
+  }
+
+  setupKeyboardNav() {
+    document.addEventListener('keydown', e => {
+      if (e.target.isContentEditable || e.metaKey || e.ctrlKey || e.altKey) return;
+      switch (e.key) {
+        case 'ArrowRight': case 'ArrowDown': case 'PageDown': case ' ':
+          e.preventDefault(); this.show(this.current + 1); break;
+        case 'ArrowLeft': case 'ArrowUp': case 'PageUp':
+          e.preventDefault(); this.show(this.current - 1); break;
+        case 'Home': this.show(0); break;
+        case 'End': this.show(this.slides.length - 1); break;
+        case 'n': case 'N': this.notesPanel.classList.toggle('show'); break;
+        case 'f': case 'F':
+          if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+          else document.exitFullscreen?.();
+          break;
+      }
     });
-    current = n;
-    counter.innerHTML = `<b>${pad(n + 1)}</b> / ${pad(total)}`;
-    progress.style.transform = `scaleX(${(n + 1) / total})`;
-    prevBtn.disabled = n === 0;
-    nextBtn.disabled = n === total - 1;
-    document.title = `${slides[n].dataset.title} · SafeCane`;
-    if (push) history.replaceState(null, '', '#' + (n + 1));
   }
 
-  const fromHash = () => (parseInt(location.hash.slice(1), 10) || 1) - 1;
-  window.addEventListener('hashchange', () => go(fromHash(), false));
-  go(fromHash(), false);
-
-  prevBtn.addEventListener('click', () => go(current - 1));
-  nextBtn.addEventListener('click', () => go(current + 1));
-
-  function toggleFs() {
-    if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
-    else document.exitFullscreen?.();
+  setupTouchNav() {
+    let x0 = null, t0 = 0;
+    document.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; t0 = performance.now(); }, { passive: true });
+    document.addEventListener('touchend', e => {
+      if (x0 === null || document.body.classList.contains('editing')) return;
+      const dx = e.changedTouches[0].clientX - x0;
+      const v = Math.abs(dx) / (performance.now() - t0);
+      if (Math.abs(dx) > 50 || v > 0.4) this.show(this.current + (dx < 0 ? 1 : -1));
+      x0 = null;
+    });
   }
-  document.getElementById('fs').addEventListener('click', toggleFs);
 
-  const root = document.documentElement;
-  function toggleTheme() {
-    const dark = root.dataset.theme
-      ? root.dataset.theme === 'dark'
-      : matchMedia('(prefers-color-scheme: dark)').matches;
-    root.dataset.theme = dark ? 'light' : 'dark';
-    try { localStorage.setItem('safecane-theme', root.dataset.theme); } catch (e) {}
+  setupWheelNav() {
+    window.addEventListener('wheel', e => {
+      if (this.wheelLock || Math.abs(e.deltaY) < 30 || document.body.classList.contains('editing')) return;
+      this.wheelLock = true;
+      this.show(this.current + (e.deltaY > 0 ? 1 : -1));
+      setTimeout(() => (this.wheelLock = false), 650);
+    }, { passive: true });
   }
-  try { const t = localStorage.getItem('safecane-theme'); if (t) root.dataset.theme = t; } catch (e) {}
-  document.getElementById('theme').addEventListener('click', toggleTheme);
 
-  document.addEventListener('keydown', e => {
-    if (e.metaKey || e.ctrlKey || e.altKey) return;
-    switch (e.key) {
-      case 'ArrowRight': case 'ArrowDown': case 'PageDown': case ' ': case 'Enter':
-        e.preventDefault(); go(current + 1); break;
-      case 'ArrowLeft': case 'ArrowUp': case 'PageUp': case 'Backspace':
-        e.preventDefault(); go(current - 1); break;
-      case 'Home': go(0); break;
-      case 'End': go(total - 1); break;
-      case 'f': case 'F': toggleFs(); break;
-      case 't': case 'T': toggleTheme(); break;
-    }
-  });
+  show(n, updateHash = true) {
+    n = Math.max(0, Math.min(this.slides.length - 1, n));
+    if (n === this.current) return;
+    this.slides.forEach((s, i) => {
+      s.classList.toggle('active', i === n);
+      s.classList.toggle('visible', i === n);
+      s.setAttribute('aria-hidden', i === n ? 'false' : 'true');
+    });
+    this.current = n;
+    const total = this.slides.length;
+    this.counter.innerHTML = `<b>${String(n + 1).padStart(2, '0')}</b> / ${total}`;
+    this.progress.style.transform = `scaleX(${(n + 1) / total})`;
+    const notes = this.slides[n].querySelector('.notes');
+    this.notesText.textContent = notes ? notes.textContent : 'Sin notas para esta diapositiva.';
+    document.title = `${this.slides[n].dataset.title} · SafeCane`;
+    if (updateHash) history.replaceState(null, '', '#' + (n + 1));
+  }
+}
 
-  // Deslizar en pantallas táctiles: distancia o velocidad
-  let x0 = null, t0 = 0;
-  deck.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') { x0 = e.clientX; t0 = performance.now(); } });
-  deck.addEventListener('pointerup', e => {
-    if (x0 === null) return;
-    const dx = e.clientX - x0, v = Math.abs(dx) / (performance.now() - t0);
-    if (Math.abs(dx) > 60 || v > 0.4) go(current + (dx < 0 ? 1 : -1));
-    x0 = null;
-  });
+/* ===========================================
+   EDICIÓN EN LÍNEA
+   E o la esquina superior izquierda activan la edición.
+   Los cambios se guardan en este navegador; Ctrl/Cmd+S descarga el HTML.
+   =========================================== */
+class InlineEditor {
+  constructor() {
+    this.isActive = false;
+    this.key = 'safecane-fundamentacion-v2';
+    this.selector = '.slide h1, .slide h2, .slide p, .slide .h3, .slide .tag, .slide .stat-n, .slide td, .slide .idx';
+    this.toggleBtn = document.getElementById('editToggle');
+    this.restore();
+    this.bind();
+  }
+  bind() {
+    const hot = document.getElementById('editHotzone');
+    let hideT = null;
+    const showBtn = () => { clearTimeout(hideT); this.toggleBtn.classList.add('show'); };
+    const hideBtn = () => { hideT = setTimeout(() => { if (!this.isActive) this.toggleBtn.classList.remove('show'); }, 400); };
+    hot.addEventListener('mouseenter', showBtn);
+    hot.addEventListener('mouseleave', hideBtn);
+    this.toggleBtn.addEventListener('mouseenter', showBtn);
+    this.toggleBtn.addEventListener('mouseleave', hideBtn);
+    hot.addEventListener('click', () => this.toggle());
+    this.toggleBtn.addEventListener('click', () => this.toggle());
+    document.addEventListener('keydown', e => {
+      if ((e.key === 'e' || e.key === 'E') && !e.target.isContentEditable && !e.metaKey && !e.ctrlKey) this.toggle();
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); this.download(); }
+      if (e.key === 'Escape' && this.isActive) this.toggle();
+    });
+    document.addEventListener('input', e => { if (e.target.isContentEditable) this.save(); });
+  }
+  toggle() {
+    this.isActive = !this.isActive;
+    document.body.classList.toggle('editing', this.isActive);
+    this.toggleBtn.classList.toggle('active', this.isActive);
+    this.toggleBtn.textContent = this.isActive ? 'Listo' : 'Editar';
+    document.querySelectorAll(this.selector).forEach(el => {
+      if (this.isActive) el.setAttribute('contenteditable', 'true'); else el.removeAttribute('contenteditable');
+    });
+    if (!this.isActive) this.toggleBtn.classList.remove('show');
+  }
+  save() {
+    try {
+      const data = Array.from(document.querySelectorAll(this.selector)).map(el => el.innerHTML);
+      localStorage.setItem(this.key, JSON.stringify(data));
+    } catch (e) {}
+  }
+  restore() {
+    try {
+      const data = JSON.parse(localStorage.getItem(this.key) || 'null');
+      const els = document.querySelectorAll(this.selector);
+      if (Array.isArray(data) && data.length === els.length) els.forEach((el, i) => (el.innerHTML = data[i]));
+    } catch (e) {}
+  }
+  download() {
+    const clone = document.documentElement.cloneNode(true);
+    clone.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+    clone.querySelector('body').classList.remove('editing');
+    const blob = new Blob(['<!DOCTYPE html>\n' + clone.outerHTML], { type: 'text/html' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'fundamentacion_teorica.html';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+}
 
-  setTimeout(() => hint.classList.add('gone'), 3200);
-})();
+const deck = new SlidePresentation();
+const editor = new InlineEditor();
 </script>
 </body>
 </html>
