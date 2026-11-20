@@ -1,7 +1,7 @@
 # generar_figuras.py: prepara las fotos y genera las figuras de resultados del informe.
 # Uso (desde la carpeta informe):  python figuras/generar_figuras.py
 # Las curvas de caida salen de una copia en Python de la logica de firmware/safecane/safecane.ino
-# aplicada al perfil de caida que el propio firmware usa en Wokwi (funcion caidaSimulada).
+# aplicada a un perfil de caida sintetico (caida libre, impacto y bastón tumbado).
 import math
 import os
 
@@ -185,7 +185,7 @@ def figura_vibracion():
 
 
 def figura_consumo():
-    partes = [("ESP32 con\nWiFi y BLE", 80), ("GPS\nNEO-6M", 45), ("Sensores\ny LED", 20),
+    partes = [("ESP32 con\nWiFi y BLE", 80), ("GPS\nNEO-6M", 45), ("Sensores", 20),
               ("Motor y\nbuzzer", 25)]
     fig, ax = plt.subplots(figsize=(3.45, 1.45))
     izq = 0
