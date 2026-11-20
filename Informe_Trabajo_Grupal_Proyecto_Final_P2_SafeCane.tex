@@ -1,0 +1,66 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage{tgtermes}
+\usepackage{amsmath}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{titlesec}
+
+\titleformat{\section}{\normalfont\large\bfseries}{\thesection.}{0.5em}{}
+\titlespacing*{\section}{0pt}{1.8ex}{0.8ex}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.8ex}
+\setlist{nosep,leftmargin=1.2em}
+\pagestyle{empty}
+
+\begin{document}
+
+\begin{center}
+{\large\bfseries Informe de Trabajo Grupal del Proyecto Final -- P2}\\[0.4ex]
+Proyecto SafeCane\\
+CS5055 Internet of Things, UTEC 2026-2\\
+20 de noviembre de 2026
+\end{center}
+
+\section{Integrantes}
+Nayeli Fernanda Guzman Huayta, Jazmin Nicole Soto Quiñones y Manyory Estefany Cueva Mendoza.
+
+\section{Organización del trabajo}
+Trabajamos con prototipado incremental, por etapas y entregables. Primero analizamos el problema (la discapacidad visual y las caídas en adultos mayores) y revisamos ocho trabajos de los últimos siete años para decidir la arquitectura: un solo ESP32 con tres capas IoT, percepción, red y aplicación. Luego probamos cada sensor por separado, armamos el circuito completo en el simulador Wokwi para validar la lógica sin quemar componentes, lo integramos en protoboard y lo montamos en el bastón. El liderazgo fue distribuido: cada una condujo su especialidad y las decisiones de integración se tomaron entre las tres. Un repositorio compartido nos permitió mantener una versión común.
+
+\section{Distribución de responsabilidades}
+Las tres aportamos por igual. El prototipo lo armamos juntas, de principio a fin, y cada una lideró además un frente de peso equivalente:
+
+\vspace{0.5ex}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{3cm} >{\raggedright\arraybackslash}p{4.2cm} >{\raggedright\arraybackslash}p{7.2cm}@{}}
+\hline
+\textbf{Integrante} & \textbf{Frente} & \textbf{Aporte} \\
+\hline
+Las tres & Prototipo, en conjunto & Armado completo del prototipo (circuito en protoboard, cableado y montaje en el bastón), pruebas controladas, demostración, revisión de las partes de las demás y revisión de dos artículos del estado del arte por integrante. \\
+\hline
+\multicolumn{3}{@{}l}{\textit{Además, cada una lideró un frente propio:}} \\
+Nayeli Guzman & Tablero web y conexión & Desarrollo del tablero web, enlace del tablero con el firmware y orden de las versiones en el repositorio. \\
+Jazmin Soto & Backend e informe & Backend y apoyo a la comunicación; consolidación del informe final en \LaTeX{} con fotografías, figuras y evidencias. \\
+Manyory Cueva & Modelo 3D y presentación & Modelo 3D paramétrico, visor interactivo, y publicación y actualización de la presentación final en Vercel. \\
+\hline
+\end{tabular}
+
+\section{Coordinación y colaboración}
+Coordinamos alrededor de las dependencias entre módulos: cada cambio del prototipo se contrastó con el firmware y el tablero, y los resultados de las pruebas pasaron al informe y a la presentación. Antes de cada entrega revisamos el trabajo de las demás. Las decisiones técnicas importantes las discutimos y las justificamos con el estado del arte:
+\begin{itemize}
+\item Cambiamos el sensor de fuerza por el FC-51 porque el ultrasonido no ve un escalón que baja, y lo limitamos a un ángulo de uso de 20° a 75° para que no suene al levantar el bastón.
+\item Separamos el ESP32 en dos núcleos, uno para sensores y decisión y otro para la red, de modo que la alerta local no dependa del Wi-Fi.
+\item Detectamos caídas con tres fases en orden (SVM menor a 0,5 g, impacto mayor a 2,5 g e inclinación mayor a 60°) y una ventana de 10 s para cancelar, para reducir falsas alarmas.
+\item Resolvimos problemas de hardware: bajamos el Echo del HC-SR04 de 5 V a 3,3 V con un divisor de 1 k$\Omega$ y 2 k$\Omega$, usamos solo el ADC1 porque el ADC2 no funciona con Wi-Fi y conmutamos los actuadores con transistores 2N2222.
+\end{itemize}
+Así el liderazgo cambió según la tarea y el avance no dependió de una sola persona.
+
+\section{Reflexión grupal}
+Aprendimos que un proyecto IoT no termina cuando cada componente funciona por separado. Entendimos el sistema completo: cómo se mide la distancia por eco, cómo se calcula la SVM del acelerómetro, cómo se publica el estado por MQTT y BLE y cómo se muestra en un tablero con mapa. Lo más difícil fue integrar sensores, energía, comunicaciones y estructura física en un prototipo coherente. Dividir por módulos aceleró el trabajo, pero las revisiones cruzadas fueron necesarias para detectar incompatibilidades.
+
+Nuestros resultados muestran que dominamos el tema, y también sus límites. Medimos error de distancia de 1 a 2 cm, 90\,\% de escalones detectados y 80\,\% de caídas simuladas, pero la autonomía real fue de 1,5 h frente a las 6 h estimadas y el primer fix del GPS tardó 3,5 min. En lugar de ocultarlo, identificamos las causas y propusimos mejoras concretas: una celda 18650 con protección y elevador, y calibrar los umbrales con registros a 50 Hz. Como mejora de equipo, definiríamos desde el inicio responsables, criterios de terminado y fechas internas más cortas. Liderar, para nosotras, fue dar seguimiento, pedir apoyo a tiempo y lograr que todas participaran en las decisiones y en el resultado.
+
+\end{document}
