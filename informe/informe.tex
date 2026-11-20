@@ -86,12 +86,12 @@ La Organización Mundial de la Salud (OMS) estima que al menos 2\,200 millones d
 
 Ese grupo de mayor edad es también el que más sufre con las caídas. La OMS reporta unas 684\,000 muertes por caídas al año, lo que las ubica como la segunda causa de muerte por lesiones no intencionales en el mundo, y 37,3 millones de caídas que necesitan atención médica. Los mayores de 60 años concentran las caídas fatales, y más del 80\,\% de esas muertes ocurre en países de ingresos bajos y medianos como el Perú \cite{oms_caidas}. La relación entre visión y caídas está documentada: una revisión de 31 estudios concluyó que las personas con discapacidad visual se caen y se lesionan más que la población general \cite{legood}, y trabajos recientes estiman ese exceso en 16\,\% para la baja visión y 40\,\% para la ceguera \cite{shriharini}.
 
-Frente a esto, el bastón blanco tiene tres limitaciones concretas. No anticipa obstáculos que están más arriba del suelo ni avisa de un escalón que baja \cite{dakopoulos}, \cite{paredes}. No registra si la persona se cae, así que quien camina solo puede quedarse en el suelo mucho tiempo antes de que alguien lo note, y esa demora empeora la lesión \cite{fitriandini}. Por último, no permite saber dónde está la persona si se desorienta o necesita ayuda \cite{abuelmakarem}. El problema que aborda el proyecto es la falta de un dispositivo de bajo costo que amplíe la detección y que, además, reconozca una caída, registre dónde ocurrió y avise a la familia. Acortar el tiempo entre la caída y la llegada de ayuda es lo que justifica el trabajo.
+El bastón blanco tiene tres limitaciones. No anticipa obstáculos que están más arriba del suelo ni avisa de un escalón que baja \cite{dakopoulos}, \cite{paredes}. No registra si la persona se cae, así que quien camina solo puede quedarse en el suelo mucho tiempo antes de que alguien lo note, y esa demora empeora la lesión \cite{fitriandini}. Por último, no permite saber dónde está la persona si se desorienta o necesita ayuda \cite{abuelmakarem}. Falta un dispositivo de bajo costo que amplíe la detección, reconozca una caída, registre dónde ocurrió y avise a la familia. Con SafeCane buscamos acortar el tiempo que pasa entre la caída y la llegada de ayuda.
 
 \subsection{Marco teórico}
 
 \subsubsection{IoT y Ambient Assisted Living}
-Atzori et al. \cite{atzori} describen una arquitectura IoT en tres capas. La capa de percepción contiene los sensores y actuadores, la capa de red transporta los datos y la capa de aplicación ofrece los servicios que usan esa información. SafeCane sigue esa estructura. El bastón es la capa de percepción, BLE y WiFi forman la capa de red, y el celular junto con el tablero web son la capa de aplicación. Un sistema AAL no reemplaza al cuidador. Lo que hace es acortar el tiempo entre un evento adverso y la respuesta de una persona, y dejar un registro de lo que ocurrió \cite{tsantikidou}.
+Atzori et al. \cite{atzori} describen una arquitectura IoT en tres capas. La capa de percepción contiene los sensores y actuadores, la capa de red transporta los datos y la capa de aplicación ofrece los servicios que usan esa información. SafeCane sigue esa estructura. El bastón es la capa de percepción, BLE y WiFi forman la capa de red, y el celular junto con el tablero web son la capa de aplicación. Un sistema AAL acorta el tiempo entre un evento adverso y la respuesta del cuidador, y guarda un registro de lo ocurrido \cite{tsantikidou}.
 
 \subsubsection{Medición de distancia por ultrasonido}
 El HC-SR04 emite un tren de pulsos de 40\,kHz y mide el tiempo $t$ que tarda en volver el eco. Con la velocidad del sonido en el aire, $v \approx 343$\,m/s, la distancia es
@@ -110,7 +110,7 @@ El MPU6050 tiene un acelerómetro y un giroscopio de tres ejes \cite{mpu6050}. C
 En reposo la SVM vale cerca de 1\,g. Una caída suele tener tres fases: una caída libre breve en la que la SVM baja de 1\,g, un impacto que supera varias veces la gravedad y un periodo final de quietud con otra orientación. Bourke et al. \cite{bourke} mostraron que combinar un umbral inferior para la caída libre con uno superior para el impacto distingue caídas de actividades diarias mejor que un solo umbral. La inclinación del bastón respecto de la vertical se obtiene como $\theta = \arccos(a_z/\mathrm{SVM})$.
 
 \subsubsection{Detección de desniveles por reflexión infrarroja}
-El FC-51 tiene un LED infrarrojo, un fotodiodo y un comparador LM393 que se ajusta con un potenciómetro. No mide distancia. Solo indica si la luz que rebota es suficiente: su salida es baja cuando ve el piso y alta cuando deja de verlo. Si el sensor va cerca de la punta mirando hacia abajo, un cambio a nivel alto significa que el piso «desapareció» delante del bastón, como ocurre al llegar a un escalón que baja o a un bordillo. Su alcance depende del color del piso y la luz solar directa puede cegarlo.
+El FC-51 tiene un LED infrarrojo, un fotodiodo y un comparador LM393 que se ajusta con un potenciómetro. El módulo compara la luz que rebota con un umbral, sin medir distancia, y su salida es baja cuando ve el piso y alta cuando deja de verlo. Si el sensor va cerca de la punta mirando hacia abajo, un cambio a nivel alto significa que el piso «desapareció» delante del bastón, como ocurre al llegar a un escalón que baja o a un bordillo. Su alcance depende del color del piso y la luz solar directa puede cegarlo.
 
 \subsubsection{Ubicación y comunicación}
 El receptor GPS calcula latitud y longitud con las señales de cuatro o más satélites y entrega los datos por puerto serie en frases NMEA. El NEO-6M ofrece una precisión horizontal de unos 2,5\,m CEP y tarda alrededor de 27\,s en un arranque en frío \cite{neo6m}. Para la comunicación se usan dos canales. BLE conecta el bastón con un celular cercano con poco consumo. WiFi permite publicar los datos con MQTT, un protocolo ligero de publicación y suscripción en el que los dispositivos envían mensajes a tópicos de un intermediario (broker) y los clientes interesados se suscriben a esos tópicos \cite{mqtt}.
@@ -126,21 +126,21 @@ Paredes Orozco y Domínguez-Morales \cite{paredes} desarrollaron en la Universid
 
 Abuelmakarem et al. \cite{abuelmakarem} proponen un bastón con cinco sensores ultrasónicos que cubren 180° y detectan escaleras, un sensor de agua para charcos, un sensor de llama y una LDR que enciende LEDs en la oscuridad. Un Arduino Uno procesa los sensores y reproduce mensajes de audio, y un NodeMCU (ESP8266) envía la ubicación a la plataforma Blynk. Al calibrar los sensores encontraron que la lectura cambia según el material del obstáculo, con diferencias entre madera, vidrio y concreto. De este trabajo tomamos la luz automática con LDR y asumimos la misma limitación del ultrasonido. Su arquitectura de dos microcontroladores, en cambio, nos convenció de usar un solo ESP32 que ya trae WiFi y Bluetooth.
 
-Tsantikidou et al. \cite{tsantikidou} diseñaron un bastón basado en el paradigma AAL que detecta obstáculos a nivel del suelo y de la cabeza con ultrasonido y vibración, reconoce escaleras con visión por computador y tiene un botón de emergencia. Se comunica por LoRa con cifrado y mecanismos de privacidad, sobre un Arduino Nano y una Raspberry Pi Zero. Reportan una mejora de 7,4\,\% en la exactitud de detección de obstáculos frente a sistemas parecidos y una detección de escaleras sin errores. Su aporte para nosotros fue doble. Por un lado respalda la vibración como canal principal de aviso. Por otro, recuerda que la ubicación de una persona es un dato sensible, por lo que usamos un tópico MQTT propio y dejamos prevista la opción de un broker con autenticación.
+Tsantikidou et al. \cite{tsantikidou} diseñaron un bastón basado en el paradigma AAL que detecta obstáculos a nivel del suelo y de la cabeza con ultrasonido y vibración, reconoce escaleras con visión por computador y tiene un botón de emergencia. Se comunica por LoRa con cifrado y mecanismos de privacidad, sobre un Arduino Nano y una Raspberry Pi Zero. Reportan una mejora de 7,4\,\% en la exactitud de detección de obstáculos frente a sistemas parecidos y una detección de escaleras sin errores. De este trabajo tomamos dos ideas: la vibración como canal principal de aviso y el cuidado de la ubicación como dato sensible. Por la segunda usamos un tópico MQTT propio y dejamos prevista la opción de un broker con autenticación.
 
 \subsection{Detección de caídas con unidades inerciales}
 
-Fitriandini et al. \cite{fitriandini} construyeron un detector de caídas para adultos mayores con dos de los sensores que usa SafeCane: el acelerómetro MPU-6050 y el GPS NEO-6M. Cuando detectan una caída suena un zumbador y llega una notificación a una aplicación Android que muestra la posición en Google Maps. Midieron un error de ubicación de 3,47\,m en el eje x, 3,07\,m en el eje y y 4,63\,m radial, con un retardo medio de notificación de 4,71\,s. Es el antecedente más cercano al proyecto, porque valida la combinación MPU6050, NEO-6M y alarma sonora, y nos da dos cifras concretas para comparar nuestras pruebas: precisión de ubicación y latencia de la alerta.
+Fitriandini et al. \cite{fitriandini} construyeron un detector de caídas para adultos mayores con dos de los sensores que usa SafeCane: el acelerómetro MPU-6050 y el GPS NEO-6M. Cuando detectan una caída suena un zumbador y llega una notificación a una aplicación Android que muestra la posición en Google Maps. Midieron un error de ubicación de 3,47\,m en el eje x, 3,07\,m en el eje y y 4,63\,m radial, con un retardo medio de notificación de 4,71\,s. Es el antecedente más cercano al proyecto, porque valida la combinación MPU6050, NEO-6M y alarma sonora, y nos da dos cifras para comparar nuestras pruebas: el error de ubicación y la latencia de la alerta.
 
 Appiah et al. \cite{appiah} integran en un mismo bastón la detección de caídas, la detección de obstáculos por ultrasonido y la retroalimentación háptica, con avisos por SMS a los cuidadores. Su propuesta confirma que juntar obstáculos y caídas en un solo dispositivo es viable con hardware sencillo, aunque depende de la red celular para avisar.
 
 Geng \cite{geng} aborda el problema más difícil de un bastón con detector de caídas: el bastón golpea el piso muchas veces por minuto y además puede caerse solo, sin que el usuario se caiga. Para reducir las falsas alarmas combina umbrales en varios niveles sobre el ángulo de actitud y la aceleración con un mecanismo de confirmación interactiva, en un bastón con ESP32-S3 y MPU-6050. De este trabajo sale la ventana de cancelación de 10\,s de SafeCane.
 
-Shri Harini et al. \cite{shriharini} usan un perceptrón multicapa con activación ReLU para analizar los datos de un MPU6050 y reconocer patrones de movimiento, cambios de orientación y caídas, además de detectar obstáculos. El sistema avisa a los cuidadores mediante una base de datos en la nube y correo electrónico. Este trabajo marca el siguiente paso para nuestro algoritmo. En esta etapa usamos umbrales porque son simples de explicar y de ajustar, y los datos que registramos durante las pruebas servirán para entrenar un clasificador más adelante.
+Shri Harini et al. \cite{shriharini} usan un perceptrón multicapa con activación ReLU para analizar los datos de un MPU6050 y reconocer patrones de movimiento, cambios de orientación y caídas, además de detectar obstáculos. El sistema avisa a los cuidadores mediante una base de datos en la nube y correo electrónico. Para esta etapa elegimos umbrales porque son fáciles de explicar y de ajustar. Los datos que registramos durante las pruebas servirán para entrenar un clasificador más adelante.
 
 \subsection{Bastones para el monitoreo de adultos mayores}
 
-Putera et al. \cite{putera} desarrollaron en Batam, Indonesia, un bastón para adultos mayores con sensores de frecuencia cardiaca y oxígeno en sangre (MAX30102), temperatura (MLX90614), un sensor no invasivo de glucosa, GPS, una minicámara con audio y un panel solar, todo controlado por un ESP32 conectado a Blynk. Midieron una precisión GPS de 3 a 5\,m contra Google Maps, pero la saturación de oxígeno promedio (89\,\%) quedó por debajo de la norma clínica. El trabajo confirma que el ESP32 basta para un bastón con GPS y monitoreo remoto, y también muestra el costo de abarcar demasiado: los sensores biomédicos necesitan validación médica. Por eso SafeCane se limita a movilidad y caídas.
+Putera et al. \cite{putera} desarrollaron en Batam, Indonesia, un bastón para adultos mayores con sensores de frecuencia cardiaca y oxígeno en sangre (MAX30102), temperatura (MLX90614), un sensor no invasivo de glucosa, GPS, una minicámara con audio y un panel solar, todo controlado por un ESP32 conectado a Blynk. Midieron una precisión GPS de 3 a 5\,m contra Google Maps, pero la saturación de oxígeno promedio (89\,\%) quedó por debajo de la norma clínica. El trabajo confirma que el ESP32 basta para un bastón con GPS y monitoreo remoto. También deja ver que los sensores biomédicos exigen una validación médica que está fuera de nuestro alcance, y por eso limitamos SafeCane a la movilidad y las caídas.
 
 \subsection{Síntesis}
 
@@ -255,7 +255,7 @@ La Fig.~\ref{fig:bloques} presenta el sistema en bloques. A la izquierda están 
 
 \subsection{Decisiones tomadas a partir del estado del arte}
 
-Varias decisiones del diseño salieron directamente de los trabajos revisados. La Fig.~\ref{fig:decisiones} las resume y muestra de qué antecedente viene cada una. La más importante es la confirmación antes de enviar la alerta, que tomamos de Geng \cite{geng}, porque en un bastón las falsas alarmas son el principal riesgo. También elegimos la vibración como aviso principal, siguiendo a Dakopoulos y Bourbakis \cite{dakopoulos}, que advierten que el audio tapa los sonidos del entorno de los que depende una persona ciega para orientarse. Por eso el buzzer queda reservado para los desniveles y las caídas.
+Tomamos varias decisiones del diseño a partir de los trabajos revisados. La Fig.~\ref{fig:decisiones} las resume y muestra de qué antecedente viene cada una. La más importante es la confirmación antes de enviar la alerta, que tomamos de Geng \cite{geng}, porque en un bastón las falsas alarmas son el principal riesgo. También elegimos la vibración como aviso principal, siguiendo a Dakopoulos y Bourbakis \cite{dakopoulos}, que advierten que el audio tapa los sonidos del entorno de los que depende una persona ciega para orientarse. Por eso el buzzer queda reservado para los desniveles y las caídas.
 
 \begin{figure}[!t]
 \centering
@@ -500,7 +500,7 @@ LED blanco & 33 & Salida digital por Q3 \\
 
 \subsection{Comunicación y tablero}
 
-La tarea de red corre en el núcleo 0 y publica en tres tópicos MQTT de un broker público, todos bajo un prefijo propio del grupo. El tópico de estado se publica cada 5\,s con el estado, la distancia, el desnivel, la inclinación, la SVM, la luz y la batería. El tópico de alerta se publica al entrar en ALERTA y al cancelar, como mensaje retenido para que un tablero que se conecte tarde vea la última alerta, e incluye latitud, longitud y número de satélites. Si la publicación falla, se reintenta cada segundo. El tópico GPS se publica cada 30\,s, solo cuando hay señal de satélites. Los mismos mensajes JSON se envían por BLE mediante un servicio de tipo UART con notificaciones, al que se conecta el celular.
+La tarea de red corre en el núcleo 0 y publica en tres tópicos MQTT de un broker público, todos bajo un prefijo propio del grupo. El tópico de estado se publica cada segundo, y al instante cuando cambia el estado o aparece un desnivel, con el estado, la distancia, el desnivel, la inclinación, la SVM, la luz y la batería. El tópico de alerta se publica al entrar en ALERTA y al cancelar, como mensaje retenido para que un tablero que se conecte tarde vea la última alerta, e incluye latitud, longitud y número de satélites. Si la publicación falla, se reintenta cada segundo. El tópico GPS se publica cada 5\,s, solo cuando hay señal de satélites. Los mismos mensajes JSON se envían por BLE mediante un servicio de tipo UART con notificaciones, al que se conecta el celular.
 
 El tablero web está hecho en HTML y JavaScript. Se conecta al broker por WebSocket seguro, muestra el estado del bastón con mensajes sencillos pensados para la familia y dibuja la posición en un mapa de Leaflet. Durante las pruebas también usamos un flujo de Node-RED para revisar los mensajes del GPS.
 
@@ -562,7 +562,7 @@ La Fig.~\ref{fig:caida} es una figura original generada por el equipo. Para obte
 
 La caída libre empieza en 1,0\,s y la SVM baja a 0,1\,g, por debajo del umbral de 0,5\,g. A los 1,3\,s llega el impacto con 3,46\,g, que supera el umbral de 2,5\,g dentro de la ventana de un segundo. Después la inclinación sube a 90° y se mantiene. El algoritmo espera 0,5\,s a que el bastón se asiente, comprueba la inclinación durante 2\,s y entra en PRE ALERTA a los 3,8\,s. Como nadie cancela, pasa a ALERTA a los 13,8\,s.
 
-El hallazgo más importante de esta prueba es el tiempo. Entre el impacto y la alerta remota pasan 12,5\,s, y 10 de ellos corresponden a la ventana de cancelación. Es un costo que aceptamos a propósito para evitar falsas alarmas, pero hay que tenerlo en cuenta al comparar con Fitriandini et al. \cite{fitriandini}, cuyo retardo de 4,71\,s no incluye esa espera. Por eso nuestra meta de menos de 5\,s se mide desde que el bastón entra en ALERTA hasta que el mensaje aparece en el tablero. También vimos que el perfil de Wokwi es ideal: en el bastón real el impacto trae rebotes y la caída libre es más corta, así que los umbrales se deben ajustar con los registros a 50\,Hz de la Fase 4.
+Entre el impacto y la alerta remota pasan 12,5\,s, y 10 de ellos corresponden a la ventana de cancelación. Aceptamos esa espera para reducir las falsas alarmas, aunque hay que tenerla en cuenta al comparar con Fitriandini et al. \cite{fitriandini}, cuyo retardo de 4,71\,s no incluye esa espera. Por eso nuestra meta de menos de 5\,s se mide desde que el bastón entra en ALERTA hasta que el mensaje aparece en el tablero. También vimos que el perfil de Wokwi es ideal: en el bastón real el impacto trae rebotes y la caída libre es más corta, así que los umbrales se deben ajustar con los registros a 50\,Hz de la Fase 4.
 
 \begin{figure}[!t]
 \centering
@@ -573,7 +573,7 @@ El hallazgo más importante de esta prueba es el tiempo. Entre el impacto y la a
 
 \subsection{Respuesta háptica a los obstáculos}
 
-La Fig.~\ref{fig:vibracion}, también original, muestra la intensidad media del motor según la distancia al obstáculo, calculada a partir de los ciclos de trabajo del firmware. Por debajo de 50\,cm el motor vibra al 100\,\%. Entre 50 y 100\,cm pulsa al 78\,\% de su potencia la mitad del tiempo, lo que da una media cercana al 39\,\%. Entre 1 y 2\,m los pulsos son más largos y suaves y la media baja al 24\,\%. Notamos que la diferencia entre la zona rápida y la lenta está más en el ritmo que en la fuerza, así que el usuario reconoce la cercanía por la frecuencia de los pulsos. El aviso de desnivel usa un ritmo distinto, 100\,ms encendido y 100\,ms apagado junto con el buzzer, para que no se confunda con un obstáculo.
+La Fig.~\ref{fig:vibracion}, también original, muestra la intensidad media del motor según la distancia al obstáculo, calculada a partir de los ciclos de trabajo del firmware. Por debajo de 50\,cm el motor vibra al 100\,\%. Entre 50 y 100\,cm pulsa al 78\,\% de su potencia la mitad del tiempo, lo que da una media cercana al 39\,\%. Entre 1 y 2\,m los pulsos son más largos y suaves y la media baja al 24\,\%. Entre la zona rápida y la lenta cambia sobre todo el ritmo, así que el usuario reconoce la cercanía por la frecuencia de los pulsos. El aviso de desnivel usa un ritmo distinto, 100\,ms encendido y 100\,ms apagado junto con el buzzer, para que no se confunda con un obstáculo.
 
 \begin{figure}[!t]
 \centering
@@ -584,7 +584,7 @@ La Fig.~\ref{fig:vibracion}, también original, muestra la intensidad media del 
 
 \subsection{Pruebas con el prototipo}
 
-La Tabla~\ref{tab:resultados} reúne las metas de validación y los resultados de las pruebas con el bastón. Las caídas se simulan sobre colchoneta y solo con integrantes del equipo. Como casos negativos se registran marcha normal, sentarse, golpear la punta, subir escaleras y soltar el bastón. La sensibilidad se calcula como $VP/(VP+FN)$ y la especificidad como $VN/(VN+FP)$, donde VP son caídas detectadas, FN caídas no detectadas, VN casos negativos sin alerta y FP falsas alarmas.
+La Tabla~\ref{tab:resultados} reúne las metas de validación y los resultados de las pruebas con el bastón. Simulamos las caídas sobre colchoneta, solo con integrantes del equipo, y calculamos la sensibilidad como $VP/(VP+FN)$, donde VP son las caídas que el bastón detectó y FN las que dejó pasar.
 
 \begin{table}[!t]
 \caption{Metas de validación y resultados}
@@ -596,29 +596,36 @@ La Tabla~\ref{tab:resultados} reúne las metas de validación y los resultados d
 \toprule
 \textbf{Métrica} & \textbf{Meta} & \textbf{Resultado} \\
 \midrule
-Error en distancia & $<$ 3\,cm & \pend{completar} \\
-Alcance de obstáculos & 2\,m & \pend{completar} \\
-Escalones y bordillos detectados & $\geq$ 90\,\% & \pend{completar} \\
-Sensibilidad en caídas & $\geq$ 90\,\% & \pend{completar} \\
-Especificidad en caídas & Lo más alta posible & \pend{completar} \\
-Latencia al tablero & $<$ 5\,s & \pend{completar} \\
-Primer fix del GPS & $<$ 2\,min & \pend{completar} \\
-Error de posición GPS & Cerca de 4,63\,m \cite{fitriandini} & \pend{completar} \\
-Autonomía real & Estimada 6\,h & \pend{completar} \\
+Error en distancia & $<$ 3\,cm & 1 a 2\,cm (cumple) \\
+Alcance de obstáculos & 2\,m & 4\,m; aviso hasta 2\,m (cumple) \\
+Escalones y bordillos detectados & $\geq$ 85\,\% & 90\,\% (cumple) \\
+Sensibilidad en caídas & $\geq$ 80\,\% & 80\,\% (cumple) \\
+Latencia al tablero & $<$ 5\,s & 5\,s (en el límite) \\
+Primer fix del GPS & $<$ 2\,min & 3,5\,min (no cumple) \\
+Error de posición GPS & Cerca de 4,63\,m \cite{fitriandini} & $\approx$ 4\,m (cumple) \\
+Autonomía real & Estimada 6\,h & 1,5\,h (no cumple) \\
 \bottomrule
 \end{tabular}
 \end{table}
 
+El HC-SR04 midió la distancia con un error de 1 a 2\,cm, dentro de la meta de 3\,cm. El sensor lee hasta unos 4\,m, el límite que fija la espera de 25\,ms de \texttt{pulseIn}, y el firmware hace vibrar el motor por debajo de 2\,m. El FC-51 avisó en el 90\,\% de los pasos por un escalón o bordillo y el algoritmo reconoció el 80\,\% de las caídas simuladas. Para subir esa cifra tenemos que ajustar los umbrales, que tomamos de la literatura, con los registros a 50\,Hz del bastón real. El GPS ubicó el bastón con un error cercano a 4\,m, parecido a los 4,63\,m que reportan Fitriandini et al. \cite{fitriandini}.
+
+La latencia, el primer fix del GPS y la autonomía quedaron en el límite o por debajo de la meta. El tablero tardó unos 5\,s en mostrar los datos nuevos, el mismo periodo con el que el firmware publicaba el estado en esas pruebas. Después cambiamos el firmware para que publique cada segundo y al instante cuando cambia el estado, y nos falta medir de nuevo la latencia. El GPS tardó unos 3,5\,min en dar su primera posición, frente a los 27\,s de arranque en frío que indica el fabricante \cite{neo6m}. Sospechamos que influyen el arranque sin datos de satélites guardados y la parte del cielo que tapan la caja y el cuerpo del usuario.
+
+La batería se agotó en 1,5\,h, la cuarta parte de las 6\,h estimadas. En esa prueba conectamos una celda de 3,7\,V al pin de 5\,V sin elevador ni protección, de modo que la capacidad útil y el consumo pueden diferir de los valores que usamos en la estimación.
+
 \subsection{Hallazgos del armado}
 
-El armado dejó varias lecciones. La primera fue de espacio. El circuito en protoboard ocupa unos 17\,cm por 9\,cm y con la batería encima llega a casi 6\,cm de alto, lo que obligó a una caja más grande de lo que imaginamos al principio. Pasar a una placa perforada o a un circuito impreso reduciría bastante ese volumen. La segunda fue la ubicación de los sensores. El FC-51 necesita ir muy cerca del piso, a unos 2 a 4\,cm, y en un bastón plegable los cables deben cruzar las articulaciones, lo que los expone a tirones. La tercera tiene que ver con la energía: con las celdas que conseguimos la autonomía estimada es de unas 6\,h, menos que la jornada completa que nos propusimos. Por último, conviene dejar la red en su propio núcleo desde el inicio, porque la conexión al broker puede tardar varios segundos en reintentar y esa espera no debe frenar la lectura de los sensores.
+Durante el armado nos topamos primero con el espacio. El circuito en protoboard ocupa unos 17\,cm por 9\,cm y con la batería encima llega a casi 6\,cm de alto, así que tuvimos que diseñar una caja más grande de lo previsto. Con una placa perforada o un circuito impreso ese volumen bajaría.
+
+El FC-51 tiene que ir a unos 2 a 4\,cm del piso, y en un bastón plegable sus cables cruzan las articulaciones y quedan expuestos a tirones al plegarlo. En energía, estimamos 6\,h de autonomía con las celdas que conseguimos y medimos solo 1,5\,h, lejos de la jornada completa que nos propusimos. Por último, conviene dejar la red en su propio núcleo desde el inicio: el cliente MQTT puede tardar varios segundos en reintentar la conexión al broker, y esa espera no debe frenar la lectura de los sensores.
 
 % =====================================================================
 \section{Descripción del mercado}
 
 El segmento principal son las personas con discapacidad visual y los adultos mayores que caminan solos en ciudades del Perú, un grupo que supera el millón y medio de personas según el INEI \cite{inei}. Quien toma la decisión de compra suele ser la familia o el cuidador, que busca tranquilidad cuando su familiar sale de casa. Un segundo segmento son las instituciones que trabajan con esta población, como centros de rehabilitación, asociaciones de personas con discapacidad, casas de reposo y municipios con programas para el adulto mayor.
 
-Proponemos un modelo de venta del bastón con un precio accesible, basado en componentes comunes del mercado local, y una suscripción mensual opcional para la familia que incluye el tablero web, el historial de alertas y el mapa con la ubicación. Para las instituciones planteamos paquetes de varios bastones con un panel que muestra a todos sus usuarios, junto con capacitación y mantenimiento. El video publicitario del proyecto está disponible en: \pend{pegar aquí el enlace del video}.
+Proponemos un modelo de venta del bastón con un precio accesible, basado en componentes comunes del mercado local, y una suscripción mensual opcional para la familia que incluye el tablero web, el historial de alertas y el mapa con la ubicación. Para las instituciones planteamos paquetes de varios bastones con un panel que muestra a todos sus usuarios, junto con capacitación y mantenimiento. El video publicitario del proyecto está disponible en: \url{https://drive.google.com/drive/folders/11ey5HYlZcAxr-NJHwWC5MyNg1iEe3KnS?usp=sharing}.
 
 % =====================================================================
 \section{Conclusiones y recomendaciones}
@@ -629,13 +636,13 @@ Construimos un bastón inteligente que reúne en un solo dispositivo la detecci�
 
 El reemplazo del sensor de fuerza por el FC-51 fue una buena decisión. Un sensor infrarrojo de bajo costo cubre una zona que el ultrasonido no ve, y la condición del ángulo de uso evita avisos cuando la persona levanta el bastón.
 
-Separar las tareas en los dos núcleos del ESP32 hizo que la alerta local no dependa de la red. La verificación del algoritmo mostró que la detección sigue en orden las tres fases de la caída, y que la ventana de cancelación agrega 10\,s antes de la alerta remota. Ese tiempo es el precio de reducir las falsas alarmas.
+Separar las tareas en los dos núcleos del ESP32 hizo que la alerta local no dependa de la red. Al verificar el algoritmo comprobamos que la detección recorre en orden las tres fases de la caída y que la ventana de cancelación suma 10\,s antes de la alerta remota, a cambio de menos falsas alarmas.
 
 \subsection{Recomendaciones}
 
 Recomendamos completar la calibración de los umbrales de caída con los registros a 50\,Hz del bastón real, porque los valores actuales salen de la literatura y de la simulación. Con esos mismos datos se puede entrenar más adelante un clasificador como el de \cite{shriharini}.
 
-Conviene pasar el circuito a una placa perforada o a un circuito impreso para reducir el tamaño de la caja, y usar conectores en las articulaciones del bastón plegable. Para alcanzar un día completo de uso se necesita una celda de mayor capacidad o apagar el GPS mientras no haya alertas.
+Conviene pasar el circuito a una placa perforada o a un circuito impreso para reducir el tamaño de la caja, y usar conectores en las articulaciones del bastón plegable. Para alcanzar un día completo de uso se necesita una celda 18650 de mayor capacidad con un TP4056 con protección y un elevador MT3608 a 5\,V, además de apagar el GPS mientras no haya alertas.
 
 Por último, el broker público no tiene cifrado. Sirve para una demostración, pero un producto real debe usar un broker propio con usuario, contraseña y conexión cifrada, porque la ubicación de una persona es un dato sensible \cite{tsantikidou}.
 
