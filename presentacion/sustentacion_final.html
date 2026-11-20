@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SafeCane · Sustentación final</title>
+
+<!-- Tipografías: Big Shoulders Display (titulares, estilo señalética), IBM Plex Sans (texto) e IBM Plex Mono (etiquetas) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+/* ===========================================
+   TEMA (variables CSS)
+   Cambia estos valores para cambiar todo el aspecto.
+   Paleta: verde petróleo + durazno, inspirada en el piso podotáctil.
+   =========================================== */
+:root {
+  --stage-bg: #03100f;      /* fuera del lienzo 16:9 */
+  --slide-bg: #0D2422;      /* fondo de cada diapositiva */
+  --bg-2: #12302D;          /* paneles */
+  --bg-3: #173a36;          /* paneles realzados */
+  --line: #25463f;          /* bordes y rejillas */
+  --glow: #163834;          /* halo del fondo */
+  --acc: #FFB38A;           /* acento durazno */
+  --dome: #e08e62;          /* relieve podotáctil */
+  --ring: #ffd2b8;
+  --mint: #8FD9C6;          /* acento frío secundario (desnivel, red) */
+  --paper: #F2EEE6;         /* texto principal */
+  --sub: #c8d6d2;           /* texto secundario */
+  --dim: #7f9e98;           /* etiquetas */
+
+  --f-display: 'Big Shoulders Display', 'Arial Narrow', sans-serif;
+  --f-body: 'IBM Plex Sans', sans-serif;
+  --f-mono: 'IBM Plex Mono', monospace;
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* ===========================================
+   FIXED 16:9 STAGE: MANDATORY BASE STYLES
+   (viewport-base.css, contenido completo)
+   =========================================== */
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: var(--stage-bg, #000);
+}
+.deck-viewport {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    background: var(--stage-bg, #000);
+}
+.deck-stage {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    transform-origin: 0 0;
+    background: var(--slide-bg, #fff);
+}
+.slide {
+    position: absolute;
+    inset: 0;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    display: block;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    background: var(--slide-bg, #fff);
+}
+.slide.active,
+.slide.visible {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    z-index: 1;
+}
+img,
+video,
+canvas,
+svg {
+    max-width: 100%;
+    max-height: 100%;
+}
+.deck-controls {
+    position: fixed;
+    left: 50%;
+    bottom: 22px;
+    transform: translateX(-50%);
+    z-index: 1000;
+}
+@media print {
+    html,
+    body {
+        width: 1920px;
+        height: auto;
+        overflow: visible;
+        background: #fff;
+    }
+    .deck-viewport {
+        position: static;
+        overflow: visible;
+        background: #fff;
+    }
+    .deck-stage {
+        position: static;
+        width: auto;
+        height: auto;
+        transform: none !important;
+        background: none;
+    }
+    .slide {
+        position: relative;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        width: 1920px;
+        height: 1080px;
+        break-after: page;
+        page-break-after: always;
+    }
+    .slide:last-child {
+        break-after: auto;
+        page-break-after: auto;
+    }
+    .deck-controls {
+        display: none !important;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.2s !important;
+    }
+}
+
+/* ===========================================
+   TRANSICIÓN ENTRE DIAPOSITIVAS
+   Fundido corto; el movimiento lo aportan los elementos .reveal
+   =========================================== */
+.slide {
+  transition: opacity 320ms ease, visibility 0s linear 320ms;
+  color: var(--paper);
+  font-family: var(--f-body);
+  background:
+    radial-gradient(1100px 700px at 82% 18%, var(--glow), transparent 70%),
+    var(--slide-bg);
+}
+.slide.active { transition: opacity 360ms ease, visibility 0s; }
+
+/* Grano sutil sobre el fondo (textura de asfalto) */
+.slide::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background-image: radial-gradient(#ffffff09 1px, transparent 1.4px);
+  background-size: 6px 6px; opacity: .6;
+}
+
+/* ===========================================
+   ANIMACIONES DE ENTRADA
+   .reveal sube y aparece; --i define el orden (lo asigna el JS)
+   =========================================== */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0s linear 360ms, transform 0s linear 360ms;
+}
+.slide.visible .reveal {
+  opacity: 1; transform: translateY(0);
+  transition: opacity 600ms ease, transform 800ms var(--ease-out);
+  transition-delay: calc(var(--i, 0) * 70ms + 120ms);
+}
+
+/* ===========================================
+   SEÑAS DE IDENTIDAD: RELIEVE PODOTÁCTIL Y BASTÓN
+   =========================================== */
+.tactile {
+  position: absolute; top: 0; bottom: 0; right: 0;
+  background-color: var(--acc);
+  background-image: radial-gradient(circle at 50% 50%, var(--dome) 0 17px, var(--ring) 18px 21px, transparent 22px);
+  background-size: 72px 72px;
+  background-position: 18px 18px;
+  clip-path: inset(0 0 0 100%);
+}
+.slide.visible .tactile {
+  clip-path: inset(0 0 0 0);
+  transition: clip-path 1100ms var(--ease-in-out) 60ms;
+}
+.cane {
+  position: absolute; width: 18px; height: 1400px; top: -120px;
+  background: linear-gradient(var(--paper) 0 80%, #e5484d 80% 100%);
+  transform: rotate(-22deg); transform-origin: top center;
+  opacity: 0;
+}
+.slide.visible .cane { opacity: 1; transition: opacity 700ms ease 700ms; }
+
+/* Relieve como marcador Sí / No en tablas */
+.dome { display: inline-block; width: 30px; height: 30px; border-radius: 50%; vertical-align: middle;
+  background: radial-gradient(circle, var(--dome) 0 9px, var(--ring) 10px 12px, var(--acc) 13px); }
+.ring { display: inline-block; width: 30px; height: 30px; border-radius: 50%; vertical-align: middle; border: 2px solid var(--line); }
+.na { font-family: var(--f-mono); color: var(--dim); font-size: 26px; }
+
+/* ===========================================
+   TIPOGRAFÍA Y BLOQUES REUTILIZABLES
+   =========================================== */
+.pad { position: absolute; inset: 96px 128px 104px; display: flex; flex-direction: column; }
+.tag {
+  font: 500 22px var(--f-mono); letter-spacing: .16em; text-transform: uppercase; color: var(--dim);
+  display: flex; align-items: center; gap: 18px;
+}
+.tag b { color: var(--acc); font-weight: 500; }
+.h1 { font: 900 200px/.84 var(--f-display); text-transform: uppercase; letter-spacing: -.005em; }
+.h2 { font: 800 112px/.9 var(--f-display); text-transform: uppercase; margin-top: 36px; max-width: 1500px; }
+.h3 { font: 800 54px/1 var(--f-display); text-transform: uppercase; letter-spacing: .01em; }
+.lead { font-size: 40px; line-height: 1.38; color: var(--sub); max-width: 1300px; }
+.txt { font-size: 30px; line-height: 1.45; color: var(--sub); }
+.src { font: 400 20px var(--f-mono); color: var(--dim); letter-spacing: .04em; }
+.acc { color: var(--acc); }
+.mint { color: var(--mint); }
+em { font-style: normal; color: var(--paper); font-weight: 600; }
+
+.panel { background: var(--bg-2); border: 1px solid var(--line); border-radius: 6px; padding: 44px 44px 40px; }
+.cols { display: grid; gap: 28px; }
+.c2 { grid-template-columns: 1fr 1fr; }
+.c3 { grid-template-columns: repeat(3, 1fr); }
+.c4 { grid-template-columns: repeat(4, 1fr); }
+.grow { flex: 1; min-height: 0; }
+.bottom { margin-top: auto; }
+
+/* Número pequeño de ítem (01, 02…) */
+.idx { font: 500 22px var(--f-mono); color: var(--acc); letter-spacing: .08em; }
+
+/* ===========================================
+   PORTADA Y CIERRE
+   =========================================== */
+.cover .tactile { width: 760px; }
+.cover .cane { right: 300px; }
+.cover .h1 { position: absolute; left: 112px; top: 220px; width: 1050px; }
+.cover .sub { position: absolute; left: 120px; top: 775px; width: 860px; font-size: 32px; line-height: 1.42; color: var(--sub); }
+.cover .tag { position: absolute; left: 120px; top: 110px; }
+.people { position: absolute; left: 120px; bottom: 84px; width: 940px; display: flex; flex-wrap: wrap; gap: 14px 40px; font: 500 20px var(--f-mono); letter-spacing: .06em; color: var(--dim); }
+.people i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--acc); margin-right: 12px; vertical-align: 1px; }
+
+/* ===========================================
+   SEPARADOR DE SECCIÓN
+   =========================================== */
+.section .tactile { width: 520px; }
+.section .cane { right: 180px; }
+.section .num {
+  position: absolute; left: 112px; top: 120px;
+  font: 900 520px/.8 var(--f-display);
+  color: transparent; -webkit-text-stroke: 3px var(--acc);
+}
+.section .h2 { position: absolute; left: 120px; bottom: 150px; width: 1200px; font-size: 150px; }
+.section .tag { position: absolute; left: 124px; bottom: 96px; }
+
+/* ===========================================
+   CIFRA GRANDE (estadísticas)
+   =========================================== */
+.stat-n { font: 900 360px/.8 var(--f-display); color: var(--acc); letter-spacing: -.01em; white-space: nowrap; }
+.stat-n small { font-size: 140px; color: var(--paper); margin-left: 16px; }
+.stat-wrap { display: grid; grid-template-columns: auto 1fr; gap: 80px; align-items: end; margin-top: auto; }
+.stat-wrap .lead { font-size: 46px; color: var(--paper); padding-bottom: 18px; }
+
+/* ===========================================
+   TABLAS
+   =========================================== */
+table { width: 100%; border-collapse: collapse; }
+th { font: 500 19px var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--dim); text-align: left; padding: 0 16px 18px; }
+td { font-size: 27px; color: var(--sub); padding: 20px 16px; border-top: 1px solid var(--line); vertical-align: middle; }
+td b { color: var(--paper); font-weight: 600; }
+td.c, th.c { text-align: center; }
+tr.us td { background: var(--bg-3); color: var(--paper); border-top-color: var(--acc); }
+
+/* ===========================================
+   ONDAS DE VIBRACIÓN (patrones de aviso)
+   =========================================== */
+.wave { height: 34px; border-radius: 4px; }
+.w-cont { background: var(--acc); }
+.w-fast { background: repeating-linear-gradient(90deg, var(--acc) 0 14px, transparent 14px 28px); }
+.w-slow { background: repeating-linear-gradient(90deg, var(--acc) 0 44px, transparent 44px 88px); opacity: .8; }
+.w-step { background: repeating-linear-gradient(90deg, var(--mint) 0 14px, transparent 14px 28px); }
+.w-pre  { background: repeating-linear-gradient(90deg, var(--ring) 0 84px, transparent 84px 140px); }
+.w-alert{ background: repeating-linear-gradient(90deg, #ff7a6b 0 35px, transparent 35px 70px); }
+.wrow { display: grid; grid-template-columns: 420px 1fr 260px; gap: 40px; align-items: center; padding: 22px 0; border-top: 1px solid var(--line); }
+.wrow b { font: 800 40px/1 var(--f-display); text-transform: uppercase; display: block; }
+.wrow span { font: 400 20px var(--f-mono); color: var(--dim); }
+.wrow .ms { text-align: right; font: 500 22px var(--f-mono); color: var(--sub); }
+
+/* ===========================================
+   SVG (diagramas)
+   =========================================== */
+svg text { font-family: var(--f-body); fill: var(--paper); }
+svg .t2 { fill: var(--sub); }
+svg .t3 { fill: var(--dim); }
+svg .mono { font-family: var(--f-mono); }
+svg .box { fill: var(--bg-2); stroke: var(--line); stroke-width: 1.5; }
+svg .box-a { fill: #2a2b24; stroke: var(--acc); stroke-width: 2; }
+svg .box-m { fill: #143a35; stroke: var(--mint); stroke-width: 1.5; }
+svg .box-s { fill: var(--bg-3); }
+svg .w { stroke: var(--dim); stroke-width: 1.6; fill: none; }
+svg .wa { stroke: var(--acc); stroke-width: 2; fill: none; }
+svg .wm { stroke: var(--mint); stroke-width: 2; fill: none; }
+svg .dash { stroke-dasharray: 6 7; }
+svg .ah { fill: var(--dim); }
+svg .aha { fill: var(--acc); }
+svg .ahm { fill: var(--mint); }
+svg .ta { fill: var(--acc); }
+svg .tm { fill: var(--mint); }
+svg .gl { stroke: var(--line); stroke-width: 1; }
+.trace { stroke: var(--acc); stroke-width: 3; fill: none; stroke-linejoin: round; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
+.slide.visible .trace { stroke-dashoffset: 0; transition: stroke-dashoffset 1600ms var(--ease-in-out) 500ms; }
+
+/* ===========================================
+   REFERENCIAS
+   =========================================== */
+.refs { columns: 2; column-gap: 72px; margin-top: 44px; }
+.refs p { font-size: 19px; line-height: 1.45; color: var(--sub); margin-bottom: 13px; break-inside: avoid; }
+.refs p b { color: var(--paper); font-weight: 600; }
+
+/* Notas del expositor: ocultas en la diapositiva, se muestran con N */
+.notes { display: none; }
+
+/* ===========================================
+   CONTROLES (fuera del lienzo)
+   =========================================== */
+.progress { position: fixed; left: 0; top: 0; height: 3px; width: 100%; background: var(--acc); transform-origin: left; transform: scaleX(0); transition: transform 400ms var(--ease-out); z-index: 1000; }
+.counter { position: fixed; right: 20px; bottom: 16px; font: 500 13px var(--f-mono); letter-spacing: .1em; color: var(--dim); z-index: 1000; }
+.counter b { color: var(--paper); font-weight: 500; }
+.notes-panel {
+  position: fixed; left: 50%; bottom: 20px; transform: translate(-50%, 16px); width: min(920px, calc(100% - 32px));
+  background: #071816f2; border: 1px solid var(--line); border-radius: 10px; padding: 18px 22px;
+  font: 400 16px/1.55 var(--f-body); color: var(--sub); z-index: 1001;
+  opacity: 0; pointer-events: none; transition: opacity 200ms ease, transform 260ms var(--ease-out);
+}
+.notes-panel.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+.notes-panel b { font: 500 12px var(--f-mono); letter-spacing: .12em; color: var(--acc); display: block; margin-bottom: 6px; }
+.hint { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); font: 400 12px var(--f-mono); color: var(--dim); background: #071816e6; border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; z-index: 1000; transition: opacity 500ms ease; }
+.hint.gone { opacity: 0; }
+
+/* Edición en línea (E o esquina superior izquierda) */
+.edit-hotzone { position: fixed; top: 0; left: 0; width: 80px; height: 80px; z-index: 10000; cursor: pointer; }
+.edit-toggle {
+  position: fixed; top: 16px; left: 16px; z-index: 10001; height: 36px; padding: 0 14px; border-radius: 8px;
+  background: var(--bg-3); color: var(--paper); border: 1px solid var(--line); font: 500 13px var(--f-mono); cursor: pointer;
+  opacity: 0; pointer-events: none; transition: opacity 300ms ease, transform 140ms var(--ease-out);
+}
+.edit-toggle.show, .edit-toggle.active { opacity: 1; pointer-events: auto; }
+.edit-toggle.active { background: var(--acc); color: #0D2422; border-color: var(--acc); }
+.edit-toggle:active { transform: scale(0.96); }
+body.editing [contenteditable="true"] { outline: 2px dashed #ffb38a66; outline-offset: 6px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal { transform: none; }
+  .slide.visible .tactile { transition: none; }
+  .trace { stroke-dashoffset: 0; }
+}
+@media print {
+  .reveal { opacity: 1 !important; transform: none !important; }
+  .tactile { clip-path: none !important; }
+  .cane { opacity: 1 !important; }
+  .trace { stroke-dashoffset: 0 !important; }
+  .progress, .counter, .notes-panel, .hint, .edit-hotzone, .edit-toggle { display: none !important; }
+}
+
+/* ===========================================
+   EXTRAS DE LA SUSTENTACIÓN FINAL
+   =========================================== */
+.big-n { font: 900 200px/.8 var(--f-display); color: transparent; -webkit-text-stroke: 3px var(--acc); letter-spacing: -.01em; }
+.ring.warn { border-color: var(--acc); border-width: 3px; }
+.ring.bad { border-color: #ff7a6b; border-width: 3px; background: #ff7a6b44; }
+.fig { display: flex; flex-direction: column; min-height: 0; }
+.fig img { flex: 1; min-height: 0; width: 100%; object-fit: cover; border: 1px solid var(--line); border-radius: 6px; display: block; }
+.fig figcaption { margin-top: 18px; font: 500 24px var(--f-mono); letter-spacing: .06em; color: var(--sub); }
+.fig figcaption b { color: var(--acc); font-weight: 500; margin-right: 10px; }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<div class="hint" id="hint">← → avanzar · N notas · F pantalla completa · E editar</div>
+
+<div class="deck-viewport">
+<main class="deck-stage" id="deckStage">
+
+<!-- 01 · PORTADA -->
+<section class="slide cover" data-title="Portada">
+  <div class="tactile"></div><div class="cane"></div>
+  <div class="tag reveal">CS5055 · Internet of Things · <b>UTEC 2026-2</b> · Semana 15</div>
+  <h1 class="h1 reveal">Safe<span class="acc">Cane</span><br>bastón que<br>anticipa</h1>
+  <p class="sub reveal">Sustentación final: las cinco etapas IoT del prototipo, demostración en vivo y video publicitario.</p>
+  <div class="people reveal"><span><i></i>Nayeli Fernanda Guzman Huayta</span><span><i></i>Jazmin Nicole Soto Quiñones</span><span><i></i>Manyory Estefany Cueva Mendoza</span></div>
+  <aside class="notes">[0:00 · 0:30] Presentar al equipo. Plan de 15 min: 2 min problema, 6 min etapas IoT, 4 min demo en vivo, 1 min video, 2 min resultados y mercado.</aside>
+</section>
+
+<!-- 02 · PROBLEMA -->
+<section class="slide" data-title="El problema">
+  <div class="pad">
+    <div class="tag reveal"><b>00</b> El problema</div>
+    <div class="cols c2 bottom" style="gap:80px">
+      <div class="reveal"><div class="stat-n" style="font-size:300px">1,55<small style="font-size:120px">M</small></div><p class="lead" style="margin-top:28px;color:var(--paper)">de peruanos tienen dificultad para ver aun con anteojos.</p><p class="src" style="margin-top:16px">INEI · 2017</p></div>
+      <div class="reveal"><div class="stat-n" style="font-size:300px;color:var(--ring)">684 000</div><p class="lead" style="margin-top:28px;color:var(--paper)">muertes por caídas al año en el mundo.</p><p class="src" style="margin-top:16px">OMS · 2021</p></div>
+    </div>
+  </div>
+  <aside class="notes">[0:30 · 1:00] La discapacidad visual es la más frecuente del país y crece después de los 60 años, justo el grupo que más muere por caídas.</aside>
+</section>
+
+<!-- 03 · LIMITACIONES DEL BASTÓN BLANCO -->
+<section class="slide" data-title="El bastón blanco">
+  <div class="pad">
+    <div class="tag reveal"><b>00</b> El problema</div>
+    <h2 class="h2 reveal">El bastón blanco solo sabe lo que toca su punta</h2>
+    <div class="cols c3 bottom">
+      <div class="panel reveal"><div class="idx">01</div><div class="h3" style="margin:18px 0 16px">No anticipa</div><p class="txt">No avisa de lo que se acerca ni de un escalón que baja.</p></div>
+      <div class="panel reveal"><div class="idx">02</div><div class="h3" style="margin:18px 0 16px">No avisa</div><p class="txt">Si la persona cae, nadie se entera.</p></div>
+      <div class="panel reveal"><div class="idx">03</div><div class="h3" style="margin:18px 0 16px">No localiza</div><p class="txt">La familia no sabe dónde está.</p></div>
+    </div>
+  </div>
+  <aside class="notes">[1:00 · 1:30] Tres limitaciones: anticipar, avisar, localizar. Falta un dispositivo de bajo costo que las cubra.</aside>
+</section>
+
+<!-- 04 · SOLUCIÓN -->
+<section class="slide" data-title="La solución">
+  <div class="pad">
+    <div class="tag reveal"><b>00</b> La solución</div>
+    <h2 class="h2 reveal">Cuatro funciones, un solo bastón</h2>
+    <div class="cols c4 bottom">
+      <div class="reveal" style="border-top:4px solid var(--acc);padding-top:28px"><div class="h3">Obstáculos</div><p class="txt" style="margin-top:14px">al frente, hasta 2 m</p></div>
+      <div class="reveal" style="border-top:4px solid var(--mint);padding-top:28px"><div class="h3">Desniveles</div><p class="txt" style="margin-top:14px">bajo la punta</p></div>
+      <div class="reveal" style="border-top:4px solid var(--ring);padding-top:28px"><div class="h3">Caídas</div><p class="txt" style="margin-top:14px">con 10 s para cancelar</p></div>
+      <div class="reveal" style="border-top:4px solid var(--paper);padding-top:28px"><div class="h3">Ubicación</div><p class="txt" style="margin-top:14px">en cada alerta, al celular y al tablero</p></div>
+    </div>
+  </div>
+  <aside class="notes">[1:30 · 2:00] Ningún trabajo revisado en el estado del arte reúne las cuatro funciones en un dispositivo de bajo costo. Esa combinación es el aporte.</aside>
+</section>
+
+<!-- 05 · CINCO ETAPAS IoT -->
+<section class="slide" data-title="Cinco etapas IoT">
+  <div class="pad">
+    <div class="tag reveal">Arquitectura IoT · cinco etapas</div>
+    <h2 class="h2 reveal">Del sensor a la familia</h2>
+    <div class="cols bottom" style="grid-template-columns:repeat(5,1fr);gap:24px">
+      <div class="reveal"><div class="big-n" style="font-size:210px">01</div><div class="h3" style="margin:22px 0 10px;font-size:44px">Percepción</div><p class="txt" style="font-size:24px">5 sensores y un pulsador</p></div>
+      <div class="reveal"><div class="big-n" style="font-size:210px">02</div><div class="h3" style="margin:22px 0 10px;font-size:44px">Procesamiento</div><p class="txt" style="font-size:24px">ESP32 de dos núcleos</p></div>
+      <div class="reveal"><div class="big-n" style="font-size:210px">03</div><div class="h3" style="margin:22px 0 10px;font-size:44px">Actuación</div><p class="txt" style="font-size:24px">vibración, sonido y luz</p></div>
+      <div class="reveal"><div class="big-n" style="font-size:210px">04</div><div class="h3" style="margin:22px 0 10px;font-size:44px">Comunicación</div><p class="txt" style="font-size:24px">BLE y MQTT sobre Wi-Fi</p></div>
+      <div class="reveal"><div class="big-n" style="font-size:210px">05</div><div class="h3" style="margin:22px 0 10px;font-size:44px">Aplicación</div><p class="txt" style="font-size:24px">tablero web con mapa</p></div>
+    </div>
+  </div>
+  <aside class="notes">[2:00 · 2:20] Estas cinco etapas son el hilo de la exposición. Corresponden a las tres capas IoT de Atzori (percepción, red, aplicación), con el procesamiento y la actuación dentro del propio bastón.</aside>
+</section>
+
+<!-- 06 · DIAGRAMA DE BLOQUES -->
+<section class="slide" data-title="Diagrama de bloques">
+  <div class="pad">
+    <div class="tag reveal">Arquitectura · diagrama de bloques</div>
+    <h2 class="h2 reveal" style="font-size:96px">Todo pasa por un ESP32</h2>
+    <div class="grow reveal" style="margin-top:20px;display:flex;align-items:flex-end">
+      <svg viewBox="0 0 1660 650" width="1660" role="img" aria-label="Diagrama de bloques: seis entradas hacia el ESP32 y de ahí a tres actuadores y dos canales de red">
+        <defs>
+          <marker id="b-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10z" class="aha"/></marker>
+          <marker id="b-m" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10z" class="ahm"/></marker>
+        </defs>
+        <text x="0" y="22" class="t3 mono" font-size="20" letter-spacing="3">ENTRADAS · PERCEPCIÓN</text>
+        <text x="560" y="22" class="t3 mono" font-size="20" letter-spacing="3">PROCESAMIENTO</text>
+        <text x="1260" y="22" class="t3 mono" font-size="20" letter-spacing="3">SALIDAS</text>
+        <g transform="translate(0,48)">
+          <g font-size="26">
+            <rect x="0" y="0" width="400" height="78" rx="4" class="box"/><text x="22" y="34" font-weight="600">HC-SR04</text><text x="22" y="62" class="t3 mono" font-size="19">distancia · GPIO 5 y 18</text>
+            <rect x="0" y="98" width="400" height="78" rx="4" class="box"/><text x="22" y="132" font-weight="600">FC-51</text><text x="22" y="160" class="t3 mono" font-size="19">desnivel · GPIO 34</text>
+            <rect x="0" y="196" width="400" height="78" rx="4" class="box"/><text x="22" y="230" font-weight="600">MPU6050</text><text x="22" y="258" class="t3 mono" font-size="19">caída · I2C 21 y 22</text>
+            <rect x="0" y="294" width="400" height="78" rx="4" class="box"/><text x="22" y="328" font-weight="600">NEO-6M</text><text x="22" y="356" class="t3 mono" font-size="19">posición · UART 16 y 17</text>
+            <rect x="0" y="392" width="400" height="78" rx="4" class="box"/><text x="22" y="426" font-weight="600">LDR</text><text x="22" y="454" class="t3 mono" font-size="19">luz · GPIO 32</text>
+            <rect x="0" y="490" width="400" height="78" rx="4" class="box"/><text x="22" y="524" font-weight="600">Pulsador</text><text x="22" y="552" class="t3 mono" font-size="19">cancelar · GPIO 27</text>
+          </g>
+          <g class="w">
+            <path d="M400 39 H556" marker-end="url(#b-a)"/><path d="M400 137 H556" marker-end="url(#b-a)"/><path d="M400 235 H556" marker-end="url(#b-a)"/>
+            <path d="M400 333 H556" marker-end="url(#b-a)"/><path d="M400 431 H556" marker-end="url(#b-a)"/><path d="M400 529 H556" marker-end="url(#b-a)"/>
+          </g>
+          <rect x="560" y="0" width="500" height="568" rx="6" class="box-a"/>
+          <text x="810" y="60" text-anchor="middle" class="ta" font-size="44" font-weight="800" letter-spacing="2">ESP32</text>
+          <rect x="600" y="100" width="420" height="190" rx="4" class="box-s"/>
+          <text x="630" y="150" font-size="30" font-weight="600">Núcleo 1</text>
+          <text x="630" y="190" class="t2" font-size="24">lee sensores</text>
+          <text x="630" y="224" class="t2" font-size="24">máquina de estados</text>
+          <text x="630" y="258" class="t2" font-size="24">comanda actuadores</text>
+          <rect x="600" y="320" width="420" height="190" rx="4" class="box-m"/>
+          <text x="630" y="370" font-size="30" font-weight="600" class="tm">Núcleo 0</text>
+          <text x="630" y="410" class="t2" font-size="24">solo red</text>
+          <text x="630" y="444" class="t2" font-size="24">BLE · Wi-Fi · MQTT</text>
+          <text x="630" y="478" class="t2" font-size="24">si cae, el bastón sigue avisando</text>
+          <g font-size="26">
+            <rect x="1260" y="0" width="400" height="78" rx="4" class="box"/><text x="1282" y="34" font-weight="600">Motor vibrador</text><text x="1282" y="62" class="t3 mono" font-size="19">PWM · GPIO 25</text>
+            <rect x="1260" y="98" width="400" height="78" rx="4" class="box"/><text x="1282" y="132" font-weight="600">Buzzer</text><text x="1282" y="160" class="t3 mono" font-size="19">digital · GPIO 26</text>
+            <rect x="1260" y="196" width="400" height="78" rx="4" class="box"/><text x="1282" y="230" font-weight="600">LED blanco</text><text x="1282" y="258" class="t3 mono" font-size="19">digital · GPIO 33</text>
+            <rect x="1260" y="294" width="400" height="78" rx="4" class="box-m"/><text x="1282" y="328" font-weight="600" class="tm">Celular</text><text x="1282" y="356" class="t3 mono" font-size="19">BLE · notificaciones</text>
+            <rect x="1260" y="392" width="400" height="78" rx="4" class="box-m"/><text x="1282" y="426" font-weight="600" class="tm">Tablero web</text><text x="1282" y="454" class="t3 mono" font-size="19">Wi-Fi · MQTT · mapa</text>
+          </g>
+          <g>
+            <path d="M1060 39 H1256" class="wa" marker-end="url(#b-a)"/><path d="M1060 137 H1256" class="wa" marker-end="url(#b-a)"/><path d="M1060 235 H1256" class="wa" marker-end="url(#b-a)"/>
+            <path d="M1060 333 H1256" class="wm" marker-end="url(#b-m)"/><path d="M1060 431 H1256" class="wm" marker-end="url(#b-m)"/>
+          </g>
+          <text x="1260" y="520" class="t3 mono" font-size="18">2N2222 en cada actuador</text>
+          <text x="1260" y="548" class="t3 mono" font-size="18">Echo a 3,3 V: divisor 1 k + 2 k</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+  <aside class="notes">[2:20 · 3:10] Izquierda: seis entradas con su pin. Centro: un solo ESP32; el núcleo 1 decide y el núcleo 0 comunica, así la alerta local nunca depende del Wi-Fi. Derecha: tres actuadores para el usuario y dos canales para la familia. Los pines son los mismos en Wokwi y en el bastón.</aside>
+</section>
+
+<!-- 07 · ETAPA 01 PERCEPCIÓN -->
+<section class="slide" data-title="01 Percepción">
+  <div class="pad">
+    <div class="tag reveal"><b>01</b> Percepción</div>
+    <h2 class="h2 reveal" style="font-size:96px">Seis entradas</h2>
+    <div class="cols c3 bottom" style="row-gap:24px">
+      <div class="panel reveal" style="display:flex;flex-direction:column;padding:34px 40px"><div class="idx">HC-SR04 · ultrasonido</div><div class="stat-n" style="font-size:130px;margin:16px 0 8px">2 cm–4 m</div><p class="txt" style="font-size:25px">d = v·t / 2. Haz de 15°. Mide cada 100 ms. Error medido: 1 a 2 cm.</p></div>
+      <div class="panel reveal" style="display:flex;flex-direction:column;padding:34px 40px"><div class="idx">FC-51 · infrarrojo</div><div class="stat-n" style="font-size:130px;margin:16px 0 8px;color:var(--mint)">10 ms</div><p class="txt" style="font-size:25px">Salida digital con LM393. Si el piso «desaparece», hay un desnivel.</p></div>
+      <div class="panel reveal" style="display:flex;flex-direction:column;padding:34px 40px"><div class="idx">MPU6050 · acelerómetro</div><div class="stat-n" style="font-size:130px;margin:16px 0 8px">50 Hz</div><p class="txt" style="font-size:25px">Rango ±8 g para no saturar en el impacto. SVM e inclinación.</p></div>
+      <div class="panel reveal" style="display:flex;flex-direction:column;padding:34px 40px"><div class="idx">NEO-6M · GPS</div><div class="stat-n" style="font-size:130px;margin:16px 0 8px">2,5 m</div><p class="txt" style="font-size:25px">Precisión CEP. Tramas NMEA por UART a 9600 bps.</p></div>
+      <div class="panel reveal" style="display:flex;flex-direction:column;padding:34px 40px"><div class="idx">LDR GL5528 · luz</div><div class="stat-n" style="font-size:130px;margin:16px 0 8px">200 ms</div><p class="txt" style="font-size:25px">Divisor de 10 kΩ en el ADC1. Enciende el LED en la oscuridad.</p></div>
+      <div class="panel reveal" style="display:flex;flex-direction:column;padding:34px 40px"><div class="idx">Pulsador · usuario</div><div class="stat-n" style="font-size:130px;margin:16px 0 8px">10 s</div><p class="txt" style="font-size:25px">Ventana para cancelar una alerta. Pull-up interno, activo en bajo.</p></div>
+    </div>
+  </div>
+  <aside class="notes">[3:10 · 4:20] Un sensor por magnitud. Detalles técnicos: Echo a 5 V se baja a 3,3 V con divisor 1k y 2k; las entradas analógicas van en el ADC1 porque el ADC2 no funciona con Wi-Fi; el FC-51 se alimenta a 3,3 V para no dañar el GPIO 34.</aside>
+</section>
+
+<!-- 08 · DOS SENSORES COMPLEMENTARIOS -->
+<section class="slide" data-title="Dos sensores">
+  <div class="pad">
+    <div class="tag reveal"><b>01</b> Percepción · por qué dos sensores</div>
+    <h2 class="h2 reveal" style="font-size:92px;max-width:1664px">Uno mira al frente. El otro, al piso.</h2>
+    <div class="grow reveal" style="margin-top:40px;display:flex;align-items:flex-end">
+      <svg viewBox="0 0 1660 560" width="1660" role="img" aria-label="Bastón con el HC-SR04 mirando al frente y el FC-51 mirando al piso al borde de un escalón">
+        <defs>
+          <marker id="m-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10z" class="aha"/></marker>
+          <marker id="m-m" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10z" class="ahm"/></marker>
+        </defs>
+        <path d="M0 420 H760 V540 H1660 V560 H0z" fill="#12302D"/>
+        <path d="M0 420 H760 V540 H1660" stroke="var(--sub)" stroke-width="3" fill="none"/>
+        <rect x="1380" y="250" width="70" height="290" rx="4" class="box"/>
+        <text x="1415" y="230" text-anchor="middle" class="t3 mono" font-size="20">obstáculo</text>
+        <path d="M420 40 L740 410" stroke="var(--paper)" stroke-width="10" stroke-linecap="round"/>
+        <path d="M722 390 L740 410" stroke="#e5484d" stroke-width="10" stroke-linecap="round"/>
+        <rect x="486" y="112" width="52" height="28" rx="4" class="box-a" transform="rotate(49 512 126)"/>
+        <path d="M530 140 L1366 330" class="wa dash" marker-end="url(#m-a)"/>
+        <path d="M530 140 L1366 260" class="wa dash" opacity=".35"/>
+        <path d="M530 140 L1366 410" class="wa dash" opacity=".35"/>
+        <text x="760" y="170" class="ta mono" font-size="24">HC-SR04 · ultrasonido · 2 cm–2 m</text>
+        <rect x="694" y="350" width="40" height="24" rx="4" class="box-m" transform="rotate(49 714 362)"/>
+        <path d="M728 378 L790 500" class="wm dash" marker-end="url(#m-m)"/>
+        <text x="810" y="480" class="tm mono" font-size="24">FC-51 · infrarrojo</text>
+        <text x="810" y="514" class="t2" font-size="24">sin piso → aviso de desnivel</text>
+        <path d="M740 410 V200" stroke="var(--dim)" stroke-width="1.5" class="dash"/>
+        <text x="560" y="300" class="t3 mono" font-size="20" text-anchor="end">ángulo de uso</text>
+        <text x="560" y="328" class="t3 mono" font-size="20" text-anchor="end">20°–75°</text>
+      </svg>
+    </div>
+  </div>
+  <aside class="notes">[4:20 · 4:50] El ultrasonido apunta al frente y no ve un escalón que baja. El FC-51 va a 2–4 cm del piso en la punta. Solo avisa si el bastón está entre 20° y 75° respecto de la vertical, para que no suene al levantarlo.</aside>
+</section>
+
+<!-- 09 · ETAPA 02 PROCESAMIENTO -->
+<section class="slide" data-title="02 Procesamiento">
+  <div class="pad">
+    <div class="tag reveal"><b>02</b> Procesamiento · ESP32</div>
+    <div class="cols c2 grow" style="margin-top:44px;gap:28px">
+      <div class="panel reveal" style="display:flex;flex-direction:column">
+        <div class="idx">Núcleo 1 · decide</div>
+        <div class="stat-n" style="font-size:210px;margin:20px 0 18px">0 <small style="font-size:80px">delay()</small></div>
+        <p class="txt">Cada tarea tiene su periodo con <em>millis()</em>, así ninguna lectura bloquea a las demás.</p>
+        <div class="bottom" style="display:grid;grid-template-columns:1fr 1fr;gap:12px 28px;font:500 24px var(--f-mono);color:var(--sub)">
+          <span>FC-51 · <b class="acc">10 ms</b></span><span>IMU · <b class="acc">20 ms</b></span>
+          <span>Actuadores · <b class="acc">50 ms</b></span><span>HC-SR04 · <b class="acc">100 ms</b></span>
+          <span>LDR · <b class="acc">200 ms</b></span><span>GPS · <b class="acc">cada vuelta</b></span>
+        </div>
+      </div>
+      <div class="panel reveal" style="display:flex;flex-direction:column;border-color:var(--mint)">
+        <div class="idx" style="color:var(--mint)">Núcleo 0 · comunica</div>
+        <div class="stat-n" style="font-size:210px;margin:20px 0 18px;color:var(--mint)">240<small style="font-size:80px">MHz</small></div>
+        <p class="txt">Solo red. Si el Wi-Fi o el broker tardan en reconectar, la lectura de sensores no se entera.</p>
+        <p class="txt bottom" style="color:var(--paper)"><em>Sin Wi-Fi, el bastón sigue vibrando y sonando.</em></p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">[4:50 · 5:40] Firmware en Arduino IDE (núcleo ESP32 3.x) con TinyGPSPlus, PubSubClient, ArduinoJson y NimBLE. Decisión de diseño: el cliente MQTT puede tardar segundos en reintentar; por eso va en su propio núcleo.</aside>
+</section>
+
+<!-- 10 · MÁQUINA DE ESTADOS -->
+<section class="slide" data-title="Máquina de estados">
+  <div class="pad">
+    <div class="tag reveal"><b>02</b> Procesamiento · lógica del firmware</div>
+    <h2 class="h2 reveal" style="font-size:96px">Cuatro estados</h2>
+    <div class="grow reveal" style="margin-top:20px;display:flex;align-items:flex-end">
+      <svg viewBox="0 0 1660 500" width="1660" role="img" aria-label="Máquina de estados: Normal, Pre alerta, Alerta y Reposo">
+        <defs>
+          <marker id="s-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10z" class="aha"/></marker>
+          <marker id="s-d" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10z" class="ah"/></marker>
+        </defs>
+        <rect x="0" y="0" width="330" height="90" rx="4" class="box-s"/><text x="165" y="58" text-anchor="middle" font-size="38" font-weight="800" letter-spacing="2" class="t2">REPOSO</text>
+        <path d="M165 150 V94" class="w" marker-end="url(#s-d)"/>
+        <text x="360" y="42" class="t2" font-size="24">5 min sin moverse</text><text x="360" y="72" class="t3 mono" font-size="19">apaga actuadores · despierta al detectar movimiento</text>
+        <rect x="0" y="150" width="330" height="120" rx="4" class="box-m"/><text x="165" y="224" text-anchor="middle" font-size="44" font-weight="800" letter-spacing="2" class="tm">NORMAL</text>
+        <rect x="665" y="150" width="330" height="120" rx="4" class="box-a"/><text x="830" y="224" text-anchor="middle" font-size="44" font-weight="800" letter-spacing="2" class="ta">PRE ALERTA</text>
+        <rect x="1330" y="150" width="330" height="120" rx="4" fill="#3a1f1d" stroke="#ff7a6b" stroke-width="2"/><text x="1495" y="224" text-anchor="middle" font-size="44" font-weight="800" letter-spacing="2" fill="#ff7a6b">ALERTA</text>
+        <path d="M330 210 H661" class="wa" marker-end="url(#s-a)"/>
+        <text x="498" y="186" text-anchor="middle" class="t2" font-size="23">caída confirmada</text>
+        <path d="M995 210 H1326" class="wa" marker-end="url(#s-a)"/>
+        <text x="1160" y="186" text-anchor="middle" class="t2" font-size="23">10 s sin cancelar</text>
+        <path d="M830 270 V340 H165 V274" class="w dash" marker-end="url(#s-d)"/>
+        <text x="500" y="332" text-anchor="middle" class="t2" font-size="23">pulsador: era un golpe</text>
+        <path d="M1495 270 V440 H80 V274" class="w dash" marker-end="url(#s-d)"/>
+        <text x="790" y="432" text-anchor="middle" class="t2" font-size="23">pulsador: única salida · publica la cancelación para que el tablero borre la alerta</text>
+        <text x="498" y="236" text-anchor="middle" class="t3 mono" font-size="19">vibra con patrón propio</text>
+        <text x="1160" y="236" text-anchor="middle" class="t3 mono" font-size="19">buzzer + LED + GPS</text>
+      </svg>
+    </div>
+  </div>
+  <aside class="notes">[5:40 · 6:20] NORMAL avisa obstáculos y desniveles. Una caída confirmada pasa a PRE ALERTA con un patrón propio de vibración. Si nadie pulsa en 10 s, ALERTA: suena el buzzer, parpadea el LED y se envía la posición. Solo el pulsador saca de ALERTA.</aside>
+</section>
+
+<!-- 11 · DETECCIÓN DE CAÍDA -->
+<section class="slide" data-title="Detección de caída">
+  <div class="pad">
+    <div class="tag reveal"><b>02</b> Procesamiento · algoritmo de caída</div>
+    <div class="cols grow" style="grid-template-columns:1fr 760px;gap:64px;margin-top:36px">
+      <div style="display:flex;flex-direction:column;justify-content:space-between">
+        <h2 class="h2 reveal" style="margin-top:0;font-size:96px">Tres fases, en orden</h2>
+        <div style="display:grid;gap:18px">
+          <div class="reveal" style="display:grid;grid-template-columns:120px 1fr;align-items:center;background:var(--bg-2);border-left:6px solid var(--acc);padding:24px 36px"><div class="big-n" style="font-size:90px">01</div><div><div class="h3">Caída libre</div><p class="txt" style="font-size:26px">SVM &lt; 0,5 g</p></div></div>
+          <div class="reveal" style="display:grid;grid-template-columns:120px 1fr;align-items:center;background:var(--bg-2);border-left:6px solid var(--mint);padding:24px 36px"><div class="big-n" style="font-size:90px">02</div><div><div class="h3">Impacto</div><p class="txt" style="font-size:26px">SVM &gt; 2,5 g dentro de 1 s</p></div></div>
+          <div class="reveal" style="display:grid;grid-template-columns:120px 1fr;align-items:center;background:var(--bg-2);border-left:6px solid var(--ring);padding:24px 36px"><div class="big-n" style="font-size:90px">03</div><div><div class="h3">Tumbado</div><p class="txt" style="font-size:26px">inclinación &gt; 60° durante 2 s</p></div></div>
+        </div>
+        <p class="src reveal">SVM = √(ax² + ay² + az²) · umbrales de Bourke y Geng, a ajustar con registros a 50 Hz</p>
+      </div>
+      <div class="reveal" style="display:flex;flex-direction:column;justify-content:center">
+        <div style="background:#fff;border-radius:6px;padding:18px"><img src="img/resultado_caida.png" alt="Respuesta del algoritmo de caída: SVM, inclinación y estado" style="display:block;width:100%"></div>
+        <p class="src" style="margin-top:14px">Figura original del equipo · algoritmo del firmware sobre el perfil de caída de Wokwi</p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">[6:20 · 7:00] Caída libre a 1,0 s con 0,1 g; impacto a 1,3 s con 3,46 g; inclinación de 90° sostenida; PRE ALERTA a 3,8 s y ALERTA a 13,8 s. Entre impacto y alerta remota pasan 12,5 s, 10 de ellos de cancelación: es el precio de bajar las falsas alarmas. El perfil de Wokwi es ideal; en el bastón real hay rebotes.</aside>
+</section>
+
+<!-- 12 · ETAPA 03 ACTUACIÓN -->
+<section class="slide" data-title="03 Actuación">
+  <div class="pad">
+    <div class="tag reveal"><b>03</b> Actuación · la vibración es el canal principal</div>
+    <h2 class="h2 reveal" style="font-size:96px;margin-bottom:20px">Cada aviso se reconoce al tacto</h2>
+    <div class="bottom" style="width:100%">
+      <div class="wrow reveal"><div><b>Obstáculo &lt; 50 cm</b><span>HC-SR04</span></div><div class="wave w-cont"></div><div class="ms">continua</div></div>
+      <div class="wrow reveal"><div><b>50 a 100 cm</b><span>HC-SR04</span></div><div class="wave w-fast"></div><div class="ms">pulsos rápidos</div></div>
+      <div class="wrow reveal"><div><b>1 a 2 m</b><span>HC-SR04</span></div><div class="wave w-slow"></div><div class="ms">pulsos lentos</div></div>
+      <div class="wrow reveal"><div><b>Desnivel</b><span>FC-51 · motor + buzzer</span></div><div class="wave w-step"></div><div class="ms">100 ms · 100 ms</div></div>
+      <div class="wrow reveal"><div><b>Pre alerta</b><span>MPU6050 · motor</span></div><div class="wave w-pre"></div><div class="ms">patrón propio</div></div>
+      <div class="wrow reveal"><div><b>Alerta</b><span>buzzer + LED + red</span></div><div class="wave w-alert"></div><div class="ms">tras 10 s</div></div>
+    </div>
+  </div>
+  <aside class="notes">[7:00 · 7:40] El audio satura el oído (Dakopoulos y Bourbakis), por eso el buzzer queda solo para desniveles y caídas. El aviso de desnivel tiene prioridad sobre el de obstáculos y dura máximo 1,5 s. Los tres actuadores van con transistores 2N2222, y el motor lleva diodo 1N4007.</aside>
+</section>
+
+<!-- 13 · ETAPA 04 COMUNICACIÓN -->
+<section class="slide" data-title="04 Comunicación">
+  <div class="pad">
+    <div class="tag reveal"><b>04</b> Comunicación · dos canales, el mismo JSON</div>
+    <div class="cols c2 grow" style="margin-top:44px;gap:28px">
+      <div style="display:grid;gap:28px;grid-template-rows:1fr 1fr">
+        <div class="panel reveal" style="display:flex;flex-direction:column;border-color:var(--mint)"><div class="idx" style="color:var(--mint)">BLE · NimBLE</div><div class="h3" style="margin:16px 0 12px">Al celular</div><p class="txt" style="font-size:26px">Servicio tipo UART con notificaciones. Poco consumo, sin red.</p></div>
+        <div class="panel reveal" style="display:flex;flex-direction:column"><div class="idx">Wi-Fi · MQTT</div><div class="h3" style="margin:16px 0 12px">Al tablero</div><p class="txt" style="font-size:26px">Publica en un broker. El tablero se suscribe por WebSocket seguro.</p></div>
+      </div>
+      <div class="panel reveal" style="display:flex;flex-direction:column">
+        <div class="idx">Tópicos bajo el prefijo del grupo</div>
+        <div style="margin-top:22px;font:500 26px/1.5 var(--f-mono);color:var(--sub)">
+          <div><b class="acc">…/estado</b> · cada 1 s y al cambiar</div>
+          <div><b class="acc">…/alerta</b> · retenido</div>
+          <div><b class="acc">…/gps</b> · cada 5 s con fix</div>
+        </div>
+        <pre style="margin-top:auto;background:#071816;border:1px solid var(--line);border-radius:6px;padding:26px 30px;font:400 24px/1.55 var(--f-mono);color:var(--paper);white-space:pre-wrap">{"estado":"ALERTA","dist":95,
+ "desnivel":false,"vbat":3.92}
+{"tipo":"caida","lat":-12.13525,
+ "lon":-77.02215,"sats":8}</pre>
+        <p class="src" style="margin-top:16px">Broker público: sirve para demo, no para producto</p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">[7:40 · 8:30] La alerta va retenida: un tablero que se conecta tarde ve la última alerta. Si la publicación falla, se reintenta cada segundo. La ubicación es un dato sensible; un producto real necesita broker propio con usuario, contraseña y cifrado (Tsantikidou).</aside>
+</section>
+
+<!-- 14 · ETAPA 05 APLICACIÓN -->
+<section class="slide" data-title="05 Aplicación">
+  <div class="pad">
+    <div class="tag reveal"><b>05</b> Aplicación · tablero web</div>
+    <div class="cols grow" style="grid-template-columns:1140px 1fr;gap:56px;margin-top:40px;align-items:center">
+      <div class="reveal">
+        <img src="img/tablero.png" alt="Tablero web de SafeCane con estado, mapa y mensajes MQTT" style="display:block;width:1140px;border:1px solid var(--line);border-radius:6px">
+        <p class="src" style="margin-top:14px">Tablero web en modo demostración (datos de ejemplo)</p>
+      </div>
+      <div style="display:grid;gap:44px">
+        <div class="reveal"><div class="idx">Estado</div><div class="h3" style="margin-top:10px">Mensajes simples</div><p class="txt" style="margin-top:8px;font-size:26px">Pensados para la familia, no para técnicos.</p></div>
+        <div class="reveal"><div class="idx">Mapa</div><div class="h3" style="margin-top:10px">Leaflet</div><p class="txt" style="margin-top:8px;font-size:26px">Posición y satélites de cada alerta.</p></div>
+        <div class="reveal"><div class="idx">Alertas</div><div class="h3" style="margin-top:10px">Sonido y registro</div><p class="txt" style="margin-top:8px;font-size:26px">Historial y JSON crudo de MQTT.</p></div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">[8:30 · 9:00] HTML y JavaScript puros: mqtt.js por WebSocket seguro y Leaflet para el mapa. El botón de cancelación del bastón borra la alerta en el tablero. Abrir el tablero real aquí para la demo.</aside>
+</section>
+
+<!-- 15 · IMPLEMENTACIÓN: ARMADO -->
+<section class="slide" data-title="Armado del circuito">
+  <div class="pad">
+    <div class="tag reveal">Implementación · armado del circuito</div>
+    <div class="cols grow" style="grid-template-columns:repeat(4,1fr);gap:24px;margin-top:32px">
+      <figure class="reveal fig"><img src="img/foto_mesa.jpg" alt="Componentes en la mesa de trabajo"><figcaption><b>01</b> Componentes</figcaption></figure>
+      <figure class="reveal fig"><img src="img/foto_protoboard.jpg" alt="Circuito en protoboard"><figcaption><b>02</b> Protoboard · 17 cm</figcaption></figure>
+      <figure class="reveal fig"><img src="img/foto_bateria.jpg" alt="Portapilas y celdas de litio"><figcaption><b>03</b> 2 celdas · 1200 mAh</figcaption></figure>
+      <figure class="reveal fig"><img src="img/foto_grosor.jpg" alt="Grosor del conjunto con la batería"><figcaption><b>04</b> 6 cm de grosor</figcaption></figure>
+    </div>
+  </div>
+  <aside class="notes">[9:00 · 9:40] Se probó cada sensor solo (fase 1), luego integración en protoboard (fase 2). La cinta métrica fijó la altura interna de la caja: 6 cm con la batería encima. El módulo inercial es de la familia MPU-9250/6500, compatible con los registros del MPU6050, sin cambiar el código.</aside>
+</section>
+
+<!-- 16 · IMPLEMENTACIÓN: EVOLUCIÓN -->
+<section class="slide" data-title="Evolución del prototipo">
+  <div class="pad">
+    <div class="tag reveal">Implementación · evolución del prototipo</div>
+    <div class="cols grow" style="grid-template-columns:repeat(3,1fr);gap:40px;margin-top:32px">
+      <figure class="reveal fig"><img src="img/foto_primer_prototipo.jpg" alt="Primer prototipo sobre un tubo de prueba"><figcaption><b>V1</b> Tubo de prueba</figcaption></figure>
+      <figure class="reveal fig"><img src="img/foto_noche.jpg" alt="Prueba nocturna con el LED encendido"><figcaption><b>V2</b> Prueba de noche con luz</figcaption></figure>
+      <figure class="reveal fig"><img src="img/foto_baston_final.jpg" alt="Bastón plegable con caja de control y sensores"><figcaption><b>V3</b> Bastón plegable</figcaption></figure>
+    </div>
+  </div>
+  <aside class="notes">[9:40 · 10:10] V3: caja de control arriba del tubo, HC-SR04 a media altura mirando al frente, FC-51 en la punta con cinta azul. La caja actual es de cartón; la carcasa definitiva mide 19 × 12 × 7 cm. Hallazgo: los cables del FC-51 cruzan las articulaciones del bastón plegable y se tiran al plegar.</aside>
+</section>
+
+<!-- 17 · DEMO EN VIVO -->
+<section class="slide cover" data-title="Demostración en vivo">
+  <div class="tactile" style="width:520px"></div><div class="cane" style="right:180px"></div>
+  <div class="tag reveal">Demostración · prototipo funcionando</div>
+  <h1 class="h1 reveal" style="font-size:300px;top:200px">Demo<br><span class="acc">en vivo</span></h1>
+  <div class="reveal" style="position:absolute;left:120px;top:800px;width:1100px;display:grid;grid-template-columns:repeat(4,1fr);gap:28px">
+    <div><div class="idx">01</div><div class="h3" style="margin-top:8px;font-size:40px">Obstáculo</div></div>
+    <div><div class="idx">02</div><div class="h3" style="margin-top:8px;font-size:40px">Desnivel</div></div>
+    <div><div class="idx">03</div><div class="h3" style="margin-top:8px;font-size:40px">Caída</div></div>
+    <div><div class="idx">04</div><div class="h3" style="margin-top:8px;font-size:40px">Tablero</div></div>
+  </div>
+  <aside class="notes">[10:10 · 14:00] Guion: 1) acercar la mano al HC-SR04 y mostrar cómo cambia la vibración (continua, rápida, lenta). 2) Pasar el FC-51 por un borde: motor + buzzer. 3) Simular caída: pre alerta, esperar o cancelar con el pulsador, alerta. 4) Mostrar en el tablero y en el celular el estado y la ubicación. Plan B si falla la red: mostrar el tablero con ?demo y recordar que la alerta local no depende del Wi-Fi.</aside>
+</section>
+
+<!-- 18 · VIDEO PUBLICITARIO -->
+<section class="slide" data-title="Video publicitario">
+  <div class="pad">
+    <div class="tag reveal">Video publicitario</div>
+    <h2 class="h2 reveal" style="font-size:240px;line-height:.82;margin-top:auto">Mira<br>el <span class="acc">video</span></h2>
+    <p class="src reveal" style="margin-top:40px;font-size:24px">drive.google.com/drive/folders/11ey5HYlZcAxr-NJHwWC5MyNg1iEe3KnS</p>
+  </div>
+  <div class="tactile" style="width:360px"></div>
+  <aside class="notes">[14:00 · 14:40] Reproducir el video publicitario. Enlace completo (también en el informe): https://drive.google.com/drive/folders/11ey5HYlZcAxr-NJHwWC5MyNg1iEe3KnS?usp=sharing</aside>
+</section>
+
+<!-- 19 · RESULTADOS -->
+<section class="slide" data-title="Resultados">
+  <div class="pad">
+    <div class="tag reveal">Resultados · entorno controlado, solo integrantes del equipo</div>
+    <div class="cols c4 grow" style="margin-top:40px;gap:24px;grid-template-rows:1fr 1fr">
+      <div class="panel reveal" style="display:flex;flex-direction:column;padding:34px 36px"><div class="stat-n" style="font-size:150px">1–2<small style="font-size:60px">cm</small></div><p class="txt" style="margin-top:14px;font-size:25px">error de distancia<br>meta &lt; 3 cm</p><p class="bottom idx"><i class="dome"></i> cumple</p></div>
+      <div class="panel reveal" style="display:flex;flex-direction:column;padding:34px 36px"><div class="stat-n" style="font-size:150px">90<small style="font-size:60px">%</small></div><p class="txt" style="margin-top:14px;font-size:25px">escalones y bordillos<br>meta ≥ 85 %</p><p class="bottom idx"><i class="dome"></i> cumple</p></div>
+      <div class="panel reveal" style="display:flex;flex-direction:column;padding:34px 36px"><div class="stat-n" style="font-size:150px">80<small style="font-size:60px">%</small></div><p class="txt" style="margin-top:14px;font-size:25px">sensibilidad en caídas<br>meta ≥ 80 %</p><p class="bottom idx"><i class="dome"></i> cumple</p></div>
+      <div class="panel reveal" style="display:flex;flex-direction:column;padding:34px 36px"><div class="stat-n" style="font-size:150px">≈4<small style="font-size:60px">m</small></div><p class="txt" style="margin-top:14px;font-size:25px">error del GPS<br>ref. 4,63 m</p><p class="bottom idx"><i class="dome"></i> cumple</p></div>
+      <div class="panel reveal" style="display:flex;flex-direction:column;padding:34px 36px"><div class="stat-n" style="font-size:150px">5<small style="font-size:60px">s</small></div><p class="txt" style="margin-top:14px;font-size:25px">latencia al tablero<br>meta &lt; 5 s</p><p class="bottom idx"><i class="ring warn"></i> en el límite</p></div>
+      <div class="panel reveal" style="display:flex;flex-direction:column;padding:34px 36px"><div class="stat-n" style="font-size:150px">3,5<small style="font-size:60px">min</small></div><p class="txt" style="margin-top:14px;font-size:25px">primer fix del GPS<br>meta &lt; 2 min</p><p class="bottom idx"><i class="ring bad"></i> no cumple</p></div>
+      <div class="panel reveal" style="display:flex;flex-direction:column;padding:34px 36px"><div class="stat-n" style="font-size:150px">1,5<small style="font-size:60px">h</small></div><p class="txt" style="margin-top:14px;font-size:25px">autonomía real<br>estimada 6 h</p><p class="bottom idx"><i class="ring bad"></i> no cumple</p></div>
+      <div class="panel reveal" style="display:flex;flex-direction:column;padding:34px 36px"><div class="stat-n" style="font-size:150px;color:var(--mint)">12,5<small style="font-size:60px">s</small></div><p class="txt" style="margin-top:14px;font-size:25px">del impacto a la alerta<br>remota</p><p class="bottom idx" style="color:var(--mint)">10 s de cancelación</p></div>
+    </div>
+  </div>
+  <aside class="notes">[14:40 · 15:00, o menos si la demo se alarga] Cumplen distancia, desniveles, caídas y GPS. Latencia en el límite: el firmware publicaba cada 5 s en esas pruebas; ahora publica cada 1 s y al instante al cambiar de estado, falta remedir. Fix de GPS lento: arranque sin datos de satélites guardados y cielo tapado por la caja. Autonomía: 1,5 h con una celda de 3,7 V sin elevador ni protección.</aside>
+</section>
+
+<!-- 20 · ENERGÍA -->
+<section class="slide" data-title="Energía">
+  <div class="pad">
+    <div class="tag reveal">Hallazgo · energía</div>
+    <div class="cols grow" style="grid-template-columns:1fr 820px;gap:64px;margin-top:36px">
+      <div style="display:flex;flex-direction:column">
+        <div class="stat-n reveal" style="font-size:340px">1,5<small style="font-size:130px">h</small></div>
+        <p class="lead reveal" style="color:var(--paper);margin-top:56px">de autonomía medida, frente a las 6 h estimadas con ~170 mA.</p>
+        <div class="bottom reveal" style="border-left:3px solid var(--acc);padding-left:32px"><div class="idx">Siguiente paso</div><p class="txt" style="margin-top:10px">Celda 18650 + TP4056 con protección + elevador MT3608, y apagar el GPS sin alertas.</p></div>
+      </div>
+      <div class="reveal" style="display:flex;flex-direction:column;justify-content:center">
+        <div style="background:#fff;border-radius:6px;padding:18px"><img src="img/resultado_consumo.png" alt="Consumo promedio estimado por bloque" style="display:block;width:100%"></div>
+        <p class="src" style="margin-top:14px">Figura original · consumo estimado por bloque: ESP32 y GPS suman casi tres cuartas partes</p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">Estimación: 1200 mAh × 0,85 / 170 mA ≈ 6 h. La prueba real usó una celda sin elevador ni protección, así que la comparación no es exacta. La meta original de un día completo exige una celda 18650 de mayor capacidad.</aside>
+</section>
+
+<!-- 21 · MERCADO -->
+<section class="slide" data-title="Mercado">
+  <div class="pad">
+    <div class="tag reveal">Descripción del mercado</div>
+    <div class="cols c2 grow" style="margin-top:44px;gap:28px">
+      <div class="panel reveal" style="display:flex;flex-direction:column"><div class="idx">Segmento</div><div class="stat-n" style="font-size:220px;margin:18px 0 14px">1,55<small style="font-size:90px">M</small></div><p class="txt">personas con discapacidad visual y adultos mayores que caminan solos. Quien compra suele ser la <em>familia</em>.</p><p class="txt bottom" style="font-size:25px">Segundo segmento: centros de rehabilitación, asociaciones, casas de reposo y municipios.</p></div>
+      <div class="panel reveal" style="display:flex;flex-direction:column"><div class="idx">Modelo de negocio</div>
+        <div style="display:grid;gap:30px;margin-top:30px">
+          <div style="border-left:4px solid var(--acc);padding-left:28px"><div class="h3">Bastón</div><p class="txt" style="margin-top:6px;font-size:26px">precio accesible, con componentes del mercado local</p></div>
+          <div style="border-left:4px solid var(--mint);padding-left:28px"><div class="h3">Suscripción mensual</div><p class="txt" style="margin-top:6px;font-size:26px">tablero, historial de alertas y mapa para la familia</p></div>
+          <div style="border-left:4px solid var(--ring);padding-left:28px"><div class="h3">Paquetes institucionales</div><p class="txt" style="margin-top:6px;font-size:26px">panel multiusuario, capacitación y mantenimiento</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">Fuente de la cifra: INEI 2017 (personas con dificultad para ver). El enlace al video también está en la sección de mercado del informe.</aside>
+</section>
+
+<!-- 22 · CONCLUSIONES Y RECOMENDACIONES -->
+<section class="slide" data-title="Conclusiones">
+  <div class="pad">
+    <div class="tag reveal">Conclusiones y recomendaciones</div>
+    <div class="cols c2 grow" style="margin-top:44px;gap:80px">
+      <div>
+        <div class="idx reveal">Conclusiones</div>
+        <div style="display:grid;gap:64px;margin-top:40px">
+          <div class="reveal"><div class="h3" style="font-size:64px">Cuatro funciones en uno</div><p class="txt" style="margin-top:10px;font-size:30px">Obstáculos, desniveles, caídas y ubicación, con componentes baratos de Lima.</p></div>
+          <div class="reveal"><div class="h3" style="font-size:64px">El FC-51 acertó</div><p class="txt" style="margin-top:10px;font-size:30px">Cubre lo que el ultrasonido no ve, bajo la punta.</p></div>
+          <div class="reveal"><div class="h3" style="font-size:64px">Dos núcleos</div><p class="txt" style="margin-top:10px;font-size:30px">La alerta local no depende de la red.</p></div>
+        </div>
+      </div>
+      <div>
+        <div class="idx reveal" style="color:var(--mint)">Recomendaciones</div>
+        <div style="display:grid;gap:64px;margin-top:40px">
+          <div class="reveal"><div class="h3" style="font-size:64px">Calibrar con datos reales</div><p class="txt" style="margin-top:10px;font-size:30px">Umbrales con registros a 50 Hz; luego un clasificador.</p></div>
+          <div class="reveal"><div class="h3" style="font-size:64px">Más pequeño y más autónomo</div><p class="txt" style="margin-top:10px;font-size:30px">Placa perforada o PCB, 18650 y conectores en las articulaciones.</p></div>
+          <div class="reveal"><div class="h3" style="font-size:64px">Broker propio y cifrado</div><p class="txt" style="margin-top:10px;font-size:30px">La ubicación de una persona es un dato sensible.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">Cierre del contenido. Pasar a preguntas.</aside>
+</section>
+
+<!-- 23 · CIERRE -->
+<section class="slide cover" data-title="Gracias">
+  <div class="tactile"></div><div class="cane"></div>
+  <div class="tag reveal">SafeCane · <b>UTEC 2026-2</b></div>
+  <h1 class="h1 reveal" style="top:300px;font-size:320px">Gracias</h1>
+  <p class="sub reveal" style="top:640px">Un bastón que anticipa obstáculos, avisa de desniveles, detecta caídas y dice dónde ocurrieron.</p>
+  <div class="people reveal"><span><i></i>Nayeli Fernanda Guzman Huayta</span><span><i></i>Jazmin Nicole Soto Quiñones</span><span><i></i>Manyory Estefany Cueva Mendoza</span></div>
+</section>
+
+</main>
+</div>
+
+<div class="counter" id="counter"></div>
+<div class="notes-panel" id="notesPanel"><b>NOTAS</b><div id="notesText"></div></div>
+<div class="edit-hotzone" id="editHotzone"></div>
+<button class="edit-toggle" id="editToggle" title="Modo edición (E)">Editar</button>
+
+<script>
+/* ===========================================
+   CONTROLADOR DE LA PRESENTACIÓN
+   Escala el lienzo 1920×1080, navega con teclado, rueda y gestos,
+   muestra notas (N) y permite editar el texto (E).
+   =========================================== */
+class SlidePresentation {
+  constructor() {
+    this.stage = document.getElementById('deckStage');
+    this.slides = Array.from(document.querySelectorAll('.slide'));
+    this.counter = document.getElementById('counter');
+    this.progress = document.getElementById('progress');
+    this.notesPanel = document.getElementById('notesPanel');
+    this.notesText = document.getElementById('notesText');
+    this.current = -1;
+    this.wheelLock = false;
+
+    // Orden de aparición escalonada dentro de cada diapositiva
+    this.slides.forEach(s => s.querySelectorAll('.reveal').forEach((el, k) => el.style.setProperty('--i', Math.min(k, 10))));
+
+    this.setupStageScale();
+    this.setupKeyboardNav();
+    this.setupTouchNav();
+    this.setupWheelNav();
+    window.addEventListener('hashchange', () => this.show(this.fromHash(), false));
+    this.show(this.fromHash(), false);
+    setTimeout(() => document.getElementById('hint').classList.add('gone'), 3500);
+  }
+
+  fromHash() { return (parseInt(location.hash.slice(1), 10) || 1) - 1; }
+
+  setupStageScale() {
+    const scale = () => {
+      const k = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+      const x = (window.innerWidth - 1920 * k) / 2;
+      const y = (window.innerHeight - 1080 * k) / 2;
+      this.stage.style.transform = `translate(${x}px, ${y}px) scale(${k})`;
+    };
+    scale();
+    window.addEventListener('resize', scale);
+  }
+
+  setupKeyboardNav() {
+    document.addEventListener('keydown', e => {
+      if (e.target.isContentEditable || e.metaKey || e.ctrlKey || e.altKey) return;
+      switch (e.key) {
+        case 'ArrowRight': case 'ArrowDown': case 'PageDown': case ' ':
+          e.preventDefault(); this.show(this.current + 1); break;
+        case 'ArrowLeft': case 'ArrowUp': case 'PageUp':
+          e.preventDefault(); this.show(this.current - 1); break;
+        case 'Home': this.show(0); break;
+        case 'End': this.show(this.slides.length - 1); break;
+        case 'n': case 'N': this.notesPanel.classList.toggle('show'); break;
+        case 'f': case 'F':
+          if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+          else document.exitFullscreen?.();
+          break;
+      }
+    });
+  }
+
+  setupTouchNav() {
+    let x0 = null, t0 = 0;
+    document.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; t0 = performance.now(); }, { passive: true });
+    document.addEventListener('touchend', e => {
+      if (x0 === null || document.body.classList.contains('editing')) return;
+      const dx = e.changedTouches[0].clientX - x0;
+      const v = Math.abs(dx) / (performance.now() - t0);
+      if (Math.abs(dx) > 50 || v > 0.4) this.show(this.current + (dx < 0 ? 1 : -1));
+      x0 = null;
+    });
+  }
+
+  setupWheelNav() {
+    window.addEventListener('wheel', e => {
+      if (this.wheelLock || Math.abs(e.deltaY) < 30 || document.body.classList.contains('editing')) return;
+      this.wheelLock = true;
+      this.show(this.current + (e.deltaY > 0 ? 1 : -1));
+      setTimeout(() => (this.wheelLock = false), 650);
+    }, { passive: true });
+  }
+
+  show(n, updateHash = true) {
+    n = Math.max(0, Math.min(this.slides.length - 1, n));
+    if (n === this.current) return;
+    this.slides.forEach((s, i) => {
+      s.classList.toggle('active', i === n);
+      s.classList.toggle('visible', i === n);
+      s.setAttribute('aria-hidden', i === n ? 'false' : 'true');
+    });
+    this.current = n;
+    const total = this.slides.length;
+    this.counter.innerHTML = `<b>${String(n + 1).padStart(2, '0')}</b> / ${total}`;
+    this.progress.style.transform = `scaleX(${(n + 1) / total})`;
+    const notes = this.slides[n].querySelector('.notes');
+    this.notesText.textContent = notes ? notes.textContent : 'Sin notas para esta diapositiva.';
+    document.title = `${this.slides[n].dataset.title} · SafeCane`;
+    if (updateHash) history.replaceState(null, '', '#' + (n + 1));
+  }
+}
+
+/* ===========================================
+   EDICIÓN EN LÍNEA
+   E o la esquina superior izquierda activan la edición.
+   Los cambios se guardan en este navegador; Ctrl/Cmd+S descarga el HTML.
+   =========================================== */
+class InlineEditor {
+  constructor() {
+    this.isActive = false;
+    this.key = 'safecane-sustentacion-v1';
+    this.selector = '.slide h1, .slide h2, .slide p, .slide .h3, .slide .tag, .slide .stat-n, .slide td, .slide .idx';
+    this.toggleBtn = document.getElementById('editToggle');
+    this.restore();
+    this.bind();
+  }
+  bind() {
+    const hot = document.getElementById('editHotzone');
+    let hideT = null;
+    const showBtn = () => { clearTimeout(hideT); this.toggleBtn.classList.add('show'); };
+    const hideBtn = () => { hideT = setTimeout(() => { if (!this.isActive) this.toggleBtn.classList.remove('show'); }, 400); };
+    hot.addEventListener('mouseenter', showBtn);
+    hot.addEventListener('mouseleave', hideBtn);
+    this.toggleBtn.addEventListener('mouseenter', showBtn);
+    this.toggleBtn.addEventListener('mouseleave', hideBtn);
+    hot.addEventListener('click', () => this.toggle());
+    this.toggleBtn.addEventListener('click', () => this.toggle());
+    document.addEventListener('keydown', e => {
+      if ((e.key === 'e' || e.key === 'E') && !e.target.isContentEditable && !e.metaKey && !e.ctrlKey) this.toggle();
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); this.download(); }
+      if (e.key === 'Escape' && this.isActive) this.toggle();
+    });
+    document.addEventListener('input', e => { if (e.target.isContentEditable) this.save(); });
+  }
+  toggle() {
+    this.isActive = !this.isActive;
+    document.body.classList.toggle('editing', this.isActive);
+    this.toggleBtn.classList.toggle('active', this.isActive);
+    this.toggleBtn.textContent = this.isActive ? 'Listo' : 'Editar';
+    document.querySelectorAll(this.selector).forEach(el => {
+      if (this.isActive) el.setAttribute('contenteditable', 'true'); else el.removeAttribute('contenteditable');
+    });
+    if (!this.isActive) this.toggleBtn.classList.remove('show');
+  }
+  save() {
+    try {
+      const data = Array.from(document.querySelectorAll(this.selector)).map(el => el.innerHTML);
+      localStorage.setItem(this.key, JSON.stringify(data));
+    } catch (e) {}
+  }
+  restore() {
+    try {
+      const data = JSON.parse(localStorage.getItem(this.key) || 'null');
+      const els = document.querySelectorAll(this.selector);
+      if (Array.isArray(data) && data.length === els.length) els.forEach((el, i) => (el.innerHTML = data[i]));
+    } catch (e) {}
+  }
+  download() {
+    const clone = document.documentElement.cloneNode(true);
+    clone.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+    clone.querySelector('body').classList.remove('editing');
+    const blob = new Blob(['<!DOCTYPE html>\n' + clone.outerHTML], { type: 'text/html' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'sustentacion_final.html';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+}
+
+const deck = new SlidePresentation();
+const editor = new InlineEditor();
+</script>
+</body>
+</html>
