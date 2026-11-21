@@ -453,7 +453,7 @@ body.editing [contenteditable="true"] { outline: 2px dashed #ffb38a66; outline-o
 <section class="slide" data-title="Cinco etapas IoT">
   <div class="pad">
     <div class="tag reveal">Arquitectura IoT · cinco etapas</div>
-    <h2 class="h2 reveal">Del sensor a la familia</h2>
+    <h2 class="h2 reveal">Del sensor al tablero</h2>
     <div class="cols bottom" style="grid-template-columns:repeat(5,1fr);gap:24px">
       <div class="reveal"><div class="big-n" style="font-size:210px">01</div><div class="h3" style="margin:22px 0 10px;font-size:44px">Percepción</div><p class="txt" style="font-size:24px">5 sensores y un pulsador</p></div>
       <div class="reveal"><div class="big-n" style="font-size:210px">02</div><div class="h3" style="margin:22px 0 10px;font-size:44px">Procesamiento</div><p class="txt" style="font-size:24px">ESP32 de dos núcleos</p></div>
@@ -733,6 +733,18 @@ body.editing [contenteditable="true"] { outline: 2px dashed #ffb38a66; outline-o
     </div>
   </div>
   <aside class="notes">[9:00 · 9:40] Se probó cada sensor solo (fase 1), luego integración en protoboard (fase 2). La cinta métrica fijó la altura interna de la caja: 6 cm con la batería encima. El módulo inercial es de la familia MPU-9250/6500, compatible con los registros del MPU6050, sin cambiar el código.</aside>
+</section>
+
+<!-- 15b · IMPLEMENTACIÓN: INTEGRACIÓN Y CAJA -->
+<section class="slide" data-title="Integración y caja de control">
+  <div class="pad">
+    <div class="tag reveal">Implementación · integración y caja de control</div>
+    <div class="cols grow" style="grid-template-columns:1.6fr 1fr;gap:40px;margin-top:32px">
+      <figure class="reveal fig"><img src="img/foto_primera_integracion.jpg" alt="Primera integración en protoboard con ESP32, HC-SR04, módulo inercial, GPS, buzzer y pulsador"><figcaption><b>01</b> Primera integración en protoboard</figcaption></figure>
+      <figure class="reveal fig"><img src="img/foto_caja_interior.jpg" alt="Interior de la caja de control con el circuito y el cableado" style="object-fit:contain;background:#000"><figcaption><b>02</b> Interior de la caja de control</figcaption></figure>
+    </div>
+  </div>
+  <aside class="notes">La primera integración reunió el ESP32, el HC-SR04, el módulo inercial, el GPS, el buzzer y el pulsador. La LDR y el LED de la izquierda no llegaron al prototipo final. A la derecha, el interior de la caja de cartón con el circuito en protoboard y el cableado hacia los sensores.</aside>
 </section>
 
 <!-- 16 · IMPLEMENTACIÓN: EVOLUCIÓN -->
